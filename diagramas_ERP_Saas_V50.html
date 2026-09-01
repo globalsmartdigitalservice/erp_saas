@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagramas de Clases · ERP SaaS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.12.0/mermaid.min.js"></script>
+<style>
+  :root{--bg:#0a0d16;--side:#0e1220;--side2:#141a2c;--panel:#10141f;--line:#262e48;--line2:#323c5e;
+    --ink:#eef1fb;--ink2:#9aa3c4;--ink3:#646d92;--ink4:#454d70;
+    --dir:#f0b44a;--trx:#36d6c3;--sup:#a08bf6;--core:#5f9bd6;--ext:#df8fcf;--vert:#86d96a;--adm:#ef7d6b;
+    --paper:#f6f4ee;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);height:100vh;overflow:hidden;display:flex}
+  ::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:9px;border:2px solid transparent;background-clip:padding-box}
+  aside{width:304px;flex-shrink:0;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100vh}
+  .brand{padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+  .brand .tag{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--trx)}
+  .brand h1{font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:700;margin-top:5px;line-height:1.15}
+  .brand p{font-size:11.5px;color:var(--ink3);margin-top:4px}
+  nav{flex:1;overflow-y:auto;padding:8px 10px 30px}
+  .glabel{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;padding:15px 10px 6px;display:flex;align-items:center;gap:7px;color:#9aa6cf}
+  .glabel .ln{flex:1;height:1px;background:var(--line)}
+  .glabel.dir{color:var(--dir)}.glabel.trx{color:var(--trx)}.glabel.sup{color:var(--sup)}.glabel.core{color:var(--core)}.glabel.ext{color:var(--ext)}.glabel.vert{color:var(--vert)}.glabel.adm{color:var(--adm)}
+  .nv{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:12.5px;color:var(--ink2);transition:.13s;border-left:2px solid transparent}
+  .nv:hover{background:var(--side2);color:var(--ink)}
+  .nv.active{background:var(--side2);color:var(--ink);font-weight:600;border-left-color:var(--ac)}
+  .nv .num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);min-width:20px}
+  .nv.sub{padding-left:30px;font-size:11.5px}
+  .nv.sub .num{min-width:30px;font-size:9.5px;opacity:.85}
+  .nv.sub2{padding-left:48px;font-size:11px}
+  .nv.sub2 .num{min-width:40px;font-size:9px;opacity:.75}
+  main{flex:1;min-width:0;display:flex;flex-direction:column;height:100vh}
+  .top{padding:22px 38px 18px;border-bottom:1px solid var(--line)}
+  .crumb{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+  .top h2{font-family:'Bricolage Grotesque',sans-serif;font-size:25px;font-weight:700;letter-spacing:-.02em;margin:7px 0 6px}
+  .top .desc{color:var(--ink2);font-size:13.5px;max-width:780px;line-height:1.55}
+  .content{flex:1;overflow:auto;padding:26px 38px 60px}
+  .card{background:var(--paper);border:1px solid var(--line2);border-radius:14px;padding:24px;overflow:auto;box-shadow:0 14px 40px rgba(0,0,0,.35)}
+  .card .mermaid{display:flex;justify-content:center;min-height:120px}
+  .card svg{max-width:100%;height:auto}
+  .legend{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3);margin-top:14px;display:flex;gap:16px;flex-wrap:wrap}
+  .legend span{display:inline-flex;align-items:center;gap:6px}.legend .d{width:10px;height:10px;border-radius:3px}
+  @media(max-width:820px){aside{display:none}.top,.content{padding-left:18px;padding-right:18px}}
+</style>
+</head>
+<body>
+<aside>
+  <div class="brand"><div class="tag">Modelo de datos · alineado a V4</div><h1>Diagramas de Clases</h1><p>Misma estructura que Funcionalidades</p></div>
+  <nav id="nav"></nav>
+</aside>
+<main>
+  <div class="top"><div class="crumb" id="crumb">—</div><h2 id="title">—</h2><p class="desc" id="desc"></p></div>
+  <div class="content"><div class="card"><div class="mermaid" id="diagram"></div><div class="mermaid" id="diagram2" style="display:none;margin-top:30px;padding-top:26px;border-top:1px dashed #c9c4b6"></div>
+    <div class="legend">
+      <span><span class="d" style="background:#0f8a7e"></span>clase del módulo</span>
+      <span><span class="d" style="background:#c9821f"></span>relación / herencia</span>
+      <span>caja sin atributos = vive en otro módulo</span>
+    </div></div></div>
+</main>
+<script>
+mermaid.initialize({startOnLoad:false,theme:'base',themeVariables:{fontFamily:"'IBM Plex Sans','DM Sans',sans-serif",primaryColor:'#e8f3f1',primaryBorderColor:'#0f8a7e',primaryTextColor:'#15201f',lineColor:'#c9821f',secondaryColor:'#f6f4ee',tertiaryColor:'#ffffff'}});
+const ACC={dir:'#f0b44a',trx:'#36d6c3',sup:'#a08bf6',core:'#5f9bd6',ext:'#df8fcf',vert:'#86d96a',adm:'#ef7d6b'};
+const M=[
+{g:'Dirección Estratégica',n:'01',ac:'dir',t:'Planeación Estratégica (BSC)',
+ d:'Soporta las pestañas del BSC: Resumen + las 4 perspectivas, objetivos, indicadores e iniciativas.',
+ c:`classDiagram
+class Plan_Estrategico{+Int id\n+Int empresaId\n+Int anio\n+String mision\n+String vision\n+Decimal metaAnual\n+Int estadoId}
+class Perspectiva{+Int id\n+String nombre\n+Int orden}
+class Objetivo_Estrategico{+Int id\n+Int planId\n+Int perspectivaId\n+String nombre\n+Decimal metaAnual\n+Decimal realActual\n+Int estadoId}
+class Indicador{+Int id\n+Int objetivoId\n+String nombre\n+String unidad\n+String formula}
+class Medicion{+Int id\n+Int indicadorId\n+String periodo\n+Decimal valor\n+Date fecha}
+class Iniciativa{+Int id\n+Int objetivoId\n+String nombre\n+Int responsableId\n+Date plazo\n+Decimal presupuesto\n+Decimal avance}
+Plan_Estrategico "1" --> "*" Objetivo_Estrategico : agrupa
+Objetivo_Estrategico --> Perspectiva : clasifica
+Objetivo_Estrategico "1" --> "1" Indicador : mide
+Indicador "1" --> "*" Medicion : registra
+Objetivo_Estrategico "1" --> "*" Iniciativa : impulsa`},
+{g:'Dirección Estratégica',n:'02',ac:'dir',t:'Inteligencia Empresarial (BI)',
+ d:'Dashboards, widgets, reportes configurables, análisis OLAP y alertas por umbral. Capa de solo lectura sobre los datos.',
+ c:`classDiagram
+class Dashboard{+Int id\n+Int empresaId\n+Int usuarioId\n+String nombre\n+Json layout}
+class Widget{+Int id\n+Int dashboardId\n+Int reporteId\n+String tipoVisual\n+String posicion}
+class Reporte{+Int id\n+Int empresaId\n+String nombre\n+String tipo\n+Json definicion}
+class Fuente_Datos{+Int id\n+Int reporteId\n+String modulo\n+String consulta}
+class Alerta_KPI{+Int id\n+Int reporteId\n+String condicion\n+Decimal umbral\n+Int usuarioDestinoId}
+Dashboard "1" --> "*" Widget : contiene
+Widget --> Reporte : visualiza
+Reporte "1" --> "*" Fuente_Datos : consulta
+Reporte "1" --> "*" Alerta_KPI : dispara`},
+{g:'Dirección Estratégica',n:'03',ac:'dir',t:'Productividad Gerencial',
+ d:'Tablero ejecutivo por semana. Cada Entrada_Productividad guarda los indicadores de la semana y agrupa sus cuadrantes: oportunidades, problemas, acciones, resultados, objetivos, revisiones y alertas.',
+ c:`classDiagram
+class Entrada_Productividad{+Int id\n+Int empresaId\n+Int gerenteId\n+String periodo\n+Decimal enfoquePct\n+Int accionesPlan\n+Int accionesCompletadas\n+Decimal tiempoEfectivo\n+Int desviaciones\n+Decimal impactoGenerado\n+Date fechaRegistro\n+Int estadoId}
+class Oportunidad{+Int id\n+Int entradaId\n+String descripcion\n+String impacto\n+String probabilidad}
+class Problema{+Int id\n+Int entradaId\n+String descripcion\n+String severidad\n+String impacto}
+class Accion_Gerencial{+Int id\n+Int entradaId\n+String descripcion\n+Int responsableId\n+Int estadoId}
+class Resultado_Gerencial{+Int id\n+Int entradaId\n+String descripcion\n+Decimal resultado\n+String impacto}
+class Objetivo_Semana{+Int id\n+Int entradaId\n+String descripcion\n+Boolean cumplido}
+class Revision_Programada{+Int id\n+Int entradaId\n+String tipo\n+DateTime fecha}
+class Alerta_Gerencial{+Int id\n+Int entradaId\n+String tipo\n+String descripcion\n+String nivel}
+Entrada_Productividad "1" --> "*" Oportunidad : detecta
+Entrada_Productividad "1" --> "*" Problema : registra
+Entrada_Productividad "1" --> "*" Accion_Gerencial : planea
+Entrada_Productividad "1" --> "*" Resultado_Gerencial : logra
+Entrada_Productividad "1" --> "*" Objetivo_Semana : fija
+Entrada_Productividad "1" --> "*" Revision_Programada : agenda
+Entrada_Productividad "1" --> "*" Alerta_Gerencial : levanta`},
+{g:'Plataforma Empresarial',n:'04',ac:'trx',t:'Entidades / Terceros',
+ d:'Maestro único de personas y organizaciones. Cliente, Proveedor, Paciente, Socio son ROLES de la misma Entidad. Los objetos del rubro (vehículo, inmueble) viven en su vertical y apuntan a una Entidad.',
+ c:`classDiagram
+class Entidad{+Int id\n+Int empresaId\n+Int tipoEntidadId\n+String nombre\n+String priApellido\n+String segApellido\n+Int tipoDocumentoId\n+String documento\n+String regimenTributario\n+Int estadoId}
+class Rol_Entidad{+Int id\n+Int entidadId\n+Int tipoRolId\n+Int categoriaEntidadId\n+Int vendedorId\n+Decimal limiteCredito\n+Json datosRol\n+Int estadoId}
+class Direccion{+Int id
++Int entidadId
++Int tipoId
++String calle
++String numero
++String descripcion
++Int ubicacionGeograficaId
++String direccionTexto
++Decimal latitud
++Decimal longitud
++Int estadoId}
+class Contacto_Entidad{+Int id\n+Int entidadId\n+String nombre\n+String cargo\n+String email\n+String telefono}
+class Categoria_Entidad{+Int id\n+Int empresaId\n+String nombre\n+String descripcion\n+Decimal descuentoCategCliente\n+Int listaPrecioId}
+class Encuesta_Satisfaccion{+Int id\n+Int entidadId\n+Date fecha\n+Int puntaje\n+String comentario}
+class Lista_Precio
+class Ubicacion_Geografica
+class Pais
+class Tipologia
+Entidad "1" --> "*" Rol_Entidad : cumple
+Entidad "1" --> "*" Direccion : tiene
+Entidad "1" --> "*" Contacto_Entidad : tiene
+Rol_Entidad --> Categoria_Entidad : categoriza
+Entidad "1" --> "*" Encuesta_Satisfaccion : evalúa
+Categoria_Entidad ..> Lista_Precio : lista asignada [suave]
+Direccion --> Ubicacion_Geografica : apunta al catálogo
+Ubicacion_Geografica "1" --> "*" Ubicacion_Geografica : contiene jerárquico
+Pais "1" --> "*" Ubicacion_Geografica : divide
+Rol_Entidad --> Tipologia : tipo de rol
+Entidad --> Tipologia : tipo de entidad
+Entidad --> Tipologia : tipo de documento
+Direccion --> Tipologia : tipo`},
+{g:'Gestión Empresarial',n:'05',ac:'trx',t:'Gestión Comercial',
+ d:'Área comercial en cuatro frentes: catálogo, CRM, ventas y postventa. Cada frente es un sub-módulo con su propio diagrama.',
+ c:`classDiagram
+class Catalogo
+class CRM
+class Ventas
+class Postventa
+Catalogo --> Ventas : provee items
+CRM --> Ventas : convierte oportunidades
+Ventas --> Postventa : origina garantias y reclamos`,
+ sub:[
+  {n:'05.1',t:'Catálogo',
+   d:'Productos y servicios con su categoría y unidad; precios por lista y promociones. Atributos dinámicos (por rubro/categoría) para adaptarse a cualquier vertical sin cambiar el esquema. PAQUETE BASE: inventario, compras, finanzas, fiscal y verticales dependen de este catalogo y lo instalan automaticamente.',
+   c:`classDiagram
+class Item{+Int id\n+Int empresaId\n+String codigo\n+String nombre\n+String tipoItem\n+Boolean controlaStock\n+String tipoControlStock\n+Int categoriaId\n+Int itemPadreId\n+Int marcaId\n+Int estadoId}
+class Categoria_Item{+Int id\n+Int empresaId\n+String nombre\n+Int padreId\n+Int estadoId}
+class Presentacion{+Int id\n+Int itemId\n+String nombre\n+Decimal factorConversion\n+Boolean esVendible\n+Int estadoId}
+class Lista_Precio{+Int id\n+Int empresaId\n+String nombre\n+Int monedaId\n+Int estadoId}
+class Precio{+Int id\n+Int presentacionId\n+Int listaPrecioId\n+Decimal valor\n+Date vigenciaDesde\n+Date vigenciaHasta}
+class Promocion{+Int id\n+Int empresaId\n+String nombre\n+Decimal descuento\n+Int limiteGlobalUsos\n+Int limitePorCliente\n+Date desde\n+Date hasta\n+Int estadoId}
+class Definicion_Atributo{+Int id\n+Int empresaId\n+Int rubroId\n+Int categoriaItemId\n+String nombre\n+Int tipoDatoId\n+Boolean requerido\n+String opciones\n+Int estadoId}
+class Valor_Atributo{+Int id\n+Int itemId\n+Int definicionAtributoId\n+String valor}
+class Combo_Componente{+Int id\n+Int empresaId\n+Int itemComboId\n+Int componenteItemId\n+Int presentacionId\n+Decimal cantidad\n+Int estadoId}
+class Item_Impuesto{+Int id\n+Int empresaId\n+Int itemId\n+Int tipoImpuestoId\n+Int estadoId}
+class Item_Foto{+Int id\n+Int itemId\n+String ubicacionArchivo\n+Boolean esPrincipal\n+Int estadoId}
+class Tipo_Impuesto
+class Tipologia
+Item --> Categoria_Item : clasifica
+Categoria_Item "1" --> "*" Categoria_Item : sub-categoria
+Item "1" --> "*" Item : variante de
+Item --> Tipologia : marca
+Item "1" --> "*" Presentacion : se vende como
+Item "1" --> "*" Item_Foto : fotos
+Presentacion "1" --> "*" Precio : precio
+Precio --> Lista_Precio : en
+Lista_Precio "1" --> "*" Promocion : aplica
+Categoria_Item "1" --> "*" Definicion_Atributo : define
+Definicion_Atributo --> Tipologia : rubro / tipoDato
+Item "1" --> "*" Valor_Atributo : tiene
+Valor_Atributo --> Definicion_Atributo : instancia
+Item "1" --> "*" Combo_Componente : compone
+Combo_Componente --> Item : componente
+Combo_Componente --> Presentacion : presentacion
+Item "1" --> "*" Item_Impuesto : grava
+Item_Impuesto --> Tipo_Impuesto : aplica`},
+  {n:'05.2',t:'CRM',
+   d:'Embudo comercial: oportunidades que avanzan por etapas y se convierten en documento de venta.',
+   c:`classDiagram
+class Oportunidad{+Int id\n+Int empresaId\n+Int clienteId\n+Int etapaId\n+Int vendedorId\n+String nombre\n+Decimal montoEstimado\n+Int estadoId}
+class Etapa_Comercial{+Int id\n+Int empresaId\n+String nombre\n+Int orden\n+Decimal probabilidad\n+Int estadoId}
+class Entidad
+class Documento_Comercial
+Etapa_Comercial "1" --> "*" Oportunidad : contiene
+Oportunidad --> Entidad : cliente
+Oportunidad ..> Documento_Comercial : convierte en`},
+  {n:'05.3',t:'Ventas',d:'Area de ventas dividida en dos vistas para poder leerla: el documento de venta y la caja/POS con sus cobros.',sub:[{n:'05.3.1',t:'Documento de Venta',d:'El documento comercial de venta: tipos, condicion de pago, detalle con impuesto por linea, historial de estados, autorizaciones de supervisor, promociones aplicadas y numeracion por punto de venta.',c:`classDiagram
+class Documento_Comercial{+Int id\n+Int empresaId\n+Int sucursalId\n+Int puntoVentaId\n+Int usuarioId\n+Int tipoDocumentoId\n+Int documentoOrigenId\n+String numero\n+Int entidadId\n+Int listaPrecioId\n+Int condicionPagoId\n+Int monedaId\n+Int tipoCambioId\n+Decimal valorTipoCambio\n+Decimal subtotal\n+Decimal descuentoTotal\n+Decimal impuestoTotal\n+Decimal total\n+Decimal montoBase\n+Decimal saldoPendiente\n+String observacion\n+Int estadoId\n+DateTime fecha}
+class Tipo_Documento_Comercial{+Int id\n+Int empresaId\n+String codigo\n+String nombre\n+Boolean afectaStock\n+Boolean generaIngreso\n+Boolean esVenta\n+Int estadoId}
+class Condicion_Pago{+Int id\n+Int empresaId\n+String nombre\n+Int dias\n+Boolean esContado\n+Int estadoId}
+class Detalle_Documento{+Int id\n+Int documentoId\n+Int itemId\n+Int presentacionId\n+Int autorizacionId\n+Int detalleOrigenId\n+Int comboId\n+String origenPrecio\n+Decimal cantidad\n+Decimal cantidadDevuelta\n+Decimal precioLista\n+Decimal precioUnitario\n+Decimal descuento\n+Decimal subtotal\n+Decimal impuesto\n+Decimal totalLinea\n+Int estadoId}
+class Secuencia_Documento{+Int id\n+Int empresaId\n+Int sucursalId\n+Int puntoVentaId\n+Int tipoDocumentoId\n+String prefijo\n+Int siguienteNumero\n+Int estadoId}
+class Historico_Estado_Documento{+Int id\n+Int documentoComercialId\n+String estadoAnterior\n+String estadoNuevo\n+Int usuarioId\n+DateTime fechaHora\n+String observacion}
+class Autorizacion_Operacion{+Int id\n+Int documentoComercialId\n+Int usuarioSupervisorId\n+String tipoOperacion\n+String motivo\n+DateTime fecha}
+class Aplicacion_Promocion{+Int id\n+Int empresaId\n+Int promocionId\n+Int documentoId\n+Int detalleId\n+Int clienteId\n+Decimal monto\n+Date fecha}
+class Empresa
+class Entidad
+class Item
+class Presentacion
+class Lista_Precio
+class auth_user
+class Calculo_Impuesto
+class Movimiento_Inventario
+class Categoria_Entidad
+class Promocion
+class Punto_Venta
+Documento_Comercial --> Tipo_Documento_Comercial : de tipo
+Documento_Comercial --> Documento_Comercial : origen
+Documento_Comercial --> Entidad : cliente
+Documento_Comercial --> auth_user : vendedor
+Documento_Comercial --> Empresa : sucursal
+Documento_Comercial --> Punto_Venta : emitido en
+Documento_Comercial --> Lista_Precio : precios de
+Documento_Comercial --> Condicion_Pago : condicion
+Documento_Comercial "1" --> "*" Detalle_Documento : detalla
+Documento_Comercial "1" --> "*" Historico_Estado_Documento : historial
+Historico_Estado_Documento --> auth_user : por
+Detalle_Documento --> Item : de
+Detalle_Documento --> Presentacion : presentacion
+Detalle_Documento "1" --> "*" Calculo_Impuesto : aplica
+Detalle_Documento ..> Movimiento_Inventario : descuenta stock [suave]
+Documento_Comercial "1" --> "*" Autorizacion_Operacion : requiere
+Autorizacion_Operacion --> auth_user : supervisor
+Detalle_Documento ..> Autorizacion_Operacion : autorizado
+Detalle_Documento --> Detalle_Documento : linea de origen
+Entidad ..> Categoria_Entidad : tiene categoria
+Categoria_Entidad "*" --> "1" Lista_Precio : lista asignada
+Detalle_Documento ..> Item : parte de combo
+Detalle_Documento ..> Promocion : promo aplicada
+Aplicacion_Promocion --> Promocion : consume
+Aplicacion_Promocion ..> Detalle_Documento : en linea
+Aplicacion_Promocion --> Entidad : cliente
+Secuencia_Documento --> Tipo_Documento_Comercial : de
+Punto_Venta "1" --> "*" Secuencia_Documento : numera`},{n:'05.3.2',t:'Caja / POS y Cobros',d:'Punto de venta y caja POS: apertura/cierre con arqueo y movimientos de efectivo, y el flujo de cobros: cada documento genera un Ingreso y su Cuenta por Cobrar, que se amortiza con Cobros por metodo de pago.',c:`classDiagram
+class Punto_Venta{+Int id\n+Int empresaId\n+Int sucursalId\n+String codigo\n+String nombre\n+Int estadoId}
+class Apertura_Cierre_Caja{+Int id\n+Int empresaId\n+Int sucursalId\n+Int puntoVentaId\n+Int usuarioId\n+DateTime apertura\n+DateTime cierre\n+Decimal montoApertura\n+Decimal montoCierre\n+Decimal diferencia\n+Int estadoId}
+class Caja_Movimiento{+Int id\n+Int empresaId\n+Int aperturaCierreCajaId\n+Int usuarioId\n+Int tipoMovimientoId\n+Decimal monto\n+String descripcion\n+DateTime fechaHora\n+Int estadoId}
+class Empresa
+class auth_user
+class Documento_Comercial
+class Ingreso
+class Cobro
+class Metodo_Pago
+class Cuenta_Por_Cobrar
+class Transferencia_Cuenta
+Empresa "1" --> "*" Punto_Venta : tiene
+Punto_Venta "1" --> "*" Apertura_Cierre_Caja : abre
+Apertura_Cierre_Caja "1" --> "*" Caja_Movimiento : registra
+Caja_Movimiento --> auth_user : por
+Documento_Comercial ..> Apertura_Cierre_Caja : en caja
+Documento_Comercial ..> Ingreso : genera [suave]
+Apertura_Cierre_Caja ..> Ingreso : recauda [suave]
+Ingreso ..> Cobro : agrupa [suave]
+Documento_Comercial ..> Cuenta_Por_Cobrar : genera deuda [suave]
+Cuenta_Por_Cobrar ..> Cobro : amortiza [suave]
+Cobro ..> Metodo_Pago : con [suave]
+Apertura_Cierre_Caja ..> Transferencia_Cuenta : rinde [suave]
+class Tipologia
+Caja_Movimiento --> Tipologia : tipo de movimiento`}]},
+  {n:'05.4',t:'Postventa',
+   d:'Postventa: garantías por tipo (con serie y condiciones), reclamos por tipo (con responsable, prioridad, seguimiento y garantía invocada) y comisiones de venta con su liquidación.',
+   c:`classDiagram
+class Tipo_Garantia{+Int id\n+Int empresaId\n+String nombre\n+String descripcion\n+Int plazoMeses\n+Int estadoId}
+class Garantia{+Int id\n+Int empresaId\n+Int documentoId\n+Int itemId\n+Int tipoGarantiaId\n+Int serieId\n+Int garantiaOrigenId\n+Date vigenciaDesde\n+Date vigenciaHasta\n+String condiciones\n+Int estadoId}
+class Reclamo{+Int id\n+Int empresaId\n+Int clienteId\n+Int documentoId\n+Int detalleDocumentoId\n+Int tipoReclamoId\n+Int garantiaId\n+String descripcion\n+String prioridad\n+Int usuarioResponsableId\n+String respuesta\n+String resolucion\n+DateTime fecha\n+DateTime fechaCierre\n+Int estadoId}
+class Seguimiento_Reclamo{+Int id\n+Int empresaId\n+Int reclamoId\n+Int usuarioId\n+DateTime fecha\n+String comentario\n+String estadoNuevo\n+Int estadoId}
+class Documento_Comercial
+class Entidad
+class Item
+class Detalle_Documento
+class auth_user
+class Numero_Serie
+Tipo_Garantia "1" --> "*" Garantia : clasifica
+Garantia ..> Documento_Comercial : cubre
+Garantia --> Item : de
+Garantia ..> Numero_Serie : serie [suave]
+Garantia --> Garantia : reemplaza
+Reclamo --> Documento_Comercial : sobre
+Reclamo --> Entidad : cliente
+Reclamo --> auth_user : responsable
+Reclamo ..> Detalle_Documento : sobre linea
+Reclamo ..> Garantia : invoca
+Reclamo "1" --> "*" Seguimiento_Reclamo : seguimiento
+Seguimiento_Reclamo --> auth_user : por
+class Movimiento_Inventario
+Reclamo ..> Movimiento_Inventario : reingresa defectuoso [suave]
+class Tipologia
+Reclamo --> Tipologia : tipo de reclamo`},{n:'05.5',t:'Comisiones',d:'Comisiones comerciales, transversal a las verticales con ventas. La Regla_Comision define el porcentaje por cargo y base de calculo (venta, cobrado o entregado); Comision guarda el monto liquidado como foto. El beneficiario es una Entidad, asi aplica a empleados internos y a terceros externos (corredores, referidores).',c:`classDiagram
+class Regla_Comision{+Int id\n+Int empresaId\n+Int cargoId\n+Int baseCalculoId\n+Decimal porcentaje\n+Date vigenciaDesde\n+Date vigenciaHasta\n+Int estadoId}
+class Comision{+Int id\n+Int empresaId\n+Int entidadId\n+Int documentoRefId\n+Int reglaComisionId\n+Int baseCalculoId\n+Decimal porcentaje\n+Decimal monto\n+Date fechaLiquidacion\n+Int egresoRefId\n+Int estadoId}
+class Cargo
+class Entidad
+class Documento_Comercial
+class Egreso
+class Tipologia
+Regla_Comision --> Cargo : aplica al cargo
+Regla_Comision --> Tipologia : base de calculo
+Comision --> Regla_Comision : segun regla
+Comision --> Entidad : beneficiario
+Comision ..> Documento_Comercial : sobre [suave]
+Comision ..> Egreso : se liquida [suave]`}
+ ]},
+{g:'Gestión Empresarial',n:'06',ac:'trx',t:'Gestión Operativa',
+ d:'Operación en cuatro frentes: compras y abastecimiento, inventario y kardex, proyectos y logística, calidad y mantenimiento. Cada frente es un sub-módulo con su propio diagrama.',
+ c:`classDiagram
+class Compras
+class Inventario
+class Proyectos
+class Calidad
+Compras --> Inventario : abastece
+Inventario --> Proyectos : surte
+Proyectos --> Inventario : despacha
+Calidad --> Inventario : audita`,
+ sub:[
+  {n:'06.1',t:'Compras y Abastecimiento',
+   d:'Ciclo de compras de punta a punta: pedido, cotización a proveedores, orden de compra y recepción; genera egreso y movimiento de inventario. La deuda (CxP) nace del Egreso (la factura del proveedor registrada), no de la recepción física. La factura del proveedor se registra en Factura_Compra (Nº, autorización, CUF y NIT emisor para crédito fiscal), valida contra OC y recepción, y genera el Egreso.',
+   c:`classDiagram
+class Pedido{+Int id\n+Int empresaId\n+Int sucursalId\n+Int solicitanteId\n+String numero\n+String prioridad\n+String justificacion\n+Date fecha\n+Int estadoId}
+class Detalle_Pedido{+Int id\n+Int pedidoId\n+Int itemId\n+Decimal cantidad\n+String descripcion\n+Int estadoId}
+class Cotizacion_Proveedor{+Int id\n+Int empresaId\n+Int pedidoId\n+Int proveedorId\n+Int monedaId\n+Decimal total\n+Date validez\n+Date fecha\n+Int estadoId}
+class Detalle_Cotizacion{+Int id\n+Int cotizacionId\n+Int itemId\n+Decimal cantidad\n+Decimal precioUnitario\n+Decimal subtotal}
+class Orden_Compra{+Int id\n+Int empresaId\n+Int sucursalId\n+Int centroCostoId\n+Int proveedorId\n+Int pedidoId\n+Int cotizacionId\n+Int condicionPagoId\n+String numero\n+Int monedaId\n+Int tipoCambioId\n+Decimal valorTipoCambio\n+Decimal subtotal\n+Decimal impuesto\n+Decimal total\n+Decimal montoBase\n+Date fechaEntrega\n+Int estadoId}
+class Detalle_Orden_Compra{+Int id\n+Int ordenCompraId\n+Int itemId\n+Decimal cantidad\n+Decimal precioUnitario\n+Decimal descuento\n+Decimal subtotal\n+Decimal cantidadRecibida\n+Int estadoId}
+class Recepcion_Mercaderia{+Int id\n+Int empresaId\n+Int ordenCompraId\n+Int importacionId\n+Int almacenId\n+Int usuarioId\n+String numero\n+Date fecha\n+Int estadoId}
+class Detalle_Recepcion{+Int id\n+Int recepcionId\n+Int itemId\n+Int loteId\n+Decimal cantidadPedida\n+Decimal cantidadRecibida\n+Decimal costoUnitario\n+Decimal costoAdicional\n+String observacion}
+class Devolucion_Compra{+Int id\n+Int empresaId\n+Int recepcionId\n+Int proveedorId\n+String motivo\n+Date fecha\n+Int estadoId}
+class Evaluacion_Proveedor{+Int id\n+Int empresaId\n+Int proveedorId\n+Int ordenCompraId\n+Int puntaje\n+String criterio\n+Date fecha}
+class Entidad
+class Item
+class Almacen
+class Lote
+class Movimiento_Inventario
+class Egreso
+class Cuenta_Por_Pagar
+Pedido "1" --> "*" Detalle_Pedido : detalla
+Detalle_Pedido --> Item : pide
+Pedido --> Entidad : solicitante
+Pedido "1" --> "*" Cotizacion_Proveedor : cotiza
+Cotizacion_Proveedor --> Entidad : proveedor
+Cotizacion_Proveedor "1" --> "*" Detalle_Cotizacion : detalla
+Pedido "0..1" --> "*" Orden_Compra : origina
+Orden_Compra --> Cotizacion_Proveedor : elegida
+Orden_Compra --> Entidad : proveedor
+Orden_Compra "1" --> "*" Detalle_Orden_Compra : detalla
+Detalle_Orden_Compra --> Item : compra
+Orden_Compra "0..1" --> "*" Recepcion_Mercaderia : recibe
+Recepcion_Mercaderia --> Almacen : ingresa a
+Recepcion_Mercaderia "1" --> "*" Detalle_Recepcion : detalla
+Detalle_Recepcion --> Lote : genera
+Detalle_Recepcion ..> Movimiento_Inventario : ingresa stock
+Recepcion_Mercaderia "1" --> "0..1" Devolucion_Compra : puede devolver
+Orden_Compra "1" --> "0..1" Evaluacion_Proveedor : evalua
+class Detalle_Devolucion_Compra{+Int id\n+Int devolucionId\n+Int detalleRecepcionId\n+Int itemId\n+Int loteId\n+Decimal cantidad\n+Int estadoId}
+Devolucion_Compra "1" --> "*" Detalle_Devolucion_Compra : detalla
+Detalle_Devolucion_Compra --> Item : devuelve
+Detalle_Devolucion_Compra --> Lote : de lote
+Detalle_Devolucion_Compra ..> Detalle_Recepcion : origen
+Detalle_Devolucion_Compra ..> Movimiento_Inventario : descuenta stock
+Devolucion_Compra ..> Cuenta_Por_Pagar : ajusta saldo [suave]
+class Centro_Costo
+Orden_Compra --> Centro_Costo : imputa
+class Importacion{+Int id\n+Int empresaId\n+String numero\n+Int proveedorId\n+Date fecha\n+Int monedaId\n+Int tipoCambioId\n+Decimal valorTipoCambio\n+Int estadoId}
+class Costo_Importacion{+Int id\n+Int importacionId\n+Int proveedorId\n+String tipo\n+String descripcion\n+Decimal monto\n+Int monedaId\n+String baseProrrateo\n+Int estadoId}
+class Prorrateo_Importacion{+Int id\n+Int costoImportacionId\n+Int detalleRecepcionId\n+Decimal monto}
+Importacion "0..1" --> "*" Recepcion_Mercaderia : agrupa
+Importacion "1" --> "*" Costo_Importacion : costos
+Importacion --> Entidad : proveedor
+Costo_Importacion --> Entidad : proveedor del costo
+Costo_Importacion "1" --> "*" Prorrateo_Importacion : reparte
+Prorrateo_Importacion ..> Detalle_Recepcion : asigna a
+Costo_Importacion ..> Egreso : genera [suave]
+class Factura_Compra{+Int id\n+Int empresaId\n+Int proveedorId\n+Int ordenCompraId\n+Int recepcionId\n+String numeroFactura\n+String autorizacion\n+String codigoControl\n+String nitEmisor\n+Date fecha\n+Int monedaId\n+Decimal total\n+Int estadoId}
+class Gasto
+Factura_Compra --> Entidad : proveedor
+Factura_Compra ..> Orden_Compra : contra
+Factura_Compra ..> Recepcion_Mercaderia : valida
+Factura_Compra ..> Egreso : genera [suave]
+Gasto ..> Detalle_Recepcion : prorratea flete local`},
+  {n:'06.2',t:'Inventario y Kardex',
+   d:'Inventario multi-almacén con kardex de saldos arrastrados, lotes, series, ubicaciones, transferencias, conteo físico y órdenes de trabajo que consumen stock.',
+   c:`classDiagram
+class Almacen{+Int id\n+Int empresaId\n+Int sucursalId\n+String codigo\n+String nombre\n+Int tipoId\n+String direccion\n+Int estadoId}
+class Ubicacion_Almacen{+Int id\n+Int almacenId\n+Int ubicacionPadreId\n+Int tipoId\n+String codigo\n+String descripcion\n+Int estadoId}
+class Existencia_Stock{+Int id\n+Int itemId\n+Int almacenId\n+Int ubicacionId\n+Int loteId\n+Decimal cantidad\n+Decimal cantidadReservada\n+Decimal cantidadDisponible\n+Decimal costoPromedio}
+class Movimiento_Inventario{+Int id\n+Int empresaId\n+Int almacenId\n+Int ubicacionId\n+Int itemId\n+Int presentacionId\n+Int loteId\n+Int tipoId\n+Decimal cantidad\n+Decimal costoUnitario\n+Decimal costoTotal\n+Decimal saldoCantidad\n+Decimal saldoValor\n+String origenTipo\n+Int origenId\n+Int usuarioId\n+Int periodoInventarioId\n+DateTime fecha}
+class Lote{+Int id\n+Int itemId\n+String codigo\n+Date fechaFabricacion\n+Date fechaVencimiento\n+String estadoCalidad\n+Int estadoId}
+class Numero_Serie{+Int id\n+Int itemId\n+Int almacenId\n+String numeroSerie\n+Int estadoId}
+class Transferencia_Almacen{+Int id\n+Int empresaId\n+Int almacenOrigenId\n+Int almacenDestinoId\n+String numero\n+Date fecha\n+Int usuarioId\n+Int estadoId}
+class Detalle_Transferencia{+Int id\n+Int transferenciaId\n+Int itemId\n+Int loteId\n+Decimal cantidad}
+class Inventario_Fisico{+Int id\n+Int empresaId\n+Int almacenId\n+Int tipoId\n+Date fecha\n+Int usuarioId\n+Int estadoId}
+class Detalle_Inventario_Fisico{+Int id\n+Int inventarioFisicoId\n+Int itemId\n+Int loteId\n+Decimal cantidadSistema\n+Decimal cantidadFisica\n+Decimal diferencia}
+class Orden_Trabajo{+Int id\n+Int empresaId\n+Int sucursalId\n+String numero\n+Int tipoId\n+Int responsableId\n+String descripcion\n+Date fechaInicio\n+Date fechaFin\n+Decimal costoTotal\n+Int estadoId}
+class Detalle_Orden_Trabajo{+Int id\n+Int ordenTrabajoId\n+Int itemId\n+String tipoLinea\n+Decimal cantidad\n+Decimal costoUnitario\n+Decimal subtotal}
+class Item
+class Presentacion
+class auth_user
+Almacen "1" --> "*" Ubicacion_Almacen : organiza
+Almacen "1" --> "*" Existencia_Stock : almacena
+Existencia_Stock --> Item : de
+Existencia_Stock --> Lote : por lote
+Existencia_Stock --> Ubicacion_Almacen : en
+Movimiento_Inventario --> Almacen : afecta
+Movimiento_Inventario --> Item : mueve
+Movimiento_Inventario --> Lote : de lote
+Movimiento_Inventario --> Presentacion : presentacion
+Item "1" --> "*" Lote : maneja
+Item "1" --> "*" Numero_Serie : serializa
+Transferencia_Almacen "1" --> "*" Detalle_Transferencia : detalla
+Transferencia_Almacen ..> Movimiento_Inventario : genera 2 mov
+Inventario_Fisico "1" --> "*" Detalle_Inventario_Fisico : detalla
+Detalle_Inventario_Fisico ..> Movimiento_Inventario : ajusta
+Orden_Trabajo "1" --> "*" Detalle_Orden_Trabajo : detalla
+Detalle_Orden_Trabajo --> Item : usa
+Detalle_Orden_Trabajo ..> Movimiento_Inventario : consume stock
+Orden_Trabajo --> auth_user : responsable
+class Movimiento_Inventario_Serie{+Int id\n+Int movimientoId\n+Int serieId}
+class Ajuste_Inventario{+Int id\n+Int empresaId\n+Int almacenId\n+Int tipoId\n+String motivo\n+Int usuarioId\n+Date fecha\n+Int estadoId}
+class Detalle_Ajuste_Inventario{+Int id\n+Int ajusteId\n+Int itemId\n+Int loteId\n+Int ubicacionId\n+Decimal cantidad\n+Decimal costoUnitario}
+class Politica_Stock{+Int id\n+Int empresaId\n+Int itemId\n+Int almacenId\n+Decimal stockMinimo\n+Decimal stockMaximo\n+Decimal puntoReorden\n+Int estadoId}
+class Inspeccion
+Ubicacion_Almacen "1" --> "*" Ubicacion_Almacen : contiene
+Movimiento_Inventario --> Ubicacion_Almacen : en
+Movimiento_Inventario "1" --> "*" Movimiento_Inventario_Serie : series
+Movimiento_Inventario_Serie --> Numero_Serie : serie
+Ajuste_Inventario "1" --> "*" Detalle_Ajuste_Inventario : detalla
+Ajuste_Inventario --> Almacen : en
+Ajuste_Inventario --> auth_user : registra
+Detalle_Ajuste_Inventario --> Item : afecta
+Detalle_Ajuste_Inventario --> Lote : de lote
+Detalle_Ajuste_Inventario ..> Movimiento_Inventario : genera salida
+Politica_Stock --> Item : define
+Politica_Stock --> Almacen : aplica en
+Inspeccion ..> Lote : libera o retiene
+class Periodo_Inventario{+Int id\n+Int empresaId\n+String periodo\n+Date fechaInicio\n+Date fechaFin\n+Int estadoId}
+Periodo_Inventario "1" --> "*" Movimiento_Inventario : enmarca\nclass Tipologia\nAlmacen --> Tipologia : tipo de almacen\nUbicacion_Almacen --> Tipologia : tipo de ubicacion\nMovimiento_Inventario --> Tipologia : tipo de movimiento\nInventario_Fisico --> Tipologia : tipo de conteo\nOrden_Trabajo --> Tipologia : tipo de orden\nAjuste_Inventario --> Tipologia : tipo de ajuste`},
+  {n:'06.3',t:'Proyectos y Logística',
+   d:'Proyectos con tareas jerárquicas, hitos y asignación de recursos; logística de salida con despacho y guía de remisión que descuenta inventario.',
+   c:`classDiagram
+class Proyecto{+Int id\n+Int empresaId\n+Int sucursalId\n+Int clienteId\n+Int responsableId\n+String codigo\n+String nombre\n+String descripcion\n+Date fechaInicio\n+Date fechaFin\n+Decimal presupuesto\n+Decimal costoReal\n+Int estadoId}
+class Tarea_Proyecto{+Int id\n+Int proyectoId\n+Int padreId\n+Int responsableId\n+String nombre\n+String descripcion\n+Date fechaInicio\n+Date fechaFin\n+Decimal avance\n+Int estadoId}
+class Hito_Proyecto{+Int id\n+Int proyectoId\n+String nombre\n+Date fecha\n+Int estadoId}
+class Asignacion_Recurso{+Int id\n+Int tareaId\n+Int empleadoId\n+Decimal horas\n+Date fecha}
+class Despacho{+Int id\n+Int empresaId\n+Int almacenId\n+Int clienteId\n+String origenTipo\n+Int origenId\n+String numero\n+Date fecha\n+Int transportistaId\n+Int estadoId}
+class Detalle_Despacho{+Int id\n+Int despachoId\n+Int itemId\n+Int loteId\n+Decimal cantidad}
+class Guia_Remision{+Int id\n+Int despachoId\n+String numero\n+Date fecha\n+String destino\n+String transportista\n+String placaVehiculo\n+Int estadoId}
+class Entidad
+class Empleado
+class Item
+class Almacen
+class Movimiento_Inventario
+Proyecto "1" --> "*" Tarea_Proyecto : compone
+Tarea_Proyecto --> Tarea_Proyecto : subtarea
+Proyecto "1" --> "*" Hito_Proyecto : marca
+Tarea_Proyecto "1" --> "*" Asignacion_Recurso : asigna
+Asignacion_Recurso ..> Empleado : a [suave]
+Proyecto --> Entidad : cliente
+Despacho "1" --> "*" Detalle_Despacho : detalla
+Detalle_Despacho ..> Item : envia [suave]
+Detalle_Despacho ..> Movimiento_Inventario : descuenta stock
+Despacho --> Almacen : sale de
+Despacho --> Entidad : cliente
+Despacho "1" --> "1" Guia_Remision : respalda`},
+  {n:'06.4',t:'Calidad y Mantenimiento de Activos',
+   d:'Control de calidad (inspecciones y no conformidades) y ciclo de vida de activos fijos: depreciación y mantenimiento preventivo y correctivo.',
+   c:`classDiagram
+class Inspeccion{+Int id\n+Int empresaId\n+String entidadTipo\n+Int entidadId\n+Int tipoId\n+Int inspectorId\n+Date fecha\n+String resultado\n+String observacion\n+Int estadoId}
+class No_Conformidad{+Int id\n+Int inspeccionId\n+String descripcion\n+String severidad\n+String accionCorrectiva\n+Int responsableId\n+Date fechaCierre\n+Int estadoId}
+class Activo{+Int id\n+Int empresaId\n+Int sucursalId\n+String codigo\n+String nombre\n+Int categoriaActivoId\n+Date fechaAdquisicion\n+Decimal valor\n+Decimal valorResidual\n+Int vidaUtilMeses\n+Decimal depreciacionAcumulada\n+Int estadoId}
+class Depreciacion_Activo{+Int id\n+Int activoId\n+String periodo\n+Decimal monto\n+Decimal valorLibros\n+Date fecha}
+class Plan_Mantenimiento{+Int id\n+Int activoId\n+String frecuencia\n+Date proximaFecha\n+Int estadoId}
+class Orden_Mantenimiento{+Int id\n+Int empresaId\n+Int activoId\n+Int planId\n+Int tipoId\n+String descripcion\n+Int responsableId\n+Date fechaProgramada\n+Date fechaEjecucion\n+Decimal costo\n+Int estadoId}
+class auth_user
+class Empleado
+Inspeccion "1" --> "*" No_Conformidad : detecta
+Inspeccion --> auth_user : inspector
+No_Conformidad --> auth_user : responsable
+Activo "1" --> "*" Depreciacion_Activo : deprecia
+Activo "1" --> "*" Plan_Mantenimiento : planifica
+Activo "1" --> "*" Orden_Mantenimiento : recibe
+Plan_Mantenimiento "1" --> "*" Orden_Mantenimiento : genera
+Orden_Mantenimiento ..> Empleado : ejecuta [suave]
+class Categoria_Activo{+Int id\n+Int empresaId\n+String nombre\n+Int metodoDepreciacionId\n+Int vidaUtilMesesDefault\n+Int cuentaActivoRefId\n+Int cuentaDepreciacionRefId\n+Int cuentaGastoDepRefId\n+Int estadoId}
+class Cuenta_Contable
+class Tipologia
+Activo --> Categoria_Activo : clasifica
+Categoria_Activo --> Tipologia : metodo depreciacion
+Categoria_Activo ..> Cuenta_Contable : cuentas contables [suave]\nInspeccion --> Tipologia : tipo de inspeccion\nOrden_Mantenimiento --> Tipologia : tipo de mantenimiento`}
+ ]},
+{g:'Gestión Empresarial',n:'07',ac:'trx',t:'Gestión Financiera',
+ d:'Finanzas en seis frentes: cuentas por cobrar, cuentas por pagar, tesorería, contabilidad, facturación electrónica y presupuesto. Cada frente es un sub-módulo con su propio diagrama.',
+ c:`classDiagram
+class Cobrar
+class Pagar
+class Tesoreria
+class Contabilidad
+class Facturacion
+class Presupuesto
+Cobrar --> Facturacion : factura
+Cobrar --> Tesoreria : cobros
+Pagar --> Tesoreria : pagos
+Cobrar --> Contabilidad : asienta
+Pagar --> Contabilidad : asienta
+Tesoreria --> Contabilidad : asienta
+Contabilidad --> Presupuesto : ejecuta`,
+ sub:[
+  {n:'07.1',t:'Cuentas por Cobrar',
+   d:'El dinero a favor: ingresos (con foto multimoneda), cobros, cuentas por cobrar, notas de crédito/débito y recordatorios. Aterriza en Tesorería y se factura en Facturación Electrónica.',
+   c:`classDiagram
+class Ingreso{+Int id\n+Int empresaId\n+Int sucursalId\n+Int entidadId\n+String origenTipo\n+Int documentoOrigenId\n+Int aperturaCierreCajaId\n+String numero\n+Int monedaId\n+Int tipoCambioId\n+Decimal valorTipoCambio\n+Decimal subtotal\n+Decimal impuesto\n+Decimal montoOriginal\n+Decimal montoBase\n+Decimal saldoPendiente\n+Date fecha\n+Int estadoId}
+class Cobro{+Int id\n+Int empresaId\n+Int ingresoId\n+Int cuentaPorCobrarId\n+Int cuotaId\n+Int metodoPagoId\n+Int cuentaFinancieraId\n+Int monedaId\n+Int tipoCambioId\n+Decimal valorTipoCambio\n+Decimal monto\n+Decimal montoBase\n+String referencia\n+Date fecha\n+Int estadoId}
+class Cuenta_Por_Cobrar{+Int id\n+Int empresaId\n+Int ingresoId\n+Int entidadId\n+Int configCreditoId\n+Int numeroCuotas\n+Decimal montoTotal\n+Decimal montoPagado\n+Decimal saldoPendiente\n+Date fechaVencimiento\n+Int estadoId}
+class Nota_Credito_Debito{+Int id\n+Int empresaId\n+Int ingresoId\n+Int facturaRefId\n+String tipo\n+String motivo\n+Decimal monto\n+Date fecha\n+Int estadoId}
+class Recordatorio_Cobro{+Int id\n+Int cuentaPorCobrarId\n+Date fechaEnvio\n+String canal\n+Int estadoId}
+class Config_Credito{+Int id\n+Int empresaId\n+String nombre\n+Int numeroMaxCuotas\n+Int plazoMaximoDias\n+Decimal tasaInteres\n+Int estadoId}
+class Cuota{+Int id\n+Int empresaId\n+Int cuentaPorCobrarId\n+Int numero\n+Decimal monto\n+Decimal montoCapital\n+Decimal montoInteres\n+Date fechaVencimiento\n+Decimal montoPagado\n+Decimal saldo\n+Int estadoId}
+class Anticipo_Cliente{+Int id\n+Int empresaId\n+Int entidadId\n+Int monedaId\n+Decimal monto\n+Decimal saldoDisponible\n+Date fecha\n+Int estadoId}
+class Aplicacion_Credito{+Int id\n+Int empresaId\n+String origenTipo\n+Int origenId\n+Int cuentaPorCobrarId\n+Int cuotaId\n+Decimal monto\n+Date fecha\n+Int estadoId}
+class Entidad
+class Documento_Comercial
+class Apertura_Cierre_Caja
+class Metodo_Pago
+class Cuenta_Financiera
+class Calculo_Impuesto
+class Movimiento_Financiero
+class Factura
+Ingreso --> Entidad : cliente
+Ingreso ..> Documento_Comercial : origen [suave]
+Ingreso ..> Apertura_Cierre_Caja : recaudado en [suave]
+Ingreso "1" --> "*" Calculo_Impuesto : aplica
+Ingreso "1" --> "*" Cobro : agrupa
+Ingreso "1" --> "0..1" Cuenta_Por_Cobrar : genera deuda
+Ingreso ..> Factura : factura [suave]
+Ingreso "1" --> "*" Nota_Credito_Debito : ajusta
+Cuenta_Por_Cobrar "1" --> "*" Cobro : amortiza
+Cuenta_Por_Cobrar "1" --> "*" Recordatorio_Cobro : recuerda
+Cobro --> Metodo_Pago : con
+Cobro --> Cuenta_Financiera : entra a
+Cobro ..> Movimiento_Financiero : produce
+Cuenta_Por_Cobrar --> Config_Credito : rige
+Cuenta_Por_Cobrar "1" --> "*" Cuota : divide en
+Cuota "1" --> "*" Cobro : amortiza
+Anticipo_Cliente --> Entidad : cliente
+Aplicacion_Credito --> Cuenta_Por_Cobrar : aplica a
+Aplicacion_Credito ..> Anticipo_Cliente : desde
+Aplicacion_Credito ..> Nota_Credito_Debito : desde`},
+  {n:'07.2',t:'Cuentas por Pagar',
+   d:'El dinero a deber: egresos y gastos (con foto multimoneda y retenciones), pagos, cuentas por pagar y pagos programados. Nace de compras y aterriza en Tesorería.',
+   c:`classDiagram
+class Egreso{+Int id\n+Int empresaId\n+Int sucursalId\n+Int proveedorId\n+Int ordenCompraId\n+Int centroCostoId\n+Int documentoOrigenId\n+String numero\n+Int monedaId\n+Int tipoCambioId\n+Decimal valorTipoCambio\n+Decimal subtotal\n+Decimal impuesto\n+Decimal total\n+Decimal montoBase\n+Decimal saldoPendiente\n+Date fecha\n+Int estadoId}
+class Pago{+Int id\n+Int empresaId\n+Int egresoId\n+Int cuentaPorPagarId\n+Int metodoPagoId\n+Int cuentaFinancieraId\n+Int monedaId\n+Int tipoCambioId\n+Decimal valorTipoCambio\n+Decimal monto\n+Decimal montoBase\n+String referencia\n+Date fecha\n+Int estadoId}
+class Cuenta_Por_Pagar{+Int id\n+Int empresaId\n+Int egresoId\n+Int proveedorId\n+Decimal montoTotal\n+Decimal montoPagado\n+Decimal saldoPendiente\n+Date fechaVencimiento\n+Int estadoId}
+class Pago_Programado{+Int id\n+Int empresaId\n+Int cuentaPorPagarId\n+Date fecha\n+Decimal monto\n+Int estadoId}
+class Retencion{+Int id\n+Int empresaId\n+Int egresoId\n+Int tipoImpuestoId\n+Decimal base\n+Decimal monto\n+Int estadoId}
+class Gasto{+Int id\n+Int empresaId\n+Int sucursalId\n+Int categoriaGastoId\n+Int proveedorId\n+Int centroCostoId\n+String concepto\n+Int monedaId\n+Decimal monto\n+Decimal montoBase\n+Date fecha\n+Int estadoId}
+class Categoria_Gasto{+Int id\n+Int empresaId\n+String nombre\n+String tipo\n+Int estadoId}
+class Entidad
+class Orden_Compra
+class Centro_Costo
+class Tipo_Impuesto
+class Metodo_Pago
+class Cuenta_Financiera
+class Movimiento_Financiero
+Egreso --> Entidad : proveedor
+Egreso ..> Orden_Compra : origen [suave]
+Egreso --> Centro_Costo : imputa
+Egreso "1" --> "*" Pago : agrupa
+Egreso "1" --> "0..1" Cuenta_Por_Pagar : genera deuda
+Egreso "1" --> "*" Retencion : retiene
+Retencion --> Tipo_Impuesto : de
+Cuenta_Por_Pagar "1" --> "*" Pago : amortiza
+Cuenta_Por_Pagar "1" --> "*" Pago_Programado : programa
+Pago --> Metodo_Pago : con
+Pago --> Cuenta_Financiera : sale de
+Pago ..> Movimiento_Financiero : produce
+Gasto --> Categoria_Gasto : clasifica
+Gasto --> Centro_Costo : imputa
+Gasto --> Entidad : proveedor`},
+  {n:'07.3',t:'Tesorería',
+   d:'El dinero real: cuentas de caja y banco, sus movimientos (con foto multimoneda y bandera de conciliado), transferencias entre cuentas, arqueo, conciliación bancaria y cheques.',
+   c:`classDiagram
+class Cuenta_Financiera{+Int id\n+Int empresaId\n+Int sucursalId\n+String tipo\n+String nombre\n+String numeroCuenta\n+String banco\n+Int monedaId\n+Decimal saldoActual\n+Int estadoId}
+class Movimiento_Financiero{+Int id\n+Int empresaId\n+Int cuentaId\n+String tipo\n+Decimal monto\n+Int monedaId\n+Int tipoCambioId\n+Decimal valorTipoCambio\n+Decimal montoBase\n+String origenTipo\n+Int origenId\n+Boolean conciliado\n+DateTime fecha}
+class Transferencia_Cuenta{+Int id\n+Int empresaId\n+Int cuentaOrigenId\n+Int cuentaDestinoId\n+Decimal monto\n+Int monedaId\n+Int tipoCambioId\n+Decimal valorTipoCambio\n+Date fecha\n+Int estadoId}
+class Metodo_Pago{+Int id\n+Int empresaId\n+String nombre\n+String tipo\n+Int cuentaFinancieraId\n+Int estadoId}
+class Arqueo_Caja{+Int id\n+Int empresaId\n+Int cuentaId\n+Int aperturaCierreCajaId\n+Decimal montoTeorico\n+Decimal montoFisico\n+Decimal diferencia\n+Int usuarioId\n+Date fecha\n+Int estadoId}
+class Conciliacion_Bancaria{+Int id\n+Int empresaId\n+Int cuentaId\n+String periodo\n+Decimal saldoExtracto\n+Decimal saldoSistema\n+Decimal diferencias\n+Decimal pctConciliado\n+Int estadoId}
+class Cheque{+Int id\n+Int empresaId\n+Int cuentaId\n+String numero\n+Decimal monto\n+String beneficiario\n+Date fechaEmision\n+Date fechaCobro\n+Int estadoId}
+class Apertura_Cierre_Caja
+class auth_user
+Cuenta_Financiera "1" --> "*" Movimiento_Financiero : registra
+Transferencia_Cuenta ..> Movimiento_Financiero : genera 2 mov
+Transferencia_Cuenta --> Cuenta_Financiera : origen
+Transferencia_Cuenta --> Cuenta_Financiera : destino
+Metodo_Pago --> Cuenta_Financiera : enruta a
+Arqueo_Caja --> Cuenta_Financiera : valida
+Arqueo_Caja ..> Apertura_Cierre_Caja : sobre [suave]
+Arqueo_Caja --> auth_user : responsable
+Conciliacion_Bancaria --> Cuenta_Financiera : concilia
+Cheque --> Cuenta_Financiera : de
+class Partida_Conciliacion{+Int id\n+Int conciliacionId\n+Int movimientoFinancieroId\n+Int tipoId\n+Date fecha\n+String descripcion\n+Decimal monto\n+Boolean conciliado\n+Int estadoId}
+class Tipologia
+Conciliacion_Bancaria "1" --> "*" Partida_Conciliacion : detalla
+Partida_Conciliacion --> Movimiento_Financiero : concilia
+Partida_Conciliacion --> Tipologia : tipo de partida`},
+  {n:'07.4',t:'Contabilidad',
+   d:'La partida doble: plan de cuentas jerárquico, periodos contables, asientos con su origen polimórfico y reglas de contabilización automática que mapean eventos del negocio a cuentas.',
+   c:`classDiagram
+class Diario_Contable{+Int id\n+Int empresaId\n+String codigo\n+String nombre\n+Int tipoId\n+String prefijoComprobante\n+Int secuenciaActual\n+Int cuentaDebeDefaultId\n+Int cuentaHaberDefaultId\n+Int estadoId}
+class Cuenta_Contable{+Int id\n+Int empresaId\n+String codigo\n+String nombre\n+String tipo\n+String naturaleza\n+Int padreId\n+Int nivel\n+Boolean aceptaMovimiento\n+Int monedaId\n+Int estadoId}
+class Periodo_Contable{+Int id\n+Int empresaId\n+Int anio\n+Int mes\n+Int estadoId}
+class Asiento_Contable{+Int id\n+Int empresaId\n+Int periodoId\n+Int diarioId\n+String numero\n+Date fecha\n+String glosa\n+String origenTipo\n+Int origenId\n+Int asientoOrigenId\n+Int monedaId\n+Int tipoCambioId\n+Decimal valorTipoCambio\n+Int usuarioId\n+String tipo\n+Int estadoId}
+class Linea_Asiento{+Int id\n+Int asientoId\n+Int numeroLinea\n+Int cuentaId\n+Int centroCostoId\n+Int entidadId\n+String glosa\n+Decimal debe\n+Decimal haber\n+Decimal debeBase\n+Decimal haberBase}
+class Regla_Contabilizacion{+Int id\n+Int empresaId\n+String evento\n+Int cuentaDebeId\n+Int cuentaHaberId\n+Int estadoId}
+class Centro_Costo
+class Entidad
+class Moneda
+class Tipo_Cambio
+class auth_user
+class Tipologia
+class Solicitud_Aprobacion
+Cuenta_Contable --> Cuenta_Contable : subcuenta
+Cuenta_Contable ..> Moneda : moneda
+Periodo_Contable "1" --> "*" Asiento_Contable : agrupa
+Diario_Contable "1" --> "*" Asiento_Contable : numera y clasifica
+Diario_Contable --> Tipologia : tipo de libro
+Diario_Contable ..> Cuenta_Contable : cuentas por defecto
+Asiento_Contable --> Asiento_Contable : reversa a
+Asiento_Contable --> Moneda : moneda
+Asiento_Contable --> Tipo_Cambio : tasa
+Asiento_Contable --> auth_user : creado por
+Asiento_Contable ..> Solicitud_Aprobacion : aprobacion [suave]
+Asiento_Contable "1" --> "*" Linea_Asiento : detalla
+Linea_Asiento --> Cuenta_Contable : imputa
+Linea_Asiento --> Centro_Costo : centro
+Linea_Asiento --> Entidad : tercero
+Regla_Contabilizacion --> Cuenta_Contable : debe
+Regla_Contabilizacion --> Cuenta_Contable : haber`},
+  {n:'07.5',t:'Facturación',
+   d:'Todo lo fiscal en un solo lugar, en dos planos: la emisión de la factura (general + extensión fiscal por país vía metadatos) y los catálogos paramétricos del SIN con la maquinaria de sincronización.',
+   sub:[
+  {n:'07.5.1',t:'Factura y Emisión',
+   d:'Núcleo fiscal por metadatos. La Factura general lleva fechaPago y metadata_negocio (JSONB) para lo vertical; su extensión 1:1 Factura_Fiscal usa el discriminador pais_iso (BOL/MEX/PER) y atributos_fiscales (JSONB) para lo exclusivo de cada país (CUF, CUFD, código de control en Bolivia). Pago multi-método vía Factura_Tipo_Pago (split payment). Incluye el envío al SIN, las anulaciones, los códigos (CUIS/CUFD) y los catálogos comunes de tipo de factura, pago y documento de identidad.',
+   c:`classDiagram
+class Factura{+Int id\n+Int empresaId\n+Int sucursalId\n+Int ingresoId\n+Int paisId\n+Int entidadId\n+String tipoDocumento\n+String numero\n+Int monedaId\n+Decimal total\n+DateTime fechaEmision\n+DateTime fechaPago\n+Int estadoId\n+Json metadataNegocio}
+class Factura_Fiscal{+Int id\n+Int facturaId\n+String paisIso\n+Int tipoFacturaId\n+Int tipoDocIdentidadId\n+String numeroFacturaFiscal\n+DateTime fechaEmisionFiscal\n+Int estadoId\n+Json atributosFiscales}
+class Factura_Tipo_Pago{+Int id\n+Int facturaId\n+Int tipoPagoId\n+Decimal monto\n+String referencia\n+DateTime fechaPago\n+Int estadoId}
+class Detalle_Factura_Fiscal{+Int id\n+Int facturaFiscalId\n+Int actividadId\n+Int documentoComercialId\n+Int homologacionId\n+Int productoServId\n+Json atributosItem}
+class Envio_Factura{+Int id\n+Int facturaFiscalId\n+Int puntoVentaId\n+Int tipoEmisionId\n+Int autorizacionId\n+Int procesoId\n+DateTime fechaEnvio\n+DateTime fechaRespuesta\n+String codEstado\n+String codRecepcion\n+Int swTransaccion\n+String ruta\n+String estadoEnvio\n+Int intento\n+String ultimoError\n+Json metadatosEnvio}
+class Anulacion_Factura{+Int id\n+Int facturaFiscalId\n+Int envioId\n+Int motivoAnulacionId}
+class Codigos_Factura{+Int id\n+Int facturaFiscalId\n+Int codigosId}
+class Codigos_Envio{+Int id\n+Int envioId\n+Int codigosId}
+class Codigos{+Int id\n+String codigoSin\n+DateTime fechaVigencia\n+String codigoControl\n+Int tipoCodigoId\n+Int puntoVentaId\n+Int sincronizacionId\n+Int estadoId}
+class Catalogo_Fiscal
+class Entidad
+class Punto_Venta
+class Actividad
+class Documento_Comercial
+class Ingreso
+class Producto_Servicio
+class Homologacion
+class Sincronizacion
+class Autorizacion
+class Proceso
+class Doc_Sector
+class Leyenda
+Factura --> Entidad : cliente
+Factura --> Ingreso : origen
+Factura "1" --> "*" Factura_Tipo_Pago : pagos
+Factura "1" --> "1" Factura_Fiscal : extension fiscal
+Factura_Tipo_Pago --> Catalogo_Fiscal : tipo de pago
+Factura_Fiscal --> Catalogo_Fiscal : tipo de factura
+Factura_Fiscal --> Catalogo_Fiscal : tipo doc identidad
+Factura_Fiscal --> Doc_Sector : sector
+Factura_Fiscal --> Leyenda : leyenda
+Factura_Fiscal "1" --> "*" Detalle_Factura_Fiscal : detalla
+Factura_Fiscal "1" --> "*" Envio_Factura : envia
+Detalle_Factura_Fiscal --> Actividad : actividad
+Detalle_Factura_Fiscal --> Documento_Comercial : host
+Detalle_Factura_Fiscal --> Producto_Servicio : producto
+Detalle_Factura_Fiscal --> Homologacion : homologa
+Envio_Factura --> Punto_Venta : pv
+Envio_Factura --> Catalogo_Fiscal : tipo de emision
+Envio_Factura --> Autorizacion : autorizacion
+Envio_Factura --> Proceso : proceso
+Anulacion_Factura --> Factura_Fiscal : anula
+Anulacion_Factura --> Envio_Factura : por
+Anulacion_Factura --> Catalogo_Fiscal : motivo de anulacion
+Codigos_Factura --> Factura_Fiscal : de
+Codigos_Factura --> Codigos : usa
+Codigos_Envio --> Envio_Factura : de
+Codigos_Envio --> Codigos : usa
+Codigos --> Catalogo_Fiscal : tipo de codigo
+Codigos --> Punto_Venta : pv
+Codigos --> Sincronizacion : sincroniza`},
+  {n:'07.5.2',t:'Catálogos y Sincronización',
+   d:'Las paramétricas del SIN (actividad, sector, leyenda, producto-servicio y la homologación ítem ↔ producto SIN) y la maquinaria de sincronización (proceso, descriptor, eventos significativos). Suma la configuración fiscal por empresa, la asociación de sistema con su autorización (CUIS) y la interfaz Adaptador_Fiscal_Pais que se implementa por país. Incluye Serie_Documental_BO: extensión boliviana (autorización SIN) de la numeración documental de plataforma.',
+   c:`classDiagram
+class Catalogo_Fiscal{+Int id\n+Int paisId\n+Int agrupador\n+Int codigoClasificador\n+String descripcion\n+String abreviatura\n+Date fechaVigencia\n+Int sincronizacionId\n+Int estadoId}
+class Actividad{+Int id\n+String codigoActividad\n+String descripcion\n+String tipoActividad\n+Int estadoId}
+class Doc_Sector{+Int id\n+String descripcion\n+String tipoDocsector\n+Int estadoId}
+class Actividad_Docsector{+Int id\n+Int actividadId\n+Int docSectorId\n+String tipoDocsec}
+class Leyenda{+Int id\n+Int actividadId\n+String descripcion}
+class Producto_Servicio{+Int id\n+String codProdsin\n+Int actividadId\n+String descripcion\n+Int estadoId}
+class Homologacion{+Int id\n+Int itemId\n+Int productoServicioId\n+String unidadSin\n+String descripcion\n+DateTime fechaHora\n+Int estadoId}
+class Sincronizacion{+Int id\n+Int procesoId\n+DateTime fechaHora\n+Int transaccionId\n+Int estadoId}
+class Sincronizar{+Int id\n+DateTime fechaHora}
+class Proceso{+Int id\n+String descripcion\n+Int tipoDescriptorId\n+Int estadoId}
+class Mensaje{+Int id\n+String descripcion\n+Int procesoId\n+DateTime fechaHora}
+class Configuracion_Fiscal{+Int id\n+Int empresaId\n+Int paisId\n+String ambiente\n+Int estadoId}
+class Serie_Documental_BO{+Int id\n+Int serieDocumentalId\n+String autorizacionSIN\n+Int estadoId}
+class Asociacion_Sistema{+Int id\n+String codigoSistema\n+String nombreSistema\n+String version\n+DateTime fechaHora\n+Int modalidadId\n+Int tipoServicioId\n+Int usuarioId\n+Int empresaId\n+Int moduloSistemaId\n+Int estadoId}
+class Autorizacion{+Int id\n+String llavePublica\n+String llavePrivada\n+String header\n+String cabToken\n+String token\n+Int asociacionSistemaId\n+Int estadoId}
+class Evento_Significativo{+Int id\n+Int empresaId\n+Int cufdEventoId\n+DateTime fechaInicio\n+DateTime fechaFin\n+Int envioId\n+Int tipoEventoId\n+String codigoRecepcion\n+Int procesoId\n+Int estadoId}
+class Adaptador_Fiscal_Pais{
+<<interface>>
++autorizar() bool
++anular() bool
++consultarEstado() String
+}
+class Pais
+class Item
+class Empresa
+class auth_user
+class Modulo_Sistema
+class Serie_Documental
+Catalogo_Fiscal --> Pais : del pais
+Catalogo_Fiscal --> Sincronizacion : sincronizado por
+Actividad "1" --> "*" Actividad_Docsector : ofrece
+Actividad_Docsector --> Doc_Sector : sector
+Actividad "1" --> "*" Leyenda : leyendas
+Actividad "1" --> "*" Producto_Servicio : clasifica
+Producto_Servicio "1" --> "*" Homologacion : homologa
+Homologacion --> Item : mapea
+Sincronizacion --> Proceso : proceso
+Proceso --> Catalogo_Fiscal : tipo descriptor
+Proceso "1" --> "*" Mensaje : mensajes
+Configuracion_Fiscal --> Empresa : de
+Configuracion_Fiscal --> Pais : pais
+Configuracion_Fiscal ..> Adaptador_Fiscal_Pais : implementa
+Serie_Documental_BO --> Serie_Documental : extiende
+Asociacion_Sistema --> Catalogo_Fiscal : modalidad
+Asociacion_Sistema --> Catalogo_Fiscal : tipo de servicio
+Asociacion_Sistema --> Empresa : de
+Asociacion_Sistema --> auth_user : registrado por
+Asociacion_Sistema --> Modulo_Sistema : sistema
+Asociacion_Sistema "1" --> "*" Autorizacion : credenciales
+Evento_Significativo --> Catalogo_Fiscal : tipo de evento
+Evento_Significativo --> Proceso : proceso`}
+   ]},
+  {n:'07.6',t:'Presupuesto y Flujo de Caja',
+   d:'La mirada hacia adelante: presupuesto por cuenta y centro de costo con ejecución real, centros de costo jerárquicos y proyección de flujo de caja por escenario.',
+   c:`classDiagram
+class Presupuesto{+Int id\n+Int empresaId\n+Int anio\n+String nombre\n+Int estadoId}
+class Detalle_Presupuesto{+Int id\n+Int presupuestoId\n+Int cuentaContableId\n+Int centroCostoId\n+String periodo\n+Decimal montoPresupuestado\n+Decimal montoEjecutado}
+class Centro_Costo
+class Proyeccion_Flujo{+Int id\n+Int empresaId\n+String escenario\n+Date fecha\n+Decimal ingresos\n+Decimal egresos\n+Decimal flujoNeto\n+Decimal saldoProyectado\n+Int estadoId}
+class Cuenta_Contable
+Presupuesto "1" --> "*" Detalle_Presupuesto : detalla
+Detalle_Presupuesto --> Cuenta_Contable : sobre
+Detalle_Presupuesto --> Centro_Costo : por centro`}
+ ]},
+{g:'Desarrollo Organizacional',n:'08',ac:'sup',t:'Recursos Humanos',
+ d:'Gestion de personas, en dos vistas: el nucleo de RRHH y el add-on opcional de Fuerza de Ventas / Distribucion.',sub:[{n:'08.1',t:'Organizacion y Nómina',d:'Estructura organizacional y legajo: departamentos y cargos imputados a centro de costo, historial de cargos con memorandos, contrato laboral, familiares, afiliaciones a la seguridad social, turnos asignados y dispositivos de marcacion. El Empleado referencia a Entidad (la persona) y opcionalmente a un usuario del sistema.',c:`classDiagram
+class Empleado{+Int id\n+Int empresaId\n+Int sucursalId\n+Int entidadId\n+Int usuarioId\n+Date fechaIngreso\n+String banco\n+String numeroCuenta\n+String tipoCuentaBanco\n+Int estadoId}
+class Departamento{+Int id\n+Int empresaId\n+String nombre\n+Int padreId\n+Int responsableId\n+Int centroCostoId}
+class Cargo{+Int id\n+Int empresaId\n+Int departamentoId\n+String nombre\n+Decimal salarioBase\n+Int monedaId}
+class Historial_Cargo{+Int id\n+Int empresaId\n+Int empleadoId\n+Int cargoId\n+Date fechaDesde\n+Date fechaHasta\n+String motivo\n+Int memorandoId\n+Int estadoId}
+class Tipo_Memorando{+Int id\n+Int empresaId\n+String nombre\n+Boolean afectaNomina\n+Int estadoId}
+class Memorando{+Int id\n+Int empresaId\n+Int empleadoId\n+Int usuarioId\n+Int tipoMemorandoId\n+String numero\n+String asunto\n+String contenido\n+Date fecha\n+Decimal montoSancion\n+Int conceptoNominaId\n+Int estadoId}
+class Contrato_Laboral{+Int id\n+Int empleadoId\n+String tipo\n+Date inicio\n+Date fin\n+Decimal salario\n+Int monedaId\n+Int estadoId}
+class Familiar{+Int id\n+Int empleadoId\n+String nombre\n+String parentesco}
+class Afiliacion{+Int id\n+Int empresaId\n+Int empleadoId\n+Int tipoEnteId\n+String numeroAfiliacion\n+Date fechaAfiliacion\n+Int estadoId}
+class Turno{+Int id\n+Int empresaId\n+String nombre\n+Time horaEntrada\n+Time horaSalida\n+Int toleranciaMinutos\n+Int estadoId}
+class Asignacion_Turno{+Int id\n+Int empresaId\n+Int empleadoId\n+Int turnoId\n+Int diaSemana\n+Date vigenciaDesde\n+Date vigenciaHasta\n+Int estadoId}
+class Dispositivo_Marcacion{+Int id\n+Int empresaId\n+Int sucursalId\n+String nombre\n+Int tipoId\n+String ubicacion\n+Int estadoId}
+class Empresa
+class Centro_Costo
+class auth_user
+class Moneda
+class Tipologia
+class Entidad
+class Detalle_Planilla_Concepto
+Departamento "1" --> "*" Cargo : define
+Departamento ..> Empleado : responsable
+Departamento --> Centro_Costo : imputa
+Empleado --> Entidad : persona
+Empleado --> Empresa : sucursal
+Empleado ..> auth_user : accede
+Empleado "1" --> "*" Historial_Cargo : historial
+Historial_Cargo --> Cargo : de
+Historial_Cargo ..> Memorando : genera
+Empleado "1" --> "*" Memorando : recibe
+Memorando --> Tipo_Memorando : tipo
+Memorando ..> Detalle_Planilla_Concepto : sanciona
+Empleado "1" --> "*" Contrato_Laboral : firma
+Empleado "1" --> "*" Familiar : declara
+Empleado "1" --> "*" Afiliacion : afiliado
+Afiliacion --> Tipologia : ente
+Empleado "1" --> "*" Asignacion_Turno : horario
+Asignacion_Turno --> Turno : aplica
+Cargo ..> Moneda : moneda
+Contrato_Laboral ..> Moneda : moneda
+Dispositivo_Marcacion --> Tipologia : tipo`},{n:'08.2',t:'Asistencia, Ausencias y Nomina',d:'Asistencia, ausencias y nomina: marcas de asistencia (por dispositivo o canal manual/web) evaluadas contra reglas de atraso, ausencias y vacaciones con su escala por antiguedad, y la planilla del periodo con su desglose por concepto, los descuentos programados en cuotas y el finiquito. Genera Egresos por referencia suave.',c:`classDiagram
+class Registro_Asistencia{+Int id\n+Int empleadoId\n+Date fecha\n+Time entrada\n+Time salida\n+Int minutosAtraso\n+Decimal horasExtra\n+Decimal horasExtraAutorizadas\n+Int origenMarcaId\n+Int dispositivoId}
+class Regla_Atraso{+Int id\n+Int empresaId\n+Int minutosDesde\n+Int minutosHasta\n+String tipoDescuento\n+Decimal valor\n+Int conceptoNominaId\n+Int estadoId}
+class Tipo_Ausencia{+Int id\n+Int empresaId\n+String nombre\n+Boolean afectaSueldo\n+Boolean afectaVacaciones\n+Int estadoId}
+class Ausencia{+Int id\n+Int empleadoId\n+Int tipoAusenciaId\n+Date desde\n+Date hasta\n+Int estadoId\n+Int aprobadorId\n+Date fechaSolicitud}
+class Saldo_Vacaciones{+Int id\n+Int empresaId\n+Int empleadoId\n+Int gestion\n+Decimal diasGanados\n+Decimal diasTomados\n+Decimal diasDisponibles\n+Int estadoId}
+class Regla_Vacacion{+Int id\n+Int empresaId\n+Int paisId\n+Int antiguedadDesde\n+Int antiguedadHasta\n+Decimal diasCorresponden\n+Date vigenciaDesde\n+Int estadoId}
+class Planilla{+Int id\n+Int empresaId\n+String periodo\n+Int estadoId\n+Decimal totalNeto\n+Date fechaEmision\n+Date fechaPago}
+class Detalle_Planilla{+Int id\n+Int planillaId\n+Int empleadoId\n+Decimal totalIngresos\n+Decimal totalDescuentos\n+Decimal neto}
+class Detalle_Planilla_Concepto{+Int id\n+Int detallePlanillaId\n+Int conceptoNominaId\n+String tipo\n+Decimal base\n+Decimal monto\n+String origenTipo\n+Int origenId}
+class Concepto_Nomina{+Int id\n+Int empresaId\n+Int paisId\n+String nombre\n+String tipo\n+String formula\n+Date vigenciaDesde\n+Date vigenciaHasta}
+class Descuento_Programado{+Int id\n+Int empresaId\n+Int empleadoId\n+Int conceptoNominaId\n+Decimal montoTotal\n+Int numeroCuotas\n+Decimal montoCuota\n+Decimal saldoPendiente\n+Date fechaInicio\n+Int estadoId}
+class Liquidacion_Finiquito{+Int id\n+Int empresaId\n+Int empleadoId\n+String tipo\n+Date fecha\n+Decimal montoIndemnizacion\n+Decimal montoVacaciones\n+Decimal montoAguinaldo\n+Decimal totalNeto\n+Int egresoRefId\n+Int estadoId}
+class Empleado
+class Dispositivo_Marcacion
+class Memorando
+class Pais
+class Egreso
+class Solicitud_Aprobacion
+Empleado "1" --> "*" Registro_Asistencia : marca
+Registro_Asistencia --> Dispositivo_Marcacion : marcado en
+Registro_Asistencia ..> Regla_Atraso : evalua
+Regla_Atraso --> Concepto_Nomina : descuenta
+Registro_Asistencia ..> Solicitud_Aprobacion : justificacion [suave]
+Registro_Asistencia ..> Detalle_Planilla_Concepto : descuenta
+Empleado "1" --> "*" Ausencia : solicita
+Ausencia --> Tipo_Ausencia : tipo
+Ausencia ..> Empleado : aprobada por
+Empleado "1" --> "*" Saldo_Vacaciones : acumula
+Ausencia ..> Saldo_Vacaciones : descuenta
+Regla_Vacacion --> Pais : pais
+Regla_Vacacion ..> Saldo_Vacaciones : calcula dias
+Planilla "1" --> "*" Detalle_Planilla : liquida
+Planilla ..> Egreso : genera [suave]
+Detalle_Planilla --> Empleado : de
+Detalle_Planilla "1" --> "*" Detalle_Planilla_Concepto : desglosa
+Detalle_Planilla_Concepto --> Concepto_Nomina : aplica
+Concepto_Nomina --> Pais : rige en
+Descuento_Programado --> Empleado : de
+Descuento_Programado --> Concepto_Nomina : concepto
+Descuento_Programado ..> Detalle_Planilla_Concepto : cuota
+Memorando ..> Detalle_Planilla_Concepto : sanciona
+Empleado "1" --> "*" Liquidacion_Finiquito : liquida
+Liquidacion_Finiquito ..> Egreso : genera [suave]`},{n:'08.3',t:'Fuerza de Ventas / Distribucion',d:'Add-on OPCIONAL (se activa solo en verticales de venta/reparto). Equipos/cuadrillas dinamicas de venta y reparto (personas mas vehiculo) que cambian por ruta o turno, con vigencia por miembro. Depende de RRHH: usa Empleado.',c:`classDiagram
+class Equipo{+Int id\n+Int empresaId\n+Int sucursalId\n+String nombre\n+Int tipoEquipoId\n+Int jefeId\n+Int vehiculoRefId\n+Int estadoId}
+class Equipo_Miembro{+Int id\n+Int equipoId\n+Int empleadoId\n+Int rolEquipoId\n+Date fechaDesde\n+Date fechaHasta\n+Int estadoId}
+class Empleado
+class Tipologia
+Equipo --> Empleado : jefe de equipo
+Equipo --> Tipologia : tipo ventas/reparto
+Equipo "1" --> "*" Equipo_Miembro : integra
+Equipo_Miembro --> Empleado : es
+Equipo_Miembro --> Tipologia : rol en equipo`}]},
+{g:'Extensiones',n:'09',ac:'ext',t:'Agenda y Citas',
+ d:'Motor compartido activable por rubro (clínica, taller, gimnasio). Maneja recursos agendables, su disponibilidad y las citas. La cita puede derivar en un documento comercial.',
+ c:`classDiagram
+class Recurso{+Int id\n+Int empresaId\n+Int sucursalId\n+String tipo\n+String nombre\n+Int entidadId}
+class Disponibilidad{+Int id\n+Int recursoId\n+Int diaSemana\n+Time desde\n+Time hasta}
+class Cita{+Int id\n+Int empresaId\n+Int sucursalId\n+Int recursoId\n+Int itemId\n+Int clienteId\n+Int capacidad\n+DateTime inicio\n+DateTime fin\n+Int estadoId\n+Int documentoId}
+class Entidad
+class Empresa
+class Item
+class Documento_Comercial
+Recurso "1" --> "*" Disponibilidad : define
+Recurso "1" --> "*" Cita : agenda
+Recurso --> Empresa : sucursal
+Cita --> Entidad : cliente
+Cita --> Item : servicio o clase
+Cita ..> Documento_Comercial : genera [suave]`},
+{g:'Extensiones',n:'10',ac:'ext',t:'Recurrencia y Contratos',
+ d:'Motor de cobros recurrentes del CLIENTE a SUS clientes (membresías, alquileres, agua). Distinto de la facturación SaaS del proveedor. Cada ciclo genera un Ingreso.',
+ c:`classDiagram
+class Plan_Recurrente{+Int id\n+Int empresaId\n+String nombre\n+Decimal monto\n+Int monedaId\n+Int periodicidadId\n+Int estadoId}
+class Contrato_Recurrente{+Int id\n+Int clienteId\n+Int planId\n+Date inicio\n+Date fin\n+Int estadoId}
+class Ciclo_Recurrencia{+Int id\n+Int contratoId\n+String periodo\n+Date fechaCobro\n+Decimal monto\n+Int ingresoRefId\n+Int estadoId}
+class Entidad
+class Moneda
+class Tipologia
+class Ingreso
+Plan_Recurrente --> Moneda : moneda
+Plan_Recurrente --> Tipologia : periodicidad
+Plan_Recurrente "1" --> "*" Contrato_Recurrente : rige
+Contrato_Recurrente --> Entidad : cliente
+Contrato_Recurrente "1" --> "*" Ciclo_Recurrencia : genera
+Ciclo_Recurrencia ..> Ingreso : factura [suave]`},
+{g:'Plataforma Empresarial',n:'11',ac:'core',t:'Core / Multiempresa',
+ d:'Identidad y alcance de cada empresa (tenant) y su operación por país. La Ubicacion_Geografica es jerárquica y recursiva (divisionSuperiorId + tipo + nivel): el mismo modelo sirve para Bolivia (País→Depto→Provincia→Municipio→Lugar) y para cualquier otro país, sin tablas fijas por nivel.',
+ c:`classDiagram
+class Pais{+Int paisId\n+String codPais\n+String nombre\n+String codigoISO\n+Int estadoId}
+class Ubicacion_Geografica{+Int id\n+Int paisId\n+Int divisionSuperiorId\n+String codigo\n+String nombre\n+String tipo\n+Int nivel\n+Int estadoId}
+class Empresa{+Int empresaId\n+Int empresaPadreId\n+Int tipoEmpresaId\n+String identTributaria\n+String razonSocial\n+String nombreComercial\n+Int ubicacionGeograficaId\n+Int rubroId\n+Int idiomaDefaultId\n+Int estadoId}
+class Moneda{+Int id\n+String descripcion\n+String codigo\n+String simbolo\n+Int estadoId}
+class Tipo_Cambio{+Int id\n+Int empresaId\n+Int monedaOrigenId\n+Int monedaDestinoId\n+Date fecha\n+Decimal valor\n+Int estadoId}
+class Empresa_Pais{+Int empresaId\n+Int paisId\n+Int ubicacionGeograficaId\n+String direccion\n+Decimal latitud\n+Decimal longitud\n+String telefono\n+String email\n+String sitioWeb\n+String logo}
+class Empresa_Moneda{+Int id\n+Int empresaId\n+Int monedaId\n+Boolean esMonedaOficial\n+Int estadoId}
+class Tipologia
+Empresa --> Empresa : contiene
+Empresa "1" --> "*" Empresa_Pais : opera en
+Pais "1" --> "*" Empresa_Pais : recibe
+Pais "1" --> "*" Ubicacion_Geografica : divide
+Ubicacion_Geografica "1" --> "*" Ubicacion_Geografica : contiene
+Empresa "*" --> "0..1" Ubicacion_Geografica : ubicada en
+Empresa "*" --> "1" Tipologia : rubro
+Empresa "*" --> "1" Tipologia : tipo de empresa
+Moneda "1" --> "*" Tipo_Cambio : origen
+Moneda "1" --> "*" Tipo_Cambio : destino
+Empresa "1" --> "*" Tipo_Cambio : gestiona
+Empresa "1" --> "*" Empresa_Moneda : habilita
+Moneda "1" --> "*" Empresa_Moneda : en
+Empresa_Pais "*" --> "0..1" Ubicacion_Geografica : en`},
+{g:'Plataforma Empresarial',n:'12',ac:'core',t:'Usuarios y Seguridad',
+ d:'Usuarios y seguridad sobre el modelo de autenticacion nativo de Django (auth_user, auth_group, auth_permission y sus tablas M2M, mas content_type, admin_log y session). Encima, la capa multiempresa: membresia por empresa (Usuario_Empresa) y asignacion de grupos con vigencia e historial en una sola tabla (grupo_usuario). Ademas el arbol de funcionalidades (Modulo_Sistema, Sub_Modulo, Funcionalidad) mapeado a auth_permission, los dispositivos autorizados por usuario y el horario de acceso con excepciones.',
+ c:`classDiagram
+class auth_user{+Int id\n+String password\n+DateTime last_login\n+Bool is_superuser\n+String username\n+String first_name\n+String last_name\n+String email\n+Bool is_staff\n+Bool is_active\n+DateTime date_joined}
+class auth_group{+Int id\n+String name}
+class auth_permission{+Int id\n+String name\n+Int content_type_id\n+String codename}
+class auth_group_permissions{+Int id\n+Int group_id\n+Int permission_id}
+class auth_user_groups{+Int id\n+Int user_id\n+Int group_id}
+class auth_user_user_permissions{+Int id\n+Int user_id\n+Int permission_id}
+class django_content_type{+Int id\n+String app_label\n+String model}
+class django_admin_log{+Int id\n+DateTime action_time\n+TextField object_id\n+String object_repr\n+Int action_flag\n+TextField change_message\n+Int content_type_id\n+Int user_id}
+class django_session{+String session_key\n+TextField session_data\n+DateTime expire_date}
+class Modulo_Sistema{+Int moduloSistemaId\n+String nombre\n+String version\n+DateTime fechaCreacion\n+Boolean es_vendible\n+Int estadoId}
+class Sub_Modulo{+Int subModuloId\n+Int moduloSistemaId\n+String nombre\n+Int estadoId}
+class Funcionalidad{+Int funcionalidadId\n+Int subModuloId\n+Int authPermissionId\n+String nombre\n+String descripcion\n+String ruta\n+Int estadoId}
+class Usuario_Empresa{+Int usuarioEmpresaId\n+Int usuarioId\n+Int empresaId\n+Date fechaAsignacion\n+Date fechaFinalizacion\n+Int estadoId}
+class grupo_usuario{+Int grupoUsuarioId\n+Int usuarioEmpresaId\n+Int grupoEmpresaId\n+Int asignadoPor\n+Date fechaInicio\n+Date fechaFin\n+String motivo\n+Int estadoId}
+class Grupo_Empresa{+Int grupoEmpresaId\n+Int empresaId\n+String nombre\n+Int estadoId}
+class Grupo_Empresa_Permiso{+Int grupoEmpresaPermisoId\n+Int grupoEmpresaId\n+Int permissionId}
+class Dispositivo{+Int dispositivoId\n+String tipo\n+String identificador\n+String nombre\n+String ip\n+String mac\n+Int estadoId}
+class Dispositivo_Usuario{+Int dispositivoUsuarioId\n+Int dispositivoId\n+Int usuarioId\n+Int autorizadoPor\n+DateTime fechaAutorizacion\n+DateTime ultimoAcceso\n+String ultimaIp\n+Date fechaInicio\n+Date fechaFin\n+Int estadoId}
+class Horario_Acceso{+Int horarioAccesoId\n+Int usuarioId\n+Int diaSemana\n+Time horaInicio\n+Time horaFin\n+Date vigenciaDesde\n+Date vigenciaHasta\n+Int estadoId}
+class Horario_Excepcion{+Int horarioExcepcionId\n+Int usuarioId\n+Date fecha\n+Time horaInicio\n+Time horaFin\n+String tipo\n+String motivo\n+Int creadoPor\n+Int estadoId}
+class Sesion_Acceso{+Int id\n+Int empresaId\n+Int usuarioId\n+Int resultadoId\n+String ip\n+String dispositivo\n+String userAgent\n+DateTime inicio\n+DateTime fin\n+Int estadoId}
+class Empresa
+auth_permission --> django_content_type : content_type
+auth_group_permissions --> auth_group : group
+auth_group_permissions --> auth_permission : permission
+auth_user_groups --> auth_user : user
+auth_user_groups --> auth_group : group
+auth_user_user_permissions --> auth_user : user
+auth_user_user_permissions --> auth_permission : permission
+django_admin_log --> auth_user : user
+django_admin_log --> django_content_type : content_type
+Modulo_Sistema "1" --> "*" Sub_Modulo : contiene
+Sub_Modulo "1" --> "*" Funcionalidad : expone
+Funcionalidad --> auth_permission : requiere
+auth_user "1" --> "*" Usuario_Empresa : pertenece
+Usuario_Empresa --> Empresa : en
+Usuario_Empresa "1" --> "*" grupo_usuario : asigna
+grupo_usuario --> Grupo_Empresa : rol
+auth_user "1" --> "*" Dispositivo_Usuario : autoriza
+Dispositivo "1" --> "*" Dispositivo_Usuario : autorizado en
+auth_user "1" --> "*" Horario_Acceso : habilitado en
+auth_user "1" --> "*" Horario_Excepcion : excepcion
+Empresa "1" --> "*" Grupo_Empresa : define
+Grupo_Empresa "1" --> "*" Grupo_Empresa_Permiso : agrupa
+Grupo_Empresa_Permiso --> auth_permission : otorga
+Empresa "1" --> "*" Sesion_Acceso : registra
+auth_user "1" --> "*" Sesion_Acceso : de
+Sesion_Acceso --> Tipologia : resultado`},
+{g:'Plataforma Empresarial',n:'13',ac:'core',t:'Idioma',
+ d:'Internacionalización: catálogo de idiomas, textos de interfaz (i18n) y traducción polimórfica de datos maestros. La empresa define su idioma por defecto y cada usuario su idioma preferido.',
+ c:`classDiagram
+class Idioma{+Int id\n+String codigo\n+String nombre\n+Boolean activo}
+class Recurso_Texto{+Int id\n+String clave\n+Int idiomaId\n+String texto\n+String modulo}
+class Traduccion{+Int id\n+String entidadTipo\n+Int entidadId\n+String campo\n+Int idiomaId\n+String texto}
+class Empresa
+class auth_user
+Idioma "1" --> "*" Recurso_Texto : traduce UI
+Idioma "1" --> "*" Traduccion : traduce datos
+Empresa "*" --> "1" Idioma : idioma defecto
+auth_user "*" --> "1" Idioma : idioma preferido`},
+{g:'Plataforma Empresarial',n:'14',ac:'core',t:'Configuración / Parametrización',
+ d:'Parametros por defecto segun pais y rubro (plantillas) que se siembran en cada empresa al darla de alta, los valores que cada empresa ajusta, y una tabla Tipologia (patron OTLT) que centraliza los catalogos triviales del sistema mediante un discriminador agrupador, evitando crear una tabla por cada lista simple. Los catalogos con campos o reglas propias (Moneda, Tipo_Impuesto, Unidad_Medida...) siguen como tablas reales.',
+ c:`classDiagram
+class Tipologia{+Int tipologiaId\n+Int empresaId\n+Int agrupador\n+Int indice\n+String nombre\n+String abreviatura\n+Int estado}
+class Parametro_Default{+Int parametroDefaultId\n+Int paisId\n+Int rubroId\n+String clave\n+String valorDefault\n+Int tipoId\n+String descripcion}
+class Empresa_Parametro{+Int empresaParametroId\n+Int empresaId\n+String clave\n+String valor\n+Int tipoId\n+String descripcion}
+class Empresa
+class Pais
+Empresa "1" --> "*" Tipologia : cataloga
+Pais "1" --> "*" Parametro_Default : define
+Parametro_Default --> Tipologia : rubro
+Empresa "1" --> "*" Empresa_Parametro : configura
+Parametro_Default ..> Empresa_Parametro : siembra
+class Centro_Costo{+Int id\n+Int empresaId\n+Int sucursalId\n+String codigo\n+String nombre\n+Int padreId\n+Int estadoId}
+Empresa "1" --> "*" Centro_Costo : imputa
+Centro_Costo --> Centro_Costo : subcentro
+class Feriado{+Int id\n+Int empresaId\n+Int gestion\n+Date fecha\n+String nombre\n+Boolean esNacional\n+Int ubicacionGeograficaId\n+Int estadoId}
+class Ubicacion_Geografica
+Feriado ..> Ubicacion_Geografica : departamento\nParametro_Default --> Tipologia : tipo de dato\nEmpresa_Parametro --> Tipologia : tipo de dato`},
+{g:'Plataforma Empresarial',n:'15',ac:'core',t:'Motor de Impuestos',
+ d:'Impuestos por país (IVA, IT, retenciones) con tasas versionadas (vigencia desde/hasta). Calculo_Impuesto es la foto inmutable del impuesto aplicado en cada transacción.',
+ c:`classDiagram
+class Tipo_Impuesto{+Int id\n+Int paisId\n+String nombre\n+String codigo\n+String tipo\n+String descripcion}
+class Tasa_Impuesto{+Int id\n+Int tipoImpuestoId\n+Decimal porcentaje\n+Date vigenciaDesde\n+Date vigenciaHasta}
+class Calculo_Impuesto{+Int id\n+Int tipoImpuestoId\n+Int tasaId\n+Decimal baseImponible\n+Decimal montoImpuesto\n+Decimal total\n+String tipoEfecto\n+DateTime fecha\n+String entidadTipo\n+Int entidadId}
+class Pais
+Pais "1" --> "*" Tipo_Impuesto : define
+Tipo_Impuesto "1" --> "*" Tasa_Impuesto : versiona
+Tasa_Impuesto "1" --> "*" Calculo_Impuesto : aplica
+Calculo_Impuesto ..> Tipo_Impuesto : foto de`},
+{g:'Plataforma Empresarial',n:'16',ac:'core',t:'Auditoría / Bitácora',
+ d:'Rastro transversal de quién hizo qué y cuándo. Registro_Auditoria es el evento (módulo, entidad, acción, IP y dispositivo como foto forense); Detalle_Auditoria guarda una fila por cada campo modificado con su valor anterior y nuevo.',
+ c:`classDiagram
+class Empresa
+class auth_user
+class Modulo_Sistema
+class Registro_Auditoria{+Int id\n+Int empresaId\n+Int sucursalId\n+Int usuarioId\n+String usuarioNombre\n+String usuarioEmail\n+Int moduloSistemaId\n+String entidadTipo\n+Int entidadId\n+Int accionId\n+Int resultadoId\n+String requestId\n+Int sesionAccesoRefId\n+DateTime fechaHora\n+String ip\n+String dispositivo\n+Text observacion}
+class Detalle_Auditoria{+Int id\n+Int auditoriaId\n+String campo\n+Text valorAnterior\n+Text valorNuevo}
+Empresa "1" --> "*" Registro_Auditoria : registra
+auth_user "1" --> "*" Registro_Auditoria : ejecuta
+Registro_Auditoria --> Modulo_Sistema : en modulo
+Registro_Auditoria "1" --> "*" Detalle_Auditoria : detalla
+Registro_Auditoria --> Tipologia : accion y resultado
+Registro_Auditoria ..> Sesion_Acceso : origen`},
+{g:'Plataforma Empresarial',n:'17',ac:'core',t:'Servicios de Plataforma',
+ d:'Los motores transversales que se definen una vez y consume todo el sistema: gestión documental (DMS) multiempresa, flujos de aprobación con auditoría de decisiones (Accion_Aprobacion), numeración/series con correlativo por gestión, tareas programadas con handler y parámetros, import/export con detalle de errores, notificaciones multicanal/multi-idioma, motor de reportes, API (tokens hasheados con scopes) y webhooks con log de entregas, el mapeo funcionalidad↔módulo vendible (Modulo_Sistema_Dependencia) y el puente Referencia_Cruzada. Lo fiscal boliviano (autorización SIN) se movió a fiscal_bo como extensión Serie_Documental_BO.',
+ c:`classDiagram
+class Adjunto{+Int id\n+Int empresaId\n+String entidadTipo\n+Int entidadId\n+Int tipoId\n+String nombreArchivo\n+String ruta\n+Int tamano\n+Int usuarioId\n+DateTime creadoEn\n+Int estadoId}
+class Flujo_Aprobacion{+Int id\n+Int empresaId\n+String entidadTipo\n+String nombre\n+Int estadoId}
+class Paso_Flujo{+Int id\n+Int flujoId\n+Int orden\n+Int rolAprobadorId}
+class Solicitud_Aprobacion{+Int id\n+Int flujoId\n+String entidadTipo\n+Int entidadId\n+Int solicitanteId\n+DateTime fechaSolicitud\n+DateTime fechaResolucion\n+Int estadoId\n+Int pasoActual}
+class Accion_Aprobacion{+Int id\n+Int solicitudId\n+Int pasoFlujoId\n+Int usuarioId\n+Int decisionId\n+String comentario\n+DateTime fecha}
+class Tarea_Programada{+Int id\n+Int empresaId\n+String nombre\n+String handler\n+Json parametros\n+String cronExpresion\n+Int estadoId}
+class Ejecucion_Job{+Int id\n+Int tareaId\n+DateTime inicio\n+DateTime fin\n+Int estadoId\n+String resultado}
+class Trabajo_Importacion{+Int id\n+Int empresaId\n+Int tipoId\n+Int adjuntoId\n+Int usuarioId\n+Int estadoId\n+Int filasProcesadas\n+Int filasError\n+Json erroresDetalle}
+class Plantilla_Notificacion{+Int id\n+Int empresaId\n+Int eventoId\n+Int canalId\n+Int idiomaId\n+String asunto\n+String cuerpo\n+Int estadoId}
+class Notificacion{+Int id\n+Int empresaId\n+Int plantillaId\n+Int destinatarioId\n+String titulo\n+Boolean leida\n+DateTime creadoEn}
+class Webhook{+Int id\n+Int empresaId\n+Int eventoId\n+String url\n+String secreto\n+Int estadoId}
+class Entrega_Webhook{+Int id\n+Int webhookId\n+Int eventoId\n+Json payload\n+Int intento\n+Int httpStatus\n+String respuesta\n+DateTime fecha\n+Int estadoId}
+class Tipologia
+Trabajo_Importacion --> Adjunto : archivo
+Flujo_Aprobacion "1" --> "*" Paso_Flujo : ordena
+Flujo_Aprobacion "1" --> "*" Solicitud_Aprobacion : instancia
+Solicitud_Aprobacion "1" --> "*" Accion_Aprobacion : audita
+Paso_Flujo "1" --> "*" Accion_Aprobacion : decide en
+Accion_Aprobacion --> Tipologia : decision
+Tarea_Programada "1" --> "*" Ejecucion_Job : corre
+Plantilla_Notificacion "1" --> "*" Notificacion : emite
+Webhook "1" --> "*" Entrega_Webhook : entrega`,
+   c2:`classDiagram
+class Plantilla_Reporte{+Int id\n+Int empresaId\n+String nombre\n+Int formatoId\n+String contenido\n+Int estadoId}
+class Clave_Api{+Int id\n+Int empresaId\n+String prefijo\n+String tokenHash\n+String scopes\n+Date fechaExpiracion\n+DateTime ultimoUso\n+Int estadoId}
+class Serie_Documental{+Int id\n+Int empresaId\n+Int sucursalId\n+Int tipoDocumentoId\n+String prefijo\n+Int estadoId}
+class Correlativo{+Int id\n+Int serieDocumentalId\n+Int gestion\n+Int ultimoNumero}
+class Modulo_Sistema
+class Modulo_Dependencia
+class Modulo_Sistema_Dependencia{+Int id\n+Int moduloSistemaId\n+Int moduloDependenciaId}
+class Tipo_Documento_Comercial
+class Empresa
+class Referencia_Cruzada{+Int id\n+Int empresaId\n+String moduloOrigen\n+String tablaOrigen\n+Int registroOrigenId\n+String moduloDestino\n+String tablaDestino\n+Int registroDestinoId\n+Int tipoVinculoId\n+Int estadoId\n+DateTime creadoEn}
+Serie_Documental "1" --> "*" Correlativo : lleva por gestion
+Serie_Documental --> Tipo_Documento_Comercial : tipo
+Serie_Documental --> Empresa : sucursal
+Modulo_Sistema "1" --> "*" Modulo_Sistema_Dependencia : funcionalidad
+Modulo_Dependencia "1" --> "*" Modulo_Sistema_Dependencia : modulo vendible
+Empresa "1" --> "*" Referencia_Cruzada : vincula modulos`},
+{g:'Plataforma Empresarial',n:'18',ac:'core',t:'Mi Cuenta / Mi Plan',
+ d:'Vista del CLIENTE sobre su propia suscripción (no la gestión del proveedor): su plan, consumo vs. límites, facturas recibidas del SaaS y solicitudes de cambio de plan.',
+ c:`classDiagram
+class Empresa
+class Suscripcion
+class Licencia
+class Factura_SaaS
+class Solicitud_Cambio_Plan{+Int id\n+Int empresaId\n+Int planDestinoId\n+Int estadoId\n+DateTime fecha}
+Empresa --> Suscripcion : mi plan
+Suscripcion "1" --> "*" Licencia : incluye
+Empresa "1" --> "*" Factura_SaaS : recibe
+Empresa "1" --> "*" Solicitud_Cambio_Plan : solicita`},
+{g:'Verticales de Negocio',n:'19',ac:'vert',t:'Farmacia',
+ d:'Paquete activable. Extiende Item con atributos farmacéuticos, maneja recetas y control de sustancias controladas. Reutiliza Lote y Movimiento_Inventario del núcleo, no los duplica.',
+ c:`classDiagram
+class Atributos_Farmacia{+Int id\n+Int itemId\n+String principioActivo\n+String concentracion\n+Boolean requiereReceta\n+Boolean controlado}
+class Receta{+Int id\n+Int clienteId\n+Int medicoId\n+Int documentoId\n+Date fecha}
+class Control_Sustancia{+Int id\n+Int itemId\n+Int loteId\n+Decimal cantidad\n+String libroControl}
+class Item
+class Lote
+class Entidad
+Atributos_Farmacia "1" --> "1" Item : extiende
+Receta --> Entidad : paciente
+Receta ..> Item : prescribe
+Control_Sustancia --> Item : de
+Control_Sustancia --> Lote : trazabilidad`},
+{g:'Verticales de Negocio',n:'20',ac:'vert',t:'Clínica',
+ d:'Paquete activable. Historia clínica del paciente, atenciones (usa Agenda/Citas), consumo de insumos (descuenta inventario) y pagos compartidos paciente/aseguradora.',
+ c:`classDiagram
+class Historia_Clinica{+Int id\n+Int pacienteId\n+String antecedentes\n+String alergias}
+class Atencion{+Int id\n+Int historiaId\n+Int profesionalId\n+Int citaId\n+String diagnostico\n+Int documentoId}
+class Consumo_Insumo{+Int id\n+Int atencionId\n+Int itemId\n+Decimal cantidad}
+class Pago_Compartido{+Int id\n+Int ingresoRefId\n+Int aseguradoraId\n+Decimal montoPaciente\n+Decimal montoAseguradora}
+class Entidad
+class Cita
+class Item
+class Ingreso
+Historia_Clinica --> Entidad : paciente
+Historia_Clinica "1" --> "*" Atencion : registra
+Atencion --> Cita : agendada
+Atencion "1" --> "*" Consumo_Insumo : usa
+Consumo_Insumo --> Item : descuenta
+Pago_Compartido ..> Ingreso : reparte [suave]`},
+{g:'Verticales de Negocio',n:'21',ac:'vert',t:'Inmobiliaria',
+ d:'Paquete activable. El Inmueble es un objeto propio (no un tercero) con FK al propietario (Entidad). Contratos de alquiler (usan Recurrencia) o venta, y liquidación al propietario.',
+ c:`classDiagram
+class Inmueble{+Int id\n+Int empresaId\n+Int propietarioId\n+String tipo\n+String direccion\n+Decimal precioRef\n+Int estadoId}
+class Contrato_Alquiler{+Int id\n+Int inmuebleId\n+Int inquilinoId\n+Int contratoRecurrenteId\n+Decimal canon\n+Date inicio\n+Date fin}
+class Venta_Inmueble{+Int id\n+Int inmuebleId\n+Int compradorId\n+Decimal precio\n+Int documentoId}
+class Liquidacion_Propietario{+Int id\n+Int propietarioId\n+Int inmuebleId\n+String periodo\n+Decimal monto\n+Decimal comision}
+class Entidad
+class Contrato_Recurrente
+Inmueble --> Entidad : propietario
+Inmueble "1" --> "*" Contrato_Alquiler : alquila
+Contrato_Alquiler --> Entidad : inquilino
+Contrato_Alquiler ..> Contrato_Recurrente : cobra
+Inmueble "1" --> "*" Venta_Inmueble : vende
+Liquidacion_Propietario --> Inmueble : liquida`},
+{g:'Verticales de Negocio',n:'22',ac:'vert',t:'Taller',
+ d:'Paquete activable. El Vehículo es objeto propio con FK al dueño (Entidad). Órdenes de servicio con mano de obra y repuestos (descuentan inventario), usa Agenda para turnos.',
+ c:`classDiagram
+class Vehiculo{+Int id\n+Int empresaId\n+Int propietarioId\n+String placa\n+String marca\n+String modelo}
+class Orden_Servicio{+Int id\n+Int vehiculoId\n+Int clienteId\n+Int citaId\n+Int estadoId\n+Decimal total\n+Int documentoId}
+class Linea_Mano_Obra{+Int id\n+Int ordenServicioId\n+String descripcion\n+Int mecanicoId\n+Decimal horas\n+Decimal costo}
+class Linea_Repuesto{+Int id\n+Int ordenServicioId\n+Int itemId\n+Decimal cantidad\n+Decimal precio}
+class Entidad
+class Item
+class Cita
+Vehiculo --> Entidad : dueño
+Vehiculo "1" --> "*" Orden_Servicio : recibe
+Orden_Servicio --> Cita : turno
+Orden_Servicio "1" --> "*" Linea_Mano_Obra : trabajos
+Orden_Servicio "1" --> "*" Linea_Repuesto : repuestos
+Linea_Repuesto --> Item : descuenta`},
+{g:'Verticales de Negocio',n:'23',ac:'vert',t:'Gimnasio',
+ d:'Paquete activable. Membresías (usan Recurrencia para el cobro), control de acceso (check-in) y reserva de clases (usa Agenda).',
+ c:`classDiagram
+class Plan_Membresia{+Int id\n+Int empresaId\n+String nombre\n+Int planRecurrenteId\n+Boolean todasLasSedes\n+Int duracionMeses\n+Int limiteClasesMes\n+Boolean permiteInvitados\n+Int estadoId}
+class Plan_Membresia_Sede{+Int id\n+Int planMembresiaId\n+Int sucursalId\n+Int estadoId}
+class Membresia{+Int id\n+Int empresaId\n+Int socioId\n+Int planId\n+Int contratoRecurrenteId\n+Date inicio\n+Date fin\n+Int estadoId}
+class Checkin{+Int id\n+Int empresaId\n+Int sucursalId\n+Int tipoPersonaId\n+Int membresiaRefId\n+Int empleadoRefId\n+String tipoMovimiento\n+DateTime fecha}
+class Reserva_Clase{+Int id\n+Int empresaId\n+Int membresiaId\n+Int sesionClaseId\n+DateTime fechaReserva\n+Boolean asistio\n+DateTime horaCheckin\n+Int estadoId}
+class Clase{+Int claseId\n+Int empresaId\n+String nombre\n+String descripcion\n+Int disciplinaId\n+Int nivelId\n+Int duracionMin\n+Int cupoMaximo\n+Int estadoId}
+class Sesion_Clase{+Int sesionClaseId\n+Int empresaId\n+Int sucursalId\n+Int claseId\n+Int coachRefId\n+Int salaRefId\n+Int citaRefId\n+DateTime fechaHoraInicio\n+DateTime fechaHoraFin\n+Int cupoDisponible\n+Int estadoId}
+class Sesion_Particular{+Int sesionParticularId\n+Int empresaId\n+Int sucursalId\n+Int socioId\n+Int coachRefId\n+Int citaRefId\n+DateTime fechaHora\n+Int duracionMin\n+Decimal precio\n+Decimal porcentajeComision\n+Int ingresoRefId\n+Int comisionRefId\n+Int estadoId}
+class Congelamiento_Membresia{+Int congelamientoMembresiaId\n+Int empresaId\n+Int membresiaId\n+Date fechaInicio\n+Date fechaFin\n+String motivo\n+Int estadoId}
+class Entidad
+class Empresa
+class Plan_Recurrente
+class Contrato_Recurrente
+class Cita
+Plan_Membresia --> Plan_Recurrente : precio y periodicidad
+Plan_Membresia "1" --> "*" Plan_Membresia_Sede : sedes habilitadas
+Plan_Membresia_Sede --> Empresa : sucursal
+Plan_Membresia "1" --> "*" Membresia : rige
+Membresia --> Entidad : socio
+Membresia ..> Contrato_Recurrente : cobra [suave]
+Membresia "1" --> "*" Checkin : accede
+Checkin --> Empresa : sucursal
+Membresia "1" --> "*" Reserva_Clase : reserva
+Membresia "1" --> "*" Congelamiento_Membresia : congela
+Checkin ..> Empleado : coach
+Checkin --> Tipologia : tipoPersona
+Clase --> Tipologia : disciplina y nivel
+Clase "1" --> "*" Sesion_Clase : programa
+Sesion_Clase --> Empleado : dictada por
+Sesion_Clase --> Recurso : sala
+Sesion_Clase ..> Cita : agenda
+Sesion_Clase ..> Comision : liquida grupal
+Sesion_Particular --> Empleado : imparte
+Sesion_Particular --> Entidad : socio
+Sesion_Particular ..> Cita : agenda
+Sesion_Particular ..> Ingreso : genera
+Sesion_Particular ..> Comision : liquida coach
+Sesion_Clase "1" --> "*" Reserva_Clase : cupos`},
+{g:'Verticales de Negocio',n:'24',ac:'vert',t:'Cooperativa de Agua',
+ d:'Paquete activable. La conexion/medidor es objeto propio con FK al socio (Entidad) y a su Tarifa. Las categorias de tarifa (basico, medio, alto, unica) son un catalogo en Tipologia. Lecturas periodicas (via Jobs) y facturacion por consumo con tarifas escalonadas por rango de m3 (precioM3, precioExcedente, precioCorte); usa Recurrencia.',
+ c:`classDiagram
+class Conexion_Medidor{+Int id\n+Int empresaId\n+Int socioId\n+String codigoMedidor\n+Int tarifaId\n+Int estadoId}
+class Tarifa{+Int id\n+Int empresaId\n+Int categoriaTarifaId\n+Date vigenciaDesde\n+Int estadoId}
+class Escala_Tarifa{+Int id\n+Int tarifaId\n+Int consumoDesde\n+Int consumoHasta\n+Decimal precioM3\n+Decimal precioExcedente\n+Decimal precioCorte}
+class Lectura_Medidor{+Int id\n+Int conexionId\n+String periodo\n+Int lecturaAnterior\n+Int lecturaActual\n+Int consumo}
+class Factura_Consumo{+Int id\n+Int conexionId\n+Int lecturaId\n+Decimal monto\n+Int ingresoRefId\n+Int estadoId}
+class Entidad
+class Ingreso
+class Tipologia
+Conexion_Medidor --> Entidad : socio
+Conexion_Medidor --> Tarifa : tarifa
+Conexion_Medidor "1" --> "*" Lectura_Medidor : mide
+Tarifa --> Tipologia : categoria
+Tarifa "1" --> "*" Escala_Tarifa : escalona
+Lectura_Medidor "1" --> "1" Factura_Consumo : factura
+Factura_Consumo ..> Tarifa : aplica
+Factura_Consumo ..> Ingreso : genera [suave]`},{g:'Verticales de Negocio',n:'30',ac:'vert',t:'Salon de Belleza',d:'Paquete activable. Salon de belleza y estetica. Solo tres tablas propias: la ficha del cliente (alergias, tipo de cabello), la atencion realizada con su formula y estilista, y los insumos realmente consumidos que descuentan inventario. Todo lo demas lo reutiliza del core: servicios como Item, estilistas y turnos con Agenda, cobro con Documento_Comercial y POS, y la comision del estilista con el modulo 05.5.',c:`classDiagram
+class Ficha_Cliente{+Int id\n+Int empresaId\n+Int entidadId\n+Int tipoCabelloId\n+String alergias\n+String observaciones\n+Int estadoId}
+class Servicio_Atencion{+Int id\n+Int empresaId\n+Int sucursalId\n+Int fichaClienteId\n+Int citaId\n+DateTime fecha\n+Decimal total\n+Decimal montoPropina\n+String observacion\n+Int documentoRefId\n+Int estadoId}
+class Detalle_Servicio_Atencion{+Int id\n+Int servicioAtencionId\n+Int itemId\n+Int estilistaId\n+Int recursoRefId\n+Decimal precio\n+Int duracionMin\n+String formula\n+Int comisionRefId\n+Int estadoId}
+class Consumo_Salon{+Int id\n+Int detalleServicioAtencionId\n+Int itemId\n+Int presentacionId\n+Decimal cantidad}
+class Ficha_Tecnica_Historial{+Int id\n+Int servicioAtencionId\n+Int porosidad\n+Int tonoBaseId\n+Int sensibilidadCueroId\n+Int tipoPielId\n+String observaciones\n+Int estadoId}
+class Entidad
+class Cita
+class Empleado
+class Item
+class Empresa
+class Documento_Comercial
+class Movimiento_Inventario
+class Tipologia
+class Comision
+class Adjunto
+class Recurso
+Ficha_Cliente --> Entidad : cliente
+Ficha_Cliente --> Tipologia : tipo de cabello
+Ficha_Cliente "1" --> "*" Servicio_Atencion : historial
+Servicio_Atencion --> Cita : turno
+Servicio_Atencion --> Empresa : sucursal
+Servicio_Atencion ..> Documento_Comercial : cobra [suave]
+Servicio_Atencion "1" --> "*" Detalle_Servicio_Atencion : detalle
+Servicio_Atencion "1" --> "*" Ficha_Tecnica_Historial : diagnostico
+Ficha_Tecnica_Historial --> Tipologia : tono base
+Ficha_Tecnica_Historial --> Tipologia : sensibilidad cuero
+Ficha_Tecnica_Historial --> Tipologia : tipo de piel
+Servicio_Atencion ..> Adjunto : fotos antes/despues
+Detalle_Servicio_Atencion --> Item : servicio
+Detalle_Servicio_Atencion --> Empleado : estilista
+Detalle_Servicio_Atencion ..> Recurso : silla/cabina
+Detalle_Servicio_Atencion ..> Comision : liquida
+Detalle_Servicio_Atencion "1" --> "*" Consumo_Salon : consume
+Consumo_Salon --> Item : insumo
+Consumo_Salon ..> Movimiento_Inventario : descuenta [suave]`},
+{g:'Proveedor Plataform',n:'25',ac:'adm',
+ t:'Proveedor Plataforma',
+ d:'Back-office del proveedor del SaaS en un solo plano: tenants, suscripciones y licenciamiento, facturacion al cliente (SaaS), uso y consumo, y operacion y soporte. Consolidado desde los antiguos modulos 25-29, cada tabla definida una sola vez.',
+ r:'Suscripcion contrata un Plan (precios por moneda en Plan_Precio); Licencia otorga modulos y rige Activacion_Vertical; Factura_SaaS cobra al tenant con foto de moneda; Registro_Consumo alimenta la cuota y la factura de uso; Ticket_Soporte se rige por SLA.',
+ c:`classDiagram
+class Activacion_Vertical{+Int id\n+Int empresaId\n+Int moduloId\n+Int licenciaId\n+Int estadoId\n+Date fechaActivacion\n+Date fechaBaja}
+class Acceso_Soporte{+Int id\n+Int empresaId\n+Int usuarioSoporteId\n+String motivo\n+DateTime inicio\n+DateTime fin}
+class Configuracion_Tenant{+Int id\n+Int empresaId\n+Int tipoAislamiento\n+Int estadoId}
+class Plan_Suscripcion{+Int id\n+String nombre\n+Int periodicidadId\n+Int estadoId}
+class Plan_Modulo{+Int id\n+Int planId\n+Int moduloId\n+String recurso\n+Int limiteDefault}
+class Tipo_Suscripcion{+Int tipoSuscripcionId\n+String nombre\n+Int estadoId}
+class Plan_Precio{+Int id\n+Int planId\n+Int monedaId\n+Decimal precio\n+Date vigenciaDesde\n+Int estadoId}
+class Suscripcion{+Int id\n+Int empresaId\n+Int planId\n+Int tipoSuscripcionId\n+DateTime fechaInicio\n+DateTime fechaFin\n+Int estadoId}
+class Licencia{+Int id\n+Int suscripcionId\n+Int moduloId\n+Int estadoId\n+Date vigenciaHasta}
+class Limite_Cuota{+Int id\n+Int licenciaId\n+String recurso\n+Int limite\n+Int consumoActual\n+Int estadoId}
+class Restriccion_Tenant{+Int id\n+Int empresaId\n+Int licenciaId\n+String recurso\n+String motivo\n+Int estadoId\n+Date fecha}
+class Modulo_Dependencia{+Int id\n+Int moduloId\n+Int dependeDeModuloId\n+String tipo}
+class Factura_SaaS{+Int id\n+Int empresaId\n+Int suscripcionId\n+String numero\n+String periodo\n+Int monedaId\n+Int tipoCambioId\n+Decimal valorTipoCambio\n+Decimal subtotal\n+Decimal impuestos\n+Decimal total\n+Decimal totalBase\n+Int estadoId\n+Date vencimiento}
+class Linea_Factura_SaaS{+Int id\n+Int facturaId\n+Int moduloId\n+String concepto\n+Decimal cantidad\n+Decimal precioUnitario\n+Decimal monto}
+class Cobro_SaaS{+Int id\n+Int facturaId\n+Int metodoPagoId\n+Decimal monto\n+DateTime fecha\n+Int estadoId}
+class Gestion_Mora{+Int id\n+Int facturaId\n+Int empresaId\n+Int nivel\n+Date fechaAccion\n+String accion\n+Int restriccionTenantId\n+Int estadoId}
+class Metodo_Pago_SaaS{+Int id\n+Int empresaId\n+Int tipoId\n+String referencia\n+Boolean predeterminado}
+class Metrica_Uso{+Int id\n+Int empresaId\n+Int tipoId\n+Decimal valor\n+Date periodo}
+class Registro_Consumo{+Int id\n+Int empresaId\n+Int licenciaId\n+String recurso\n+Decimal cantidad\n+Date fecha}
+class Ticket_Soporte{+Int id\n+Int empresaId\n+Int solicitanteId\n+Int agenteId\n+Int slaId\n+String asunto\n+Int prioridadId\n+Int estadoId\n+DateTime fecha}
+class Respuesta_Ticket{+Int id\n+Int ticketId\n+Int usuarioId\n+String mensaje\n+DateTime fecha}
+class Version_Plataforma{+Int id\n+String numero\n+String changelog\n+Date fecha}
+class SLA{+Int id\n+Int empresaId\n+String nombre\n+Int prioridadId\n+Int minutosRespuesta\n+Int minutosResolucion\n+Int estadoId}
+class Incidente{+Int id\n+Int versionId\n+Int empresaId\n+Int severidadId\n+String descripcion\n+DateTime inicio\n+DateTime fin\n+Int estadoId}
+class Despliegue{+Int id\n+Int versionId\n+Int empresaId\n+Int estadoId\n+DateTime fecha}
+class Empresa
+class Modulo_Sistema
+class Moneda
+class Sub_Modulo
+class Tipologia
+class auth_user
+Empresa "1" --> "*" Activacion_Vertical : activa
+Activacion_Vertical --> Modulo_Sistema : de
+Acceso_Soporte --> Empresa : sobre
+Acceso_Soporte ..> auth_user : soporte
+Configuracion_Tenant --> Empresa : enruta
+Licencia "1" --> "*" Activacion_Vertical : rige
+Configuracion_Tenant --> Tipologia : tipoAislamiento
+Modulo_Sistema "1" --> "*" Sub_Modulo : requiere
+Plan_Suscripcion "1" --> "*" Plan_Modulo : incluye
+Plan_Modulo --> Modulo_Sistema : de
+Empresa "1" --> "*" Suscripcion : contrata
+Suscripcion --> Plan_Suscripcion : sobre
+Tipo_Suscripcion "1" --> "*" Suscripcion : clasifica
+Suscripcion "1" --> "*" Licencia : habilita
+Licencia --> Modulo_Sistema : de
+Licencia "1" --> "*" Limite_Cuota : limita
+Restriccion_Tenant --> Licencia : sobre
+Plan_Suscripcion --> Tipologia : periodicidad
+Plan_Modulo "1" --> "*" Modulo_Dependencia : resuelve dependencias
+Plan_Suscripcion "1" --> "*" Plan_Precio : precios
+Plan_Precio --> Moneda : en
+Empresa "1" --> "*" Factura_SaaS : recibe
+Factura_SaaS --> Suscripcion : de
+Factura_SaaS "1" --> "*" Linea_Factura_SaaS : detalla
+Factura_SaaS "1" --> "*" Cobro_SaaS : cobra
+Cobro_SaaS --> Metodo_Pago_SaaS : con
+Empresa "1" --> "*" Metodo_Pago_SaaS : registra
+Factura_SaaS --> Moneda : moneda
+Gestion_Mora --> Factura_SaaS : sobre
+Gestion_Mora ..> Restriccion_Tenant : dispara
+Metodo_Pago_SaaS --> Tipologia : tipo
+Empresa "1" --> "*" Metrica_Uso : genera
+Empresa "1" --> "*" Registro_Consumo : consume
+Registro_Consumo --> Licencia : contra
+Registro_Consumo "*" --> "1" Limite_Cuota : alimenta
+Registro_Consumo ..> Linea_Factura_SaaS : factura uso
+Metrica_Uso --> Tipologia : tipo
+Empresa "1" --> "*" Ticket_Soporte : abre
+Ticket_Soporte "1" --> "*" Respuesta_Ticket : recibe
+Version_Plataforma "1" --> "*" Despliegue : despliega
+Despliegue --> Empresa : en
+Ticket_Soporte --> SLA : rige
+Ticket_Soporte --> auth_user : agente
+Ticket_Soporte --> Tipologia : prioridad
+SLA --> Tipologia : prioridad
+Incidente --> Version_Plataforma : de`}
+];
+const navEl=document.getElementById('nav');
+const groups=[...new Set(M.map(m=>m.g))];
+let html='';
+groups.forEach(g=>{
+  const ac=M.find(m=>m.g===g).ac;
+  html+=`<div class="glabel ${ac}">${g}<span class="ln"></span></div>`;
+  M.filter(m=>m.g===g).forEach(m=>{
+    html+=`<div class="nv" data-n="${m.n}" style="--ac:${ACC[m.ac]}" onclick="sel('${m.n}')"><span class="num">${m.n}</span><span>${m.t}</span></div>`;
+    if(m.sub){m.sub.forEach(s=>{html+=`<div class="nv sub" data-n="${s.n}" style="--ac:${ACC[m.ac]}" onclick="sel('${s.n}')"><span class="num">${s.n}</span><span>${s.t}</span></div>`;if(s.sub){s.sub.forEach(ss=>{html+=`<div class="nv sub2" data-n="${ss.n}" style="--ac:${ACC[m.ac]}" onclick="sel('${ss.n}')"><span class="num">${ss.n}</span><span>${ss.t}</span></div>`;});}});}
+  });
+});
+navEl.innerHTML=html;
+const FLAT=[];M.forEach(m=>{FLAT.push(m);if(m.sub)m.sub.forEach(s=>{FLAT.push(Object.assign({},s,{g:m.g,ac:m.ac}));if(s.sub)s.sub.forEach(ss=>FLAT.push(Object.assign({},ss,{g:m.g,ac:m.ac})));});});
+let current=null;
+async function sel(n){
+  const m=FLAT.find(x=>x.n===n); if(!m) return;
+  if(m.sub&&m.sub.length&&!m.c){return sel(m.sub[0].n);}
+  document.querySelectorAll('.nv').forEach(e=>e.classList.toggle('active',e.dataset.n===n));
+  const c=ACC[m.ac];
+  document.getElementById('crumb').textContent=`${m.g} · módulo ${m.n}`;
+  document.getElementById('crumb').style.color=c;
+  document.getElementById('title').textContent=m.t;
+  document.getElementById('desc').textContent=m.d;
+  const host=document.getElementById('diagram');
+  host.removeAttribute('data-processed'); host.innerHTML='';
+  try{ const {svg}=await mermaid.render('mm'+n.replace(/\W/g,'')+Date.now(), m.c); host.innerHTML=svg; }
+  catch(e){ host.innerHTML='<p style="color:#b00;font-family:monospace">Error: '+e.message+'</p>'; }
+  const host2=document.getElementById('diagram2');
+  host2.removeAttribute('data-processed'); host2.innerHTML=''; host2.style.display='none';
+  if(m.c2){
+    try{ const r2=await mermaid.render('mm2'+n.replace(/\W/g,'')+Date.now(), m.c2); host2.innerHTML=r2.svg; host2.style.display='flex'; }
+    catch(e){ host2.innerHTML='<p style="color:#b00;font-family:monospace">Error: '+e.message+'</p>'; host2.style.display='flex'; }
+  }
+  document.querySelector('.content').scrollTop=0;
+}
+sel('01');
+</script>
+</body>
+</html>
