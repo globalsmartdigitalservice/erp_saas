@@ -1,0 +1,8 @@
+from django.apps import AppConfig
+
+
+class MonedasConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "comun.monedas"
+    label = "monedas"
+    verbose_name = "Monedas"

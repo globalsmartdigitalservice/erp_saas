@@ -1,0 +1,24 @@
+
+.venv/
+
+# Secretos: el .env entra por env_file en el compose, no en la imagen.
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Git y editores
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# Generados
+staticfiles/
+media/
+*.log
+db.sqlite3
+.pytest_cache/
+.coverage
+htmlcov/

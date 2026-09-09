@@ -1,0 +1,1 @@
+"""Capa GraphQL de `idiomas`."""

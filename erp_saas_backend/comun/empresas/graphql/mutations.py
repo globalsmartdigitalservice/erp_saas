@@ -1,0 +1,171 @@
+"""Las mutations de empresas."""
+
+import strawberry
+from django.core.exceptions import ValidationError
+from graphql import GraphQLError
+
+from dominios.seguridad.permisos import auto_permisos
+
+from comun.empresas import api as empresas
+
+from .inputs import ActualizarEmpresaInput, AgregarPaisInput, CrearEmpresaInput
+from .queries import _armar
+from .types import EmpresaMonedaType, EmpresaPaisType, EmpresaType
+
+
+def _traducir(error: ValidationError) -> GraphQLError:
+    """El mensaje del dominio va tal cual; cualquier otra excepción sube."""
+    return GraphQLError("; ".join(error.messages))
+
+
+def _a_empresa(fila) -> EmpresaType:
+    return _armar([fila])[0]
+
+
+def _id(valor) -> int | None:
+    return int(valor) if valor is not None else None
+
+
+@auto_permisos(recurso="CORE_EMPRESAS")
+@strawberry.type
+class EmpresaMutations:
+    @strawberry.mutation(
+        description="Alta de un cliente. Crea la empresa y su primer país en "
+        "una sola transacción."
+    )
+    def crear_empresa(self, datos: CrearEmpresaInput) -> EmpresaType:
+        try:
+            fila = empresas.crear_empresa(
+                ident_tributaria=datos.ident_tributaria,
+                razon_social=datos.razon_social,
+                nombre_comercial=datos.nombre_comercial,
+                tipo_empresa_id=int(datos.tipo_empresa_id),
+                rubro_id=int(datos.rubro_id),
+                estado_id=int(datos.estado_id),
+                idioma_default_id=int(datos.idioma_default_id),
+                moneda_oficial_id=int(datos.moneda_oficial_id),
+                pais_id=int(datos.pais_id),
+                empresa_padre_id=_id(datos.empresa_padre_id),
+                ubicacion_geografica_id=_id(datos.ubicacion_geografica_id),
+            )
+        except ValidationError as error:
+            raise _traducir(error) from error
+        return _a_empresa(fila)
+
+    @strawberry.mutation(description="Cambia los datos de una empresa.")
+    def actualizar_empresa(
+        self, id: strawberry.ID, datos: ActualizarEmpresaInput
+    ) -> EmpresaType:
+        campos = {
+            campo: valor
+            for campo, valor in (
+                ("ident_tributaria", datos.ident_tributaria),
+                ("razon_social", datos.razon_social),
+                ("nombre_comercial", datos.nombre_comercial),
+                ("tipo_empresa_id", _id(datos.tipo_empresa_id)),
+                ("rubro_id", _id(datos.rubro_id)),
+                ("estado_id", _id(datos.estado_id)),
+                ("idioma_default_id", _id(datos.idioma_default_id)),
+                ("empresa_padre_id", _id(datos.empresa_padre_id)),
+                ("ubicacion_geografica_id", _id(datos.ubicacion_geografica_id)),
+            )
+            if valor is not None
+        }
+        try:
+            fila = empresas.actualizar_empresa(int(id), **campos)
+        except ValidationError as error:
+            raise _traducir(error) from error
+        return _a_empresa(fila)
+
+    @strawberry.mutation(
+        description="Soft delete: la fila queda, se le pone el estado "
+        "Inactiva. Falla si tiene sucursales activas."
+    )
+    def desactivar_empresa(self, id: strawberry.ID) -> EmpresaType:
+        try:
+            fila = empresas.desactivar_empresa(int(id))
+        except ValidationError as error:
+            raise _traducir(error) from error
+        return _a_empresa(fila)
+
+
+@auto_permisos(recurso="CORE_EMPRESAS")
+@strawberry.type
+class EmpresaPaisMutations:
+    @strawberry.mutation(
+        description="Agrega un país donde opera la empresa, con sus datos de "
+        "contacto."
+    )
+    def agregar_pais_a_empresa(self, datos: AgregarPaisInput) -> EmpresaPaisType:
+        try:
+            fila = empresas.agregar_pais(
+                empresa_id=int(datos.empresa_id),
+                pais_id=int(datos.pais_id),
+                ubicacion_geografica_id=_id(datos.ubicacion_geografica_id),
+                direccion=datos.direccion,
+                telefono=datos.telefono,
+                email=datos.email,
+                sitio_web=datos.sitio_web,
+                logo=datos.logo,
+                latitud=datos.latitud,
+                longitud=datos.longitud,
+            )
+        except ValidationError as error:
+            raise _traducir(error) from error
+        return EmpresaPaisType.desde_modelo(fila)
+
+
+@auto_permisos(recurso="CORE_EMPRESAS")
+@strawberry.type
+class EmpresaMonedaMutations:
+    @strawberry.mutation(
+        description="Habilita una moneda para una empresa. Si es la primera, "
+        "queda como su moneda oficial: sin base de conversión no hay montoBase."
+    )
+    def agregar_moneda_a_empresa(
+        self,
+        empresa_id: strawberry.ID,
+        moneda_id: strawberry.ID,
+        es_moneda_oficial: bool = False,
+    ) -> EmpresaMonedaType:
+        try:
+            fila = empresas.agregar_moneda(
+                empresa_id=int(empresa_id),
+                moneda_id=int(moneda_id),
+                es_moneda_oficial=es_moneda_oficial,
+            )
+        except ValidationError as error:
+            raise _traducir(error) from error
+        return EmpresaMonedaType.desde_modelo(fila)
+
+    @strawberry.mutation(
+        description="Cambia la moneda base de una empresa. Desmarca la "
+        "anterior, y solo la de ESA empresa. No reescribe documentos ya "
+        "emitidos: cada uno guarda su montoBase."
+    )
+    def marcar_moneda_oficial(
+        self, empresa_id: strawberry.ID, moneda_id: strawberry.ID
+    ) -> EmpresaMonedaType:
+        try:
+            fila = empresas.marcar_moneda_oficial(int(empresa_id), int(moneda_id))
+        except ValidationError as error:
+            raise _traducir(error) from error
+        return EmpresaMonedaType.desde_modelo(fila)
+
+    @strawberry.mutation(
+        description="Saca una moneda de las que opera la empresa. Soft "
+        "delete. Rechaza la oficial: quedaría sin base de conversión."
+    )
+    def quitar_moneda_de_empresa(
+        self, empresa_id: strawberry.ID, moneda_id: strawberry.ID
+    ) -> bool:
+        try:
+            empresas.quitar_moneda(int(empresa_id), int(moneda_id))
+        except ValidationError as error:
+            raise _traducir(error) from error
+        return True
+
+
+@strawberry.type
+class EmpresaMutation(EmpresaMutations, EmpresaPaisMutations, EmpresaMonedaMutations):
+    """La superficie de escritura de empresas. Solo compone."""

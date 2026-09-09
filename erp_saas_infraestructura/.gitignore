@@ -1,0 +1,17 @@
+# Variables de entorno: nunca se suben
+.env
+.env.*
+!.env.example
+
+# Volúmenes y datos locales
+volumenes/
+datos/
+*.log
+
+# Editores
+.vscode/
+.idea/
+.DS_Store
+
+# Volcados de fallo de MSYS/Git Bash en Windows
+*.stackdump

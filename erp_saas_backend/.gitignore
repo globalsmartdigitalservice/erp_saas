@@ -1,0 +1,27 @@
+# Entorno
+.venv/
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.py[cod]
+*.egg-info/
+
+# Django
+staticfiles/
+media/
+*.log
+db.sqlite3
+
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editores
+.vscode/
+.idea/
+
+# Volcados de fallo de MSYS/Git Bash en Windows
+*.stackdump

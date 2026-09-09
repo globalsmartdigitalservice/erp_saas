@@ -1,0 +1,37 @@
+# ═══════════════════════════════════════════════════════════
+#  ERP SaaS — dependencias base
+#
+#  Regla: solo lo que se usa HOY. Nada "por si acaso".
+#  Tampoco se anotan dependencias de arrastre (kombu, asgiref,
+#  graphql-core...) — pip las instala sola.
+# ═══════════════════════════════════════════════════════════
+
+# ═══ Core ═══
+Django==5.2.15
+psycopg2-binary==2.9.11
+python-dotenv==1.2.1
+
+# ═══ Servidor ASGI ═══
+# [standard] trae la librería `websockets`. Sin ella uvicorn
+# rechaza las conexiones WebSocket. Se deja desde el día 1
+# para no tener que cambiar de motor más adelante.
+uvicorn[standard]==0.34.0
+
+# ═══ GraphQL ═══
+strawberry-graphql==0.287.3
+strawberry-graphql-django==0.70.1
+
+# ═══ Sesión ═══
+# Los tokens del login. Se agrega ahora porque ahora se usa (tanda 7);
+# la alternativa sin dependencia era `django.core.signing`, y se eligió
+# JWT porque es lo que el equipo ya conoce de portaldatos.
+PyJWT==2.10.1
+
+# ═══ Testing ═══
+pytest==9.0.3
+pytest-django==4.12.0
+
+# ═══ Arquitectura ═══
+# Valida las reglas de capas (ver ARQUITECTURA §6). Se corre a mano:
+#   lint-imports
+import-linter==2.3
