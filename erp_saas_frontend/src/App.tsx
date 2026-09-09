@@ -4,9 +4,12 @@ import { Toaster } from "sonner";
 
 import { client } from "@/config/apollo";
 import { EntidadesRoutes } from "@/modules/entidades/routes/EntidadesRoutes";
+import { LoginPage } from "@/modules/seguridad/pages/LoginPage";
 import { TipologiasRoutes } from "@/modules/tipologias/routes/TipologiasRoutes";
 import { AppShell } from "@/shared/components/layout/AppShell";
+import { ProtectedRoute } from "@/shared/components/ProtectedRoute";
 import { PreferenciasProvider } from "@/shared/preferencias";
+import { SesionProvider } from "@/shared/sesion";
 
 
 function App() {
@@ -16,22 +19,30 @@ function App() {
         <BrowserRouter>
           <Toaster position="top-right" richColors />
 
-          <Routes>
-            <Route element={<AppShell />}>
-              <Route path="/" element={<Navigate to="/entidades" replace />} />
-              <Route path="/entidades/*" element={<EntidadesRoutes />} />
-              <Route path="/configuracion/*" element={<TipologiasRoutes />} />
-            </Route>
+          {/* Adentro del router: `<ProtectedRoute>` navega al login. */}
+          <SesionProvider>
+            <Routes>
+              {/* Fuera del AppShell: el login no lleva menú ni encabezado. */}
+              <Route path="/login" element={<LoginPage />} />
 
-            <Route
-              path="*"
-              element={
-                <div className="flex min-h-screen items-center justify-center text-muted-foreground">
-                  404
-                </div>
-              }
-            />
-          </Routes>
+              <Route element={<ProtectedRoute />}>
+                <Route element={<AppShell />}>
+                  <Route path="/" element={<Navigate to="/entidades" replace />} />
+                  <Route path="/entidades/*" element={<EntidadesRoutes />} />
+                  <Route path="/configuracion/*" element={<TipologiasRoutes />} />
+                </Route>
+              </Route>
+
+              <Route
+                path="*"
+                element={
+                  <div className="flex min-h-screen items-center justify-center text-muted-foreground">
+                    404
+                  </div>
+                }
+              />
+            </Routes>
+          </SesionProvider>
         </BrowserRouter>
       </PreferenciasProvider>
     </ApolloProvider>

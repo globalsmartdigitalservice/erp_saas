@@ -22,8 +22,8 @@ def _validar_nombre(nombre: str, excluir_id: int | None = None) -> None:
         raise ValidationError("El nombre del rol no puede ir vacío.")
     if repo.existe_nombre_en_el_ambito(nombre, excluir_id):
         raise ValidationError(
-            f"Ya podés usar un rol llamado '{nombre}'. Si es el de tu casa "
-            f"matriz, asignalo directamente en vez de crear otro igual."
+            f"Ya puede usar un rol llamado '{nombre}'. Si es el de su casa "
+            f"matriz, asígnelo directamente en vez de crear otro igual."
         )
 
 
@@ -33,10 +33,10 @@ def _exigir_que_sea_propio(grupo: GrupoEmpresa) -> None:
     """
     if grupo.empresa_id != empresa_actual():
         raise ValidationError(
-            f"El rol '{grupo.nombre}' es de tu casa matriz y solo ella puede "
-            f"modificarlo: si lo cambiaras, les cambiarías los permisos a "
-            f"todas las sucursales del grupo. Si necesitás algo distinto, "
-            f"creá un rol propio."
+            f"El rol '{grupo.nombre}' es de su casa matriz y solo ella puede "
+            f"modificarlo: si lo cambiara, les cambiaría los permisos a "
+            f"todas las sucursales del grupo. Si necesita algo distinto, "
+            f"cree un rol propio."
         )
 
 
@@ -112,7 +112,7 @@ def desactivar(grupo_id: int) -> GrupoEmpresa:
     if baja is None:
         raise ValidationError(
             f"Falta la tipología '{NOMBRE_ESTADO_BAJA}' del agrupador "
-            f"ESTADO_REGISTRO. Corré: python manage.py cargar_semillas"
+            f"ESTADO_REGISTRO. Ejecute: python manage.py cargar_semillas"
         )
 
     return repo.actualizar(grupo, estado_id=baja.pk)

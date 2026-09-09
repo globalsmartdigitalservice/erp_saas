@@ -22,6 +22,12 @@ from dominios.seguridad.services import acceso as svc_acceso
 # El mismo texto para todos los fallos de credenciales. Ver el docstring.
 CREDENCIALES_INVALIDAS = "Usuario o contraseña incorrectos."
 
+# El refresh ya no sirve: robado, rotado o de una sesión cerrada. El código
+# viaja hasta `extensions["code"]` para que el cliente distinga ESTO —al login, sin
+# reintentar— de un acceso vencido, que sí se renueva.
+SESION_MUERTA = "La sesión venció. Inicie sesión nuevamente."
+CODIGO_SESION_MUERTA = "SESSION_EXPIRED"
+
 
 class Ingreso:
     """Lo que devuelve un login exitoso.
@@ -49,7 +55,7 @@ def _estado_activo():
     valor = _tipologia(AGRUPADOR.ESTADO_REGISTRO, NOMBRE_ESTADO_ACTIVO)
     if valor is None:
         raise ValidationError(
-            "Falta la tipología 'ACTIVO'. Corré: python manage.py cargar_semillas"
+            "Falta la tipología 'ACTIVO'. Ejecute: python manage.py cargar_semillas"
         )
     return valor
 
@@ -59,7 +65,7 @@ def _resultado(nombre):
     if valor is None:
         raise ValidationError(
             f"Falta la tipología '{nombre}' del agrupador RESULTADO_ACCESO. "
-            f"Corré: python manage.py cargar_semillas"
+            f"Ejecute: python manage.py cargar_semillas"
         )
     return valor
 
@@ -112,7 +118,7 @@ def ingresar(
         # mensaje SÍ puede ser específico: ya demostró quién es, y este
         # caso lo resuelve un administrador, no la persona.
         raise ValidationError(
-            "Tu usuario no está habilitado en ninguna empresa. Hablá con el "
+            "Su usuario no está habilitado en ninguna empresa. Consulte con el "
             "administrador."
         )
 
@@ -127,7 +133,7 @@ def ingresar(
         if elegida is None:
             # Mismo mensaje que si la empresa no existiera: probando ids
             # no se averigua cuáles hay.
-            raise ValidationError("Esa empresa no está disponible para tu usuario.")
+            raise ValidationError("Esa empresa no está disponible para su usuario.")
 
     return _abrir_sesion(
         usuario=usuario,
@@ -230,7 +236,7 @@ def renovar(*, refresh: str) -> Ingreso:
     try:
         datos = tokens.leer(refresh, tipo=tokens.TIPO_REFRESH)
     except tokens.TokenInvalido as error:
-        raise ValidationError("La sesión venció. Volvé a entrar.") from error
+        raise ValidationError(SESION_MUERTA, code=CODIGO_SESION_MUERTA) from error
 
     with sin_filtro_de_empresa():
         # Sin filtro porque todavía no hay empresa en el contexto: se está
@@ -238,14 +244,14 @@ def renovar(*, refresh: str) -> Ingreso:
         sesion = SesionAcceso.objects.filter(pk=datos["ses"]).first()
 
     if sesion is None or not sesion.esta_abierta:
-        raise ValidationError("La sesión venció. Volvé a entrar.")
+        raise ValidationError(SESION_MUERTA, code=CODIGO_SESION_MUERTA)
 
     if sesion.refresh_jti != datos.get("jti"):
         # Refresh viejo. Ver el aviso del docstring.
-        raise ValidationError("La sesión venció. Volvé a entrar.")
+        raise ValidationError(SESION_MUERTA, code=CODIGO_SESION_MUERTA)
 
     if not sesion.usuario.is_active:
-        raise ValidationError("La sesión venció. Volvé a entrar.")
+        raise ValidationError(SESION_MUERTA, code=CODIGO_SESION_MUERTA)
 
     acceso = tokens.emitir_acceso(
         usuario_id=sesion.usuario_id,
@@ -295,4 +301,6 @@ __all__ = [
     "empresas_de",
     "Ingreso",
     "CREDENCIALES_INVALIDAS",
+    "SESION_MUERTA",
+    "CODIGO_SESION_MUERTA",
 ]

@@ -92,7 +92,7 @@ def desactivar(idioma_id: int) -> Idioma:
     if empresas.hay_empresas_con_idioma(idioma_id):
         raise ValidationError(
             f"'{idioma.nombre}' es el idioma por defecto de al menos una "
-            f"empresa: no se puede desactivar. Cambiales el idioma primero."
+            f"empresa: no se puede desactivar. Cámbieles el idioma primero."
         )
 
     return repo.actualizar(idioma, activo=False)

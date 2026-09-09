@@ -1,5 +1,7 @@
 import datetime
 
+from django.utils import timezone
+
 from comun.tipologias import api as tipologias
 from comun.tipologias.constantes import (
     AGRUPADOR,
@@ -126,7 +128,11 @@ def puede_entrar(
     `mac` la manda el cliente instalado; desde un navegador no se puede leer.
     Si llega `None` la comprobación del equipo NO se hace: exigir el cliente
     antes de que exista dejaría a todos afuera."""
-    momento = momento or datetime.datetime.now()
+    # `localtime()` y no `datetime.now()`: aquel devuelve la hora de
+    # TIME_ZONE y este la del servidor, que dentro del contenedor es UTC.
+    # Los horarios se cargan en hora local, así que con `now()` un turno de
+    # 08:00 a 17:00 dejaba entrar de 04:00 a 13:00, sin error ninguno.
+    momento = momento or timezone.localtime()
 
     tipo, excepcion = _excepcion_del_dia(membresia_id, momento)
 

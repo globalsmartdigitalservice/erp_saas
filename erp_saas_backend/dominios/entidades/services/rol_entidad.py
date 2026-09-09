@@ -49,7 +49,7 @@ def crear(
     if repo.existe(entidad_id, tipo_rol_id):
         raise ValidationError(
             "Esa entidad ya tiene ese rol. Un rol se asigna una sola vez; "
-            "si querés cambiarle la categoría o el límite, actualizalo."
+            "si desea cambiar la categoría o el límite, actualícelo."
         )
 
     return repo.crear(

@@ -11,8 +11,6 @@ import { useTranslation } from "react-i18next";
 
 import { IDIOMA_POR_DEFECTO } from "@/config/i18n";
 import {
-  empresaGuardada,
-  guardarEmpresa,
   guardarIdioma,
   idiomaCodigoGuardado,
   idiomaGuardado,
@@ -20,11 +18,12 @@ import {
 
 
 
+//  La EMPRESA salió de acá con el login: vive en el token y la responde
+// `useSesion()`. Guardarla en el navegador daría dos fuentes de verdad, y la
+// del navegador puede quedar vieja.
 type Preferencias = {
-  empresaId: string | null;
   idiomaId: string | null;
   idiomaCodigo: string;
-  elegirEmpresa: (empresaId: string) => void;
   elegirIdioma: (idiomaId: string, codigo: string) => void;
 };
 
@@ -35,20 +34,9 @@ export function PreferenciasProvider({ children }: { children: ReactNode }) {
   const client = useApolloClient();
   const { i18n } = useTranslation();
 
-  const [empresaId, setEmpresaId] = useState<string | null>(empresaGuardada);
   const [idiomaId, setIdiomaId] = useState<string | null>(idiomaGuardado);
   const [idiomaCodigo, setIdiomaCodigo] = useState<string>(
     () => idiomaCodigoGuardado() || IDIOMA_POR_DEFECTO,
-  );
-
-  const elegirEmpresa = useCallback(
-    (nuevo: string) => {
-      guardarEmpresa(nuevo);
-      setEmpresaId(nuevo);
-
-      void client.resetStore();
-    },
-    [client],
   );
 
   const elegirIdioma = useCallback(
@@ -65,8 +53,8 @@ export function PreferenciasProvider({ children }: { children: ReactNode }) {
   );
 
   const valor = useMemo(
-    () => ({ empresaId, idiomaId, idiomaCodigo, elegirEmpresa, elegirIdioma }),
-    [empresaId, idiomaId, idiomaCodigo, elegirEmpresa, elegirIdioma],
+    () => ({ idiomaId, idiomaCodigo, elegirIdioma }),
+    [idiomaId, idiomaCodigo, elegirIdioma],
   );
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;

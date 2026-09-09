@@ -37,7 +37,7 @@ class Command(BaseCommand):
             if activo is None:
                 raise CommandError(
                     f"Falta la tipología '{NOMBRE_ESTADO_ACTIVO}' del agrupador "
-                    f"ESTADO_REGISTRO. Corré primero: "
+                    f"ESTADO_REGISTRO. Ejecute primero: "
                     f"python manage.py cargar_tipologias"
                 )
 

@@ -50,8 +50,8 @@ def agregar(
 
     if repo.existe(empresa_id, pais_id):
         raise ValidationError(
-            "Esa empresa ya tiene una ficha para ese país. Si querés cambiar "
-            "los datos de contacto, actualizá la que existe."
+            "Esa empresa ya tiene una ficha para ese país. Si desea cambiar "
+            "los datos de contacto, actualice la que existe."
         )
 
     return repo.crear(

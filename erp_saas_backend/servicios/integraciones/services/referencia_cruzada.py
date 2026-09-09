@@ -87,7 +87,7 @@ def anular(vinculo_id: int) -> ReferenciaCruzada:
     if baja is None:
         raise ValidationError(
             f"Falta la tipología '{NOMBRE_ESTADO_BAJA}' del agrupador "
-            f"ESTADO_REGISTRO. Corré: python manage.py cargar_semillas"
+            f"ESTADO_REGISTRO. Ejecute: python manage.py cargar_semillas"
         )
 
     return repo.actualizar(fila, estado_id=baja.pk)

@@ -80,7 +80,7 @@ def exigir_del_agrupador(
     if fila.indice == INDICE_CABECERA:
         raise TipologiaEquivocada(
             f"La tipología {tipologia_id} es el NOMBRE de la lista "
-            f"'{fila.nombre}', no uno de sus valores. Elegí un valor de esa "
+            f"'{fila.nombre}', no uno de sus valores. Seleccione un valor de esa "
             f"lista para el {para}."
         )
 

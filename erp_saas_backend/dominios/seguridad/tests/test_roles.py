@@ -156,7 +156,7 @@ def test_la_sucursal_no_repite_un_nombre_que_ya_hereda(cadena, activo):
         seguridad.crear_rol(nombre="Cajero", estado_id=activo.id)
 
     with empresa(norte.id):
-        with pytest.raises(ValidationError, match="Ya podés usar un rol"):
+        with pytest.raises(ValidationError, match="Ya puede usar un rol"):
             seguridad.crear_rol(nombre="Cajero", estado_id=activo.id)
 
 

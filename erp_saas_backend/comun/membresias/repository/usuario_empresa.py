@@ -40,7 +40,11 @@ def listar(estado_id: int | None = None) -> list[UsuarioEmpresa]:
 
 def obtener_de_usuario(usuario_id: int) -> UsuarioEmpresa | None:
     """La membresía de esa persona EN LA EMPRESA DEL CONTEXTO."""
-    return UsuarioEmpresa.objects.filter(usuario_id=usuario_id).first()
+    return (
+        UsuarioEmpresa.objects.filter(usuario_id=usuario_id)
+        .select_related("empresa")
+        .first()
+    )
 
 
 def listar_de_usuario_en_todas_las_empresas(usuario_id: int) -> list[UsuarioEmpresa]:

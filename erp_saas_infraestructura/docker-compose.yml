@@ -6,7 +6,7 @@ services:
     container_name: erp-frontend
     image: erp-frontend:1.0.0
     build:
-      context: ../erp-frontend
+      context: ../erp_saas_frontend
       dockerfile: Dockerfile
       args:
         - VITE_API_URL=/graphql/ 
@@ -22,7 +22,7 @@ services:
     container_name: erp-backend
     image: erp-backend:1.0.0
     build:
-      context: ../erp-backend
+      context: ../erp_saas_backend
       dockerfile: Dockerfile
     restart: unless-stopped
     command: >
@@ -35,7 +35,7 @@ services:
     ports:
       - "10000:8000"
     env_file:
-      - ../erp-backend/.env
+      - ../erp_saas_backend/.env
     networks:
       - erp-frontend-backend-net
   

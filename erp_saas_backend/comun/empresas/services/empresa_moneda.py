@@ -28,7 +28,7 @@ def _estado_activo():
     if fila is None:
         raise ValidationError(
             f"Falta la tipología '{NOMBRE_ESTADO_ACTIVO}' del agrupador "
-            f"ESTADO_REGISTRO. Corré: python manage.py cargar_semillas"
+            f"ESTADO_REGISTRO. Ejecute: python manage.py cargar_semillas"
         )
     return fila
 
@@ -44,8 +44,8 @@ def agregar(
 
     if repo.existe(empresa_id, moneda_id):
         raise ValidationError(
-            f"Esa empresa ya opera con {moneda.codigo}. Si querés que sea su "
-            f"moneda oficial, marcala; no hace falta agregarla de nuevo."
+            f"Esa empresa ya opera con {moneda.codigo}. Si desea que sea su "
+            f"moneda oficial, márquela; no es necesario agregarla de nuevo."
         )
 
     # INVARIANTE 4, primera mitad: si es la primera, es la oficial.
@@ -118,7 +118,7 @@ def quitar(empresa_id: int, moneda_id: int) -> int:
     if baja is None:
         raise ValidationError(
             f"Falta la tipología '{NOMBRE_ESTADO_BAJA}' del agrupador "
-            f"ESTADO_REGISTRO. Corré: python manage.py cargar_semillas"
+            f"ESTADO_REGISTRO. Ejecute: python manage.py cargar_semillas"
         )
 
     repo.actualizar(fila, estado=baja)

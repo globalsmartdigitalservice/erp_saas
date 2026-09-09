@@ -74,7 +74,7 @@ def actualizar(
                 raise ValidationError(
                     "Esta serie ya emitió documentos: cambiarle el prefijo "
                     "haría que lo impreso no coincida con lo que el sistema "
-                    "calcula. Creá una serie nueva."
+                    "calcula. Cree una serie nueva."
                 )
             if repo.existe(serie.tipo_documento_id, prefijo, excluir_id=serie_id):
                 raise ValidationError(
@@ -107,7 +107,7 @@ def desactivar(serie_id: int) -> SerieDocumental:
     if baja is None:
         raise ValidationError(
             f"Falta la tipología '{NOMBRE_ESTADO_BAJA}' del agrupador "
-            f"ESTADO_REGISTRO. Corré: python manage.py cargar_semillas"
+            f"ESTADO_REGISTRO. Ejecute: python manage.py cargar_semillas"
         )
 
     return repo.actualizar(serie, estado_id=baja.pk)

@@ -134,7 +134,7 @@ def desactivar(ubicacion_id: int) -> UbicacionGeografica:
     if inactivo is None:
         raise ValidationError(
             f"Falta la tipología '{NOMBRE_ESTADO_BAJA}' del agrupador "
-            f"ESTADO_REGISTRO. Corré: python manage.py cargar_semillas"
+            f"ESTADO_REGISTRO. Ejecute: python manage.py cargar_semillas"
         )
 
     return repo.actualizar(ubicacion, estado_id=inactivo.pk)

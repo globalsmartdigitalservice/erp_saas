@@ -318,8 +318,8 @@ def test_el_recorrido_completo(cadena, activo, permiso):
 
         # 6 — y ahora sí puede
         mis = _correr(
-            "query ($m: ID!) { misPermisos(membresiaId: $m) }", m=suya["id"]
-        )["misPermisos"]
+            "query ($m: ID!) { permisosDe(membresiaId: $m) }", m=suya["id"]
+        )["permisosDe"]
 
     assert mis == [f"{p.content_type.app_label}.anular_factura"]
 

@@ -54,7 +54,7 @@ def _validar_texto(texto: str) -> str:
     limpio = (texto or "").strip()
     if not limpio:
         raise ValidationError(
-            "La traducción no puede estar vacía. Si querés sacarla, borrala."
+            "La traducción no puede estar vacía. Si desea quitarla, elimínela."
         )
     return limpio
 
@@ -121,14 +121,14 @@ def _exigir_que_sea_propia(traduccion: Traduccion) -> None:
     if traduccion.empresa_id is None:
         raise ValidationError(
             "Esa traducción es del catálogo del sistema y no se toca desde "
-            "una empresa. Si necesitás otro texto, guardá el tuyo: el propio "
+            "una empresa. Si necesita otro texto, guarde el suyo: el propio "
             "le gana al de fábrica."
         )
 
     if traduccion.empresa_id != empresa_id:
         raise ValidationError(
-            "Esa traducción es de tu casa matriz. Si necesitás otro texto, "
-            "guardá el tuyo: el propio le gana al heredado."
+            "Esa traducción es de su casa matriz. Si necesita otro texto, "
+            "guarde el suyo: el propio le gana al heredado."
         )
 
 

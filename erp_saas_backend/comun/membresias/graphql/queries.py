@@ -14,7 +14,7 @@ class MembresiaQueries:
     @strawberry.field(
         description=(
             "En qué empresas está dada de alta una persona. Es lo que llena "
-            "el selector '¿dónde querés trabajar?' del login, y corre ANTES "
+            "el selector '¿dónde desea trabajar?' del login, y corre ANTES "
             "de elegir empresa."
         )
     )

@@ -2,7 +2,8 @@ import { Menu } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Brand } from "./Brand";
-import { SelectorDeEmpresa } from "./SelectorDeEmpresa";
+import { EmpresaDeLaSesion } from "./EmpresaDeLaSesion";
+import { MenuDeUsuario } from "./MenuDeUsuario";
 import { SelectorDeIdioma } from "./SelectorDeIdioma";
 
 
@@ -30,9 +31,10 @@ export function Header({ alAbrirMenu }: Props) {
         <Brand />
       </div>
 
-      <div className="ml-auto flex items-center gap-3">
-        <SelectorDeEmpresa />
+      <div className="ml-auto flex min-w-0 items-center gap-3">
+        <EmpresaDeLaSesion />
         <SelectorDeIdioma />
+        <MenuDeUsuario />
       </div>
     </header>
   );

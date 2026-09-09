@@ -44,7 +44,7 @@ def _estado(nombre: str):
     if fila is None:
         raise ValidationError(
             f"Falta la tipología '{nombre}' del agrupador ESTADO_REGISTRO. "
-            f"Corré: python manage.py cargar_semillas"
+            f"Ejecute: python manage.py cargar_semillas"
         )
     return fila
 

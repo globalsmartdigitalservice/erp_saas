@@ -1,6 +1,9 @@
 
+//  La empresa NO está acá: sale del token de la sesión. Estuvo mientras no
+// había login, y se fue con él. La clave vieja `erp.empresaId` puede haber
+// quedado en el navegador de quien lo usó antes; nada la lee, así que da
+// igual.
 export const CLAVES = {
-  empresa: "erp.empresaId",
   idiomaId: "erp.idiomaId",
   idiomaCodigo: "erp.idiomaCodigo",
 } as const;
@@ -19,14 +22,6 @@ function escribir(clave: string, valor: string): void {
   } catch {
 
   }
-}
-
-export function empresaGuardada(): string | null {
-  return leer(CLAVES.empresa);
-}
-
-export function guardarEmpresa(empresaId: string): void {
-  escribir(CLAVES.empresa, empresaId);
 }
 
 /** El ID del idioma, que es lo que espera la cabecera `X-Idioma`. */

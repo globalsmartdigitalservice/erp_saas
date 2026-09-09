@@ -11,7 +11,12 @@ from dominios.seguridad.services import login as svc
 
 
 def _traducir(error: ValidationError) -> GraphQLError:
-    return GraphQLError("; ".join(error.messages))
+    """El `code` de Django sube a `extensions` para que el cliente decida sin
+    leer el texto: comparar mensajes se rompe al reescribir una palabra, y se
+    rompe en silencio."""
+    codigo = getattr(error, "code", None)
+    extensions = {"code": codigo} if codigo else None
+    return GraphQLError("; ".join(error.messages), extensions=extensions)
 
 
 def _poner_cookies(info, ingreso) -> None:
@@ -144,7 +149,10 @@ class LoginMutations:
     def renovar_sesion(self, info: strawberry.Info) -> ResultadoIngresoType:
         crudo = info.context.request.COOKIES.get(settings.COOKIE_REFRESH)
         if not crudo:
-            raise GraphQLError("La sesión venció. Volvé a entrar.")
+            raise GraphQLError(
+                svc.SESION_MUERTA,
+                extensions={"code": svc.CODIGO_SESION_MUERTA},
+            )
 
         try:
             ingreso = svc.renovar(refresh=crudo)

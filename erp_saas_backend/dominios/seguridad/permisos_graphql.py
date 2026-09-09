@@ -26,8 +26,19 @@ from dominios.seguridad.permisos import METADATA, codename_de
 
 # El mismo texto para todos los rechazos por permiso. No dice CUÁL falta:
 # eso le dibuja el sistema a quien está probando qué puede hacer.
-SIN_PERMISO = "No tenés permiso para hacer esto."
-SIN_SESION = "Necesitás iniciar sesión."
+SIN_PERMISO = "No tiene permiso para realizar esta acción."
+SIN_SESION = "Debe iniciar sesión."
+
+# El código viaja en `extensions["code"]` para que el cliente DECIDA sin leer
+# el texto. Comparar mensajes se rompe al reescribir una palabra, y se rompe
+# en silencio: el cliente deja de renovar la sesión y nadie se entera.
+#
+# La clave `code` y estos dos valores son la convención de Apollo, que es el
+# cliente de este ERP: son las palabras de 401 y 403, y las entiende cualquier
+# dev sin preguntar. El MENSAJE sigue en español y formal — los códigos son
+# para máquinas y los mensajes para personas.
+CODIGO_SIN_PERMISO = "FORBIDDEN"
+CODIGO_SIN_SESION = "UNAUTHENTICATED"
 
 # El prefijo del ancla al que se cuelgan todos los permisos del ERP.
 # Ver dominios/seguridad/models/permiso_de_negocio.py.
@@ -57,13 +68,13 @@ def _exigir_sesion(args, kwargs, func):
     if info is None:
         raise GraphQLError(
             f"'{func.__name__}' está protegido pero no recibe `info`. "
-            f"Agregale el parámetro `info: strawberry.Info`: de ahí sale "
+            f"Agregue el parámetro `info: strawberry.Info`: de ahí sale "
             f"quién está llamando."
         )
 
     usuario = _usuario_de(info)
     if usuario is None or not usuario.is_authenticated:
-        raise GraphQLError(SIN_SESION)
+        raise GraphQLError(SIN_SESION, extensions={"code": CODIGO_SIN_SESION})
 
     return usuario
 
@@ -114,12 +125,12 @@ def _armar_guard(func, codigo_fijo):
             raise GraphQLError(
                 f"'{func.__name__}' tiene @requiere_permiso pero su clase no "
                 f"tiene @auto_permisos, así que no se sabe qué permiso pedir. "
-                f'Poné @auto_permisos(recurso="...") en la clase, o pasale el '
+                f'Coloque @auto_permisos(recurso="...") en la clase, o pásele el '
                 f'código: @requiere_permiso("mi_codigo").'
             )
 
         if not usuario.has_perm(f"{APP_DE_LOS_PERMISOS}.{codigo}"):
-            raise GraphQLError(SIN_PERMISO)
+            raise GraphQLError(SIN_PERMISO, extensions={"code": CODIGO_SIN_PERMISO})
 
         return func(*args, **kwargs)
 
@@ -172,7 +183,7 @@ def solo_proveedor(func):
         if not (usuario.is_staff or usuario.is_superuser):
             # Mismo texto que "no tenés el permiso": distinguirlos le diría
             # a un cliente que esa operación existe.
-            raise GraphQLError(SIN_PERMISO)
+            raise GraphQLError(SIN_PERMISO, extensions={"code": CODIGO_SIN_PERMISO})
 
         return func(*args, **kwargs)
 
@@ -186,4 +197,6 @@ __all__ = [
     "solo_proveedor",
     "SIN_PERMISO",
     "SIN_SESION",
+    "CODIGO_SIN_PERMISO",
+    "CODIGO_SIN_SESION",
 ]

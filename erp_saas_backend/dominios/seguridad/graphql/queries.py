@@ -7,6 +7,8 @@ import strawberry
 from core.tenancy import empresa_actual
 from dominios.seguridad import api as seguridad
 
+from comun.membresias import api as membresias
+from comun.membresias.graphql.types import EmpresaDelUsuarioType
 from comun.usuarios.graphql.types import UsuarioType
 
 from .tipos_acceso import (
@@ -66,13 +68,12 @@ class SeguridadQueries:
 
     @strawberry.field(
         description=(
-            "Los códigos de permiso que una persona tiene HOY en esta "
-            "empresa, ya unidos de todos sus roles vigentes. Es lo mismo que "
-            "contesta `has_perm()`, y sirve para que el frontend esconda los "
-            "botones que no va a poder usar."
+            "Los códigos de permiso que OTRA persona tiene hoy en esta "
+            "empresa, unidos de todos sus roles vigentes. Para los propios "
+            "está `misPermisos`, que no pide nada."
         )
     )
-    def mis_permisos(self, membresia_id: strawberry.ID) -> list[str]:
+    def permisos_de(self, membresia_id: strawberry.ID) -> list[str]:
         return sorted(seguridad.permisos_de(int(membresia_id)))
 
 
@@ -147,6 +148,14 @@ class AccesoQueries:
         )
 
 
+def _mi_membresia(info):
+    """La membresía de quien llama, en la empresa donde está parado."""
+    usuario = getattr(info.context.request, "user", None)
+    if usuario is None or not usuario.is_authenticated:
+        return None
+    return membresias.membresia_de(usuario.pk)
+
+
 @strawberry.type
 class SesionQueries:
     @strawberry.field(
@@ -172,6 +181,27 @@ class SesionQueries:
     def empresa_actual(self) -> strawberry.ID | None:
         actual = empresa_actual()
         return strawberry.ID(str(actual)) if actual is not None else None
+
+    @strawberry.field(
+        description=(
+            "La empresa de la sesión, con la razón social ya resuelta para "
+            "el encabezado. `empresaActual` devuelve solo el id."
+        )
+    )
+    def mi_empresa(self, info: strawberry.Info) -> EmpresaDelUsuarioType | None:
+        membresia = _mi_membresia(info)
+        return EmpresaDelUsuarioType.desde_modelo(membresia) if membresia else None
+
+    @strawberry.field(
+        description=(
+            "Los códigos de permiso de quien está conectado, deducidos de la "
+            "sesión. Sirve para esconder los botones que no va a poder usar; "
+            "lo que de verdad protege son las guardas del backend."
+        )
+    )
+    def mis_permisos(self, info: strawberry.Info) -> list[str]:
+        membresia = _mi_membresia(info)
+        return sorted(seguridad.permisos_de(membresia.pk)) if membresia else []
 
 
 @strawberry.type

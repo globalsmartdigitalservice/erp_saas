@@ -47,7 +47,7 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.WARNING(
                     "No se encontró ninguna mutation decorada con @auto_permisos. "
-                    "Si esperabas encontrar alguna, revisá que la clase esté "
+                    "Si esperaba encontrar alguna, revise que la clase esté "
                     "decorada y que su app esté en INSTALLED_APPS."
                 )
             )
@@ -58,7 +58,7 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.WARNING(
                     f"  aviso: '{d['codename']}' está declarado más de una vez. "
-                    f"Se usa el primero ({d['metodo']}); revisá si el otro "
+                    f"Se usa el primero ({d['metodo']}); revise si el otro "
                     f"quería un `operacion=` distinto."
                 )
             )
@@ -149,8 +149,8 @@ class Command(BaseCommand):
                 self.style.WARNING(
                     f"  aviso: No existe el Sub_Modulo '{recurso}'. Sus permisos se "
                     f"crean igual, pero sin pantalla ni nombre: en el armado de "
-                    f"roles van a aparecer como un código suelto. Creá esa "
-                    f"pantalla y volvé a correr el comando."
+                    f"roles van a aparecer como un código suelto. Cree esa "
+                    f"pantalla y vuelva a ejecutar el comando."
                 )
             )
 

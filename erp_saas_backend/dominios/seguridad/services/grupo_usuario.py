@@ -82,8 +82,8 @@ def asignar(
 
     if repo.hay_asignacion_vigente(membresia_id, grupo_id):
         raise ValidationError(
-            "Esa persona ya tiene ese rol vigente. Si querés cambiarle las "
-            "fechas o el motivo, editá la asignación en vez de crear otra."
+            "Esa persona ya tiene ese rol vigente. Si desea cambiar las "
+            "fechas o el motivo, edite la asignación en vez de crear otra."
         )
 
     return repo.crear(
@@ -121,7 +121,7 @@ def quitar(
     if baja is None:
         raise ValidationError(
             f"Falta la tipología '{NOMBRE_ESTADO_BAJA}' del agrupador "
-            f"ESTADO_REGISTRO. Corré: python manage.py cargar_semillas"
+            f"ESTADO_REGISTRO. Ejecute: python manage.py cargar_semillas"
         )
 
     return repo.actualizar(asignacion, fecha_fin=fecha_fin, estado_id=baja.pk)

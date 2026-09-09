@@ -70,13 +70,14 @@ def graphql_encendido(settings):
     settings.ROOT_URLCONF = "config.urls"
 
 
-def _pedir(cliente, consulta, **variables):
+def _pedir(cliente, consulta, *, cabeceras=None, **variables):
     import json
 
     return cliente.post(
         URL,
         data=json.dumps({"query": consulta, "variables": variables or None}),
         content_type="application/json",
+        headers=cabeceras or {},
     )
 
 
@@ -251,3 +252,26 @@ def test_las_consultas_devuelven_solo_lo_de_la_empresa_de_la_sesion(
     datos = _pedir(client, "{ miembros { usuario { username } } }").json()["data"]
 
     assert [m["usuario"]["username"] for m in datos["miembros"]] == ["juan"]
+
+
+def test_la_cabecera_de_empresa_no_le_gana_al_token(
+    client, en_gimnasio, empresa_a, empresa_b
+):
+    """La empresa del token va firmada; la de la cabecera no.
+
+    Sale del ORDEN de los middlewares, que no se ve desde acá, y darlo vuelta
+    no rompe nada: contesta con los datos de la otra empresa. El frontend
+    manda esa cabecera desde el localStorage, así que una guardada de antes le
+    cambiaría la empresa a una sesión recién abierta.
+
+    Juan NO es miembro de `empresa_b`: la cabecera no tiene que servir ni
+    siquiera para ir a donde la persona sí podría entrar."""
+    _pedir(client, INGRESAR, datos={"identificador": "juan", "password": "Kx7pLm9Qw2"})
+
+    respuesta = _pedir(
+        client,
+        "{ empresaActual }",
+        cabeceras={"x-empresa-id": str(empresa_b.id)},
+    )
+
+    assert respuesta.json()["data"]["empresaActual"] == str(empresa_a.id)

@@ -12,7 +12,7 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 if not SECRET_KEY:
     raise RuntimeError(
-        "Falta DJANGO_SECRET_KEY. Copiá .env.example a .env y completala."
+        "Falta DJANGO_SECRET_KEY. Copie .env.example a .env y complétela."
     )
 
 
@@ -56,8 +56,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "dominios.seguridad.middleware.SesionPorTokenMiddleware",
+
     "core.tenancy.middleware.EmpresaDesdeCabeceraMiddleware",
+    "dominios.seguridad.middleware.SesionPorTokenMiddleware",
     "core.idioma.middleware.IdiomaDesdeCabeceraMiddleware",
 ]
 

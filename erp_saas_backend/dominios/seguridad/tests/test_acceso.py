@@ -2,6 +2,7 @@ import datetime
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 
 from comun.membresias import api as membresias
@@ -474,3 +475,33 @@ def test_desautorizar_no_borra_la_fila(en_gimnasio, empresa_a, activo, caja_2, c
         assert quitada.id == autorizacion.id
         assert quitada.fecha_fin == datetime.date.today()
         assert len(seguridad.dispositivos_de(en_gimnasio.id)) == 1
+
+
+def test_sin_momento_la_hora_sale_de_TIME_ZONE_y_no_del_servidor(
+    en_gimnasio, empresa_a, activo
+):
+    """El único test que NO pasa `momento`, y por eso el único que toca el
+    reloj de verdad.
+
+    El contenedor corre en UTC y la empresa en `America/La_Paz`: son cuatro
+    horas. Con `datetime.now()` un turno de 08:00 a 17:00 dejaba entrar de
+    04:00 a 13:00 y rechazaba el resto, sin excepción ni log — el veredicto
+    salía mal y parecía bien.
+
+    Se cargan los SIETE días para que el día no participe: lo único que puede
+    hacer fallar esto es que la hora se lea en la zona equivocada."""
+    with timezone.override("Pacific/Kiritimati"):
+        alla = timezone.localtime()
+
+        with empresa(empresa_a.id):
+            for dia in range(7):
+                seguridad.cargar_horario(
+                    membresia_id=en_gimnasio.id,
+                    dia_semana=dia,
+                    hora_inicio=(alla - datetime.timedelta(minutes=5)).time(),
+                    hora_fin=(alla + datetime.timedelta(minutes=5)).time(),
+                    estado_id=activo.id,
+                    vigencia_desde=datetime.date(2020, 1, 1),
+                )
+
+            assert seguridad.puede_entrar(membresia_id=en_gimnasio.id)

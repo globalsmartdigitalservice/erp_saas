@@ -31,7 +31,7 @@ def _es_tipo_matriz(tipo_empresa_id: int) -> bool:
     if matriz is None:
         raise ValidationError(
             f"Falta la tipología '{NOMBRE_TIPO_MATRIZ}' del agrupador "
-            f"TIPO_EMPRESA. Corré: python manage.py cargar_semillas"
+            f"TIPO_EMPRESA. Ejecute: python manage.py cargar_semillas"
         )
     return tipo_empresa_id == matriz.pk
 
@@ -49,7 +49,7 @@ def _validar_coherencia_jerarquia(
     if not es_matriz and empresa_padre_id is None:
         raise ValidationError(
             "Una sucursal o filial tiene que tener una empresa padre. Si es "
-            "independiente, marcala como casa matriz."
+            "independiente, márquela como casa matriz."
         )
 
 
@@ -221,7 +221,7 @@ def desactivar(empresa_id: int) -> Empresa:
     if inactiva is None:
         raise ValidationError(
             f"Falta la tipología '{NOMBRE_ESTADO_INACTIVA}' del agrupador "
-            f"ESTADO_EMPRESA. Corré: python manage.py cargar_semillas"
+            f"ESTADO_EMPRESA. Ejecute: python manage.py cargar_semillas"
         )
 
     activas = [

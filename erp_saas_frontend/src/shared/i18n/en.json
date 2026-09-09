@@ -8,13 +8,27 @@
     "sinRespuesta": "Could not reach the server. Please check your connection and try again.",
     "ninguna": "None"
   },
+  "login": {
+    "titulo": "Sign in",
+    "ayuda": "Enter your credentials to access the system.",
+    "identificador": "Username or email address",
+    "identificadorAyuda": "You may use either one.",
+    "password": "Password",
+    "entrar": "Sign in",
+    "entrando": "Signing in…",
+    "tituloEmpresa": "Select a company",
+    "ayudaEmpresa": "Your account is enabled in more than one. The information you see belongs to the one you select.",
+    "casaMatriz": "Headquarters",
+    "sucursal": "Branch",
+    "volver": "Back",
+    "panelTitulo": "Business management in one place",
+    "panelTexto": "Each company works with its own information, its own lists and its own documents."
+  },
   "cabecera": {
     "empresa": "Company",
     "idioma": "Language",
-    "elegiEmpresa": "Select a company",
-    "sinEmpresa": "No active company",
-    "sinEmpresaTitulo": "Select a company to get started",
-    "sinEmpresaAyuda": "The selector is at the top right. The information shown — customers, lists and documents — belongs to the selected company."
+    "salir": "Sign out",
+    "saliendo": "Signing out"
   },
   "menu": {
     "configuracion": "Settings",

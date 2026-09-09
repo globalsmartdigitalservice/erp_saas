@@ -8,13 +8,27 @@
     "sinRespuesta": "No se pudo conectar con el servidor. Verifique su conexión e intente nuevamente.",
     "ninguna": "Ninguna"
   },
+  "login": {
+    "titulo": "Iniciar sesión",
+    "ayuda": "Ingrese sus credenciales para acceder al sistema.",
+    "identificador": "Usuario o correo electrónico",
+    "identificadorAyuda": "Puede ingresar con cualquiera de los dos.",
+    "password": "Contraseña",
+    "entrar": "Ingresar",
+    "entrando": "Ingresando…",
+    "tituloEmpresa": "Seleccione una empresa",
+    "ayudaEmpresa": "Su usuario está habilitado en más de una. La información que verá corresponde a la que seleccione.",
+    "casaMatriz": "Casa matriz",
+    "sucursal": "Sucursal",
+    "volver": "Volver",
+    "panelTitulo": "Gestión empresarial en un solo lugar",
+    "panelTexto": "Cada empresa trabaja con su propia información, sus propias listas y sus propios documentos."
+  },
   "cabecera": {
     "empresa": "Empresa",
     "idioma": "Idioma",
-    "elegiEmpresa": "Seleccione una empresa",
-    "sinEmpresa": "Sin empresa activa",
-    "sinEmpresaTitulo": "Seleccione una empresa para comenzar",
-    "sinEmpresaAyuda": "El selector se encuentra en la parte superior derecha. La información que se muestra —clientes, listas y documentos— corresponde a la empresa seleccionada."
+    "salir": "Cerrar sesión",
+    "saliendo": "Cerrando sesión"
   },
   "menu": {
     "configuracion": "Configuración",

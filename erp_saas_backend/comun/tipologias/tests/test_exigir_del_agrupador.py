@@ -31,7 +31,7 @@ def test_la_cabecera_dice_que_es_una_cabecera(cabecera_de_estados):
     assert "NOMBRE de la lista" in mensaje
     assert "ESTADOS GENERALES" in mensaje
     # Y dice qué hacer, no solo qué está mal.
-    assert "Elegí un valor" in mensaje
+    assert "Seleccione un valor" in mensaje
 
 
 def test_una_tipologia_de_otra_lista_dice_cual_es(catalogo):
