@@ -6,26 +6,13 @@ from comun.membresias import api as membresias
 from comun.usuarios import api as usuarios
 from comun.usuarios.graphql.types import UsuarioType
 
-from .types import EmpresaDelUsuarioType, MembresiaType
+from .types import MembresiaType
+
+
 
 
 @strawberry.type
 class MembresiaQueries:
-    @strawberry.field(
-        description=(
-            "En qué empresas está dada de alta una persona. Es lo que llena "
-            "el selector '¿dónde desea trabajar?' del login, y corre ANTES "
-            "de elegir empresa."
-        )
-    )
-    def empresas_del_usuario(
-        self, usuario_id: strawberry.ID
-    ) -> list[EmpresaDelUsuarioType]:
-        return [
-            EmpresaDelUsuarioType.desde_modelo(m)
-            for m in membresias.empresas_de(int(usuario_id))
-        ]
-
     @strawberry.field(
         description=(
             "Quiénes trabajan en la empresa activa. Es la lista de usuarios "

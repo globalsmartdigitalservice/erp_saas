@@ -48,9 +48,12 @@ def bloqueo_exc(catalogo):
 
 
 @pytest.fixture
-def juan():
+def juan(empresa_a):
     return Usuario.objects.create_user(
-        username="juan", email="juan@acme.com", password="Kx7pLm9Qw2"
+        username="juan",
+        email="juan@acme.com",
+        password="Kx7pLm9Qw2",
+        matriz=empresa_a,
     )
 
 
@@ -62,9 +65,13 @@ def en_gimnasio(juan, empresa_a, activo):
 
 
 @pytest.fixture
-def en_farmacia(juan, empresa_b, activo):
+def en_sucursal(juan, sucursal_a, activo):
+    """La misma persona en OTRA empresa de su cliente.
+
+    El caso real: trabaja de mañana en una sucursal y de tarde en la otra,
+    con horarios y equipos distintos en cada una."""
     return membresias.afiliar(
-        usuario_id=juan.id, empresa_id=empresa_b.id, estado_id=activo.id
+        usuario_id=juan.id, empresa_id=sucursal_a.id, estado_id=activo.id
     )
 
 
@@ -300,8 +307,8 @@ def test_el_tipo_de_excepcion_tiene_que_ser_del_agrupador_correcto(
             )
 
 
-def test_el_horario_de_la_farmacia_no_deja_entrar_al_gimnasio(
-    en_gimnasio, en_farmacia, empresa_a, empresa_b, activo
+def test_el_horario_de_una_sucursal_no_vale_en_la_otra(
+    en_gimnasio, en_sucursal, empresa_a, sucursal_a, activo
 ):
     with empresa(empresa_a.id):
         seguridad.cargar_horario(
@@ -312,9 +319,9 @@ def test_el_horario_de_la_farmacia_no_deja_entrar_al_gimnasio(
             estado_id=activo.id,
             vigencia_desde=LUNES,
         )
-    with empresa(empresa_b.id):
+    with empresa(sucursal_a.id):
         seguridad.cargar_horario(
-            membresia_id=en_farmacia.id,
+            membresia_id=en_sucursal.id,
             dia_semana=0,
             hora_inicio=datetime.time(14, 0),
             hora_fin=datetime.time(18, 0),
@@ -328,14 +335,14 @@ def test_el_horario_de_la_farmacia_no_deja_entrar_al_gimnasio(
         assert not seguridad.puede_entrar(
             membresia_id=en_gimnasio.id, momento=a_las_tres
         )
-    with empresa(empresa_b.id):
+    with empresa(sucursal_a.id):
         assert seguridad.puede_entrar(
-            membresia_id=en_farmacia.id, momento=a_las_tres
+            membresia_id=en_sucursal.id, momento=a_las_tres
         )
 
 
 def test_una_empresa_no_ve_los_horarios_de_la_otra(
-    en_gimnasio, en_farmacia, empresa_a, empresa_b, activo
+    en_gimnasio, en_sucursal, empresa_a, sucursal_a, activo
 ):
     with empresa(empresa_a.id):
         seguridad.cargar_horario(
@@ -346,8 +353,8 @@ def test_una_empresa_no_ve_los_horarios_de_la_otra(
             estado_id=activo.id,
         )
 
-    with empresa(empresa_b.id):
-        assert seguridad.horarios_de(en_farmacia.id) == []
+    with empresa(sucursal_a.id):
+        assert seguridad.horarios_de(en_sucursal.id) == []
 
 
 @pytest.fixture
@@ -438,7 +445,7 @@ def test_sin_cliente_instalado_no_se_comprueba_el_equipo(
 
 
 def test_no_se_puede_autorizar_el_equipo_de_otro_cliente(
-    en_gimnasio, en_farmacia, empresa_a, empresa_b, activo, tipo_pc
+    en_gimnasio, empresa_a, empresa_b, activo, tipo_pc
 ):
     with empresa(empresa_b.id):
         ajeno = seguridad.registrar_dispositivo(

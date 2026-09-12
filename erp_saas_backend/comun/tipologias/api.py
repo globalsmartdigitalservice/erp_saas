@@ -109,6 +109,11 @@ def es_del_agrupador(tipologia_id: int, agrupador: int) -> bool:
     )
 
 
+#  Sin la empresa adentro a proposito: la tipologia de semilla es la misma
+# para todos los clientes. Es la excepcion a la regla de nombrado de claves.
+_CLAVE_ESTADO_ACTIVO = "erp:tipologia:estado_activo"
+
+
 def obtener_del_sistema(agrupador: int, nombre: str) -> Tipologia | None:
     """
     Una fila del CATÁLOGO DEL SISTEMA por su nombre — la que garantiza la
@@ -117,6 +122,29 @@ def obtener_del_sistema(agrupador: int, nombre: str) -> Tipologia | None:
     se haya creado con el mismo nombre.
     """
     return _repo.obtener_del_sistema(agrupador, nombre)
+
+
+def id_del_estado_activo() -> int | None:
+    """El id de la tipologia ACTIVO, para comparar contra un `estado_id`.
+
+     Se cachea porque lo consulta el middleware EN CADA PETICION: es una
+    fila de semilla que no cambia en toda la vida del proceso. Si algun dia
+    cambiara, se reinicia el contenedor, que ya es la operacion normal.
+    """
+    from django.core.cache import cache
+
+    from comun.tipologias.constantes import AGRUPADOR, NOMBRE_ESTADO_ACTIVO
+
+    guardado = cache.get(_CLAVE_ESTADO_ACTIVO)
+    if guardado is not None:
+        return guardado
+
+    activo = obtener_del_sistema(AGRUPADOR.ESTADO_REGISTRO, NOMBRE_ESTADO_ACTIVO)
+    if activo is None:
+        return None
+
+    cache.set(_CLAVE_ESTADO_ACTIVO, activo.pk, timeout=None)
+    return activo.pk
 
 
 def agrupadores() -> list[Tipologia]:
@@ -235,6 +263,7 @@ __all__ = [
     "exigir_del_agrupador",
     "TipologiaEquivocada",
     "obtener_del_sistema",
+    "id_del_estado_activo",
     "agrupadores",
     "nombre_de_la_lista",
     "puede_ampliar",

@@ -22,16 +22,30 @@ queda pegada a la siguiente petición.
  NO RECHAZA LA PETICIÓN SI NO HAY TOKEN. Sigue de largo sin usuario y
 sin empresa: quién puede hacer qué lo deciden los resolvers y `has_perm()`,
 y un middleware que devuelve 401 a todo dejaría afuera al propio login.
+
+ SE COMPRUEBA LA SESIÓN CONTRA LA BASE EN CADA PETICIÓN, y eso no es un
+lujo: sin esto, dar de baja a alguien no lo saca del sistema. Su token ya
+lleva la empresa adentro y la renovación tampoco mira la membresía, así
+que se queda adentro mientras siga renovando. **No es una ventana de 15
+minutos: es indefinida.**
+
+Y no cuesta una consulta más. Antes se buscaba al usuario para mirarle
+`is_active` —una consulta igual—; ahora se busca la sesión, que con un
+`select_related` trae la membresía y la persona en la misma. Se paga lo
+mismo y se contestan cuatro cosas en vez de una.
 """
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 
-from core.tenancy import establecer_empresa, restaurar_empresa
+from comun.tipologias import api as tipologias
+from core.tenancy import (
+    establecer_empresa,
+    restaurar_empresa,
+    sin_filtro_de_empresa,
+)
 from dominios.seguridad import tokens
-
-UserModel = get_user_model()
+from dominios.seguridad.models import SesionAcceso
 
 
 class SesionPorTokenMiddleware:
@@ -47,19 +61,17 @@ class SesionPorTokenMiddleware:
         datos = self._leer_token(request)
 
         if datos is None:
-            # Sin token: petición anónima. El login entra por acá.
+         
             return self.get_response(request)
 
-        usuario = self._resolver_usuario(datos)
-        if usuario is None:
-            # Token válido pero el usuario ya no existe o está dado de
-            # baja. Se sigue como anónimo en vez de reventar: dar de baja
-            # a alguien no tiene que devolverle un error 500.
+        membresia = self._membresia_vigente(datos)
+        if membresia is None:
+            
             return self.get_response(request)
 
-        request.user = usuario
+        request.user = membresia.usuario
 
-        marca = establecer_empresa(datos["emp"])
+        marca = establecer_empresa(membresia.empresa_id)
         try:
             return self.get_response(request)
         finally:
@@ -72,15 +84,40 @@ class SesionPorTokenMiddleware:
         try:
             return tokens.leer(crudo, tipo=tokens.TIPO_ACCESO)
         except tokens.TokenInvalido:
-            # Vencido, mal firmado o del tipo equivocado. Se ignora: el
-            # cliente va a pedir uno nuevo con su refresh.
+        
             return None
 
-    def _resolver_usuario(self, datos):
-        usuario = UserModel.objects.filter(pk=int(datos["sub"])).first()
-        if usuario is None or not usuario.is_active:
+    def _membresia_vigente(self, datos):
+        """La membresía de esta sesión, si todo sigue en pie.
+
+        Cuatro comprobaciones en UNA consulta: la sesión existe, sigue
+        abierta, la cuenta está activa y la persona sigue trabajando en esa
+        empresa.
+        """
+        with sin_filtro_de_empresa():
+            
+            sesion = (
+                SesionAcceso.objects.select_related("usuario_empresa__usuario")
+                .filter(pk=datos["ses"])
+                .first()
+            )
+
+        if sesion is None or not sesion.esta_abierta:
             return None
-        return usuario
+
+        membresia = sesion.usuario_empresa
+        if not membresia.usuario.is_active:
+            return None
+
+        activo = tipologias.id_del_estado_activo()
+        if membresia.estado_id != activo:
+            return None
+
+       
+        if datos.get("emp") != membresia.empresa_id:
+            return None
+
+        return membresia
 
 
 class AnonimoPorDefectoMiddleware:

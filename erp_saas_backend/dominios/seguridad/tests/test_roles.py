@@ -27,12 +27,12 @@ def de_baja(catalogo):
 
 
 @pytest.fixture
-def cadena(crear_empresa):
-    """Supermercado Central con dos sucursales."""
-    matriz = crear_empresa("Supermercado Central")
-    norte = crear_empresa("Sucursal Norte", padre=matriz)
-    sur = crear_empresa("Sucursal Sur", padre=matriz)
-    return matriz, norte, sur
+def cadena(crear_empresa, empresa_a):
+    """La empresa de Juan con dos sucursales: una cuenta solo trabaja en
+    empresas de su propio cliente."""
+    norte = crear_empresa("Sucursal Norte", padre=empresa_a)
+    sur = crear_empresa("Sucursal Sur", padre=empresa_a)
+    return empresa_a, norte, sur
 
 
 @pytest.fixture
@@ -61,9 +61,12 @@ def afiliar(activo):
 
 
 @pytest.fixture
-def juan():
+def juan(empresa_a):
     return Usuario.objects.create_user(
-        username="juan", email="juan@acme.com", password="Kx7pLm9Qw2"
+        username="juan",
+        email="juan@acme.com",
+        password="Kx7pLm9Qw2",
+        matriz=empresa_a,
     )
 
 
@@ -428,7 +431,10 @@ def test_los_permisos_de_una_persona_no_crecen_con_sus_roles(
     empresa_a, empresa_b, juan, afiliar, activo, permiso
 ):
     ana = Usuario.objects.create_user(
-        username="ana", email="ana@acme.com", password="Zq4tRn8Vd3"
+        username="ana",
+        email="ana@acme.com",
+        password="Zq4tRn8Vd3",
+        matriz=empresa_a,
     )
     con_uno = afiliar(juan, empresa_a)
     con_seis = afiliar(ana, empresa_a)

@@ -21,11 +21,12 @@ def activo(catalogo):
 
 
 @pytest.fixture
-def cadena(crear_empresa):
-    matriz = crear_empresa("Supermercado Central")
-    norte = crear_empresa("Sucursal Norte", padre=matriz)
-    sur = crear_empresa("Sucursal Sur", padre=matriz)
-    return matriz, norte, sur
+def cadena(crear_empresa, empresa_a):
+    """La empresa de Juan con dos sucursales: una cuenta solo trabaja en
+    empresas de su propio cliente."""
+    norte = crear_empresa("Sucursal Norte", padre=empresa_a)
+    sur = crear_empresa("Sucursal Sur", padre=empresa_a)
+    return empresa_a, norte, sur
 
 
 @pytest.fixture
@@ -92,18 +93,19 @@ mutation ($datos: CrearUsuarioInput!) {
 """
 
 
-def test_crear_usuario(db):
-    datos = _correr(
-        CREAR_USUARIO,
-        datos={
-            "username": "jose",
-            "email": "Jose@Acme.com",
-            "password": "Kx7pLm9Qw2",
-            "firstName": "José",
-            "lastName": "Villarroel",
-            "segApellido": "Mamani",
-        },
-    )["crearUsuario"]
+def test_crear_usuario(empresa_a):
+    with empresa(empresa_a.id):
+        datos = _correr(
+            CREAR_USUARIO,
+            datos={
+                "username": "jose",
+                "email": "Jose@Acme.com",
+                "password": "Kx7pLm9Qw2",
+                "firstName": "José",
+                "lastName": "Villarroel",
+                "segApellido": "Mamani",
+            },
+        )["crearUsuario"]
 
     assert datos["nombreCompleto"] == "José Villarroel Mamani"
     # El correo se normaliza: si no, `Jose@` y `jose@` entrarían como dos
@@ -152,15 +154,16 @@ def test_la_contrasena_no_puede_ser_el_apellido(db):
 
 def test_afiliar_al_grupo_y_ver_el_selector(cadena, activo):
     matriz, _, _ = cadena
-    jose = _correr(
-        CREAR_USUARIO,
-        datos={
-            "username": "jose",
-            "email": "jose@acme.com",
-            "password": "Kx7pLm9Qw2",
-            "firstName": "José",
-        },
-    )["crearUsuario"]
+    with empresa(matriz.id):
+        jose = _correr(
+            CREAR_USUARIO,
+            datos={
+                "username": "jose",
+                "email": "jose@acme.com",
+                "password": "Kx7pLm9Qw2",
+                "firstName": "José",
+            },
+        )["crearUsuario"]
 
     creadas = _correr(
         """
@@ -177,31 +180,24 @@ def test_afiliar_al_grupo_y_ver_el_selector(cadena, activo):
 
     assert len(creadas) == 3
 
-    # Y el selector del login: corre SIN empresa en el contexto.
-    opciones = _correr(
-        """
-        query ($id: ID!) {
-          empresasDelUsuario(usuarioId: $id) { razonSocial esMatriz }
-        }
-        """,
-        id=jose["id"],
-    )["empresasDelUsuario"]
-
-    assert {o["razonSocial"] for o in opciones} == {
-        "Supermercado Central",
-        "Sucursal Norte",
-        "Sucursal Sur",
-    }
-    assert [o["esMatriz"] for o in opciones].count(True) == 1
+    #  El selector del login ya no sale de una consulta: `empresasDelUsuario`
+    # se borró porque decía en qué empresas trabaja alguien sin pedir sesión.
+    # La lista viaja en la respuesta de `ingresar`.
 
 
 def test_los_miembros_son_solo_los_de_la_empresa_activa(cadena, activo):
     matriz, norte, _ = cadena
     jose = Usuario.objects.create_user(
-        username="jose", email="jose@acme.com", password="Kx7pLm9Qw2"
+        username="jose",
+        email="jose@acme.com",
+        password="Kx7pLm9Qw2",
+        matriz=matriz,
     )
     ana = Usuario.objects.create_user(
-        username="ana", email="ana@acme.com", password="Zq4tRn8Vd3"
+        username="ana",
+        email="ana@acme.com",
+        password="Zq4tRn8Vd3",
+        matriz=matriz,
     )
     membresias.afiliar(usuario_id=jose.id, empresa_id=matriz.id, estado_id=activo.id)
     membresias.afiliar(usuario_id=ana.id, empresa_id=norte.id, estado_id=activo.id)
@@ -217,7 +213,10 @@ def test_la_lista_de_miembros_no_dispara_una_consulta_por_persona(
 ):
     for i in range(10):
         u = Usuario.objects.create_user(
-            username=f"u{i}", email=f"u{i}@acme.com", password="Kx7pLm9Qw2"
+            username=f"u{i}",
+            email=f"u{i}@acme.com",
+            password="Kx7pLm9Qw2",
+            matriz=empresa_a,
         )
         membresias.afiliar(
             usuario_id=u.id, empresa_id=empresa_a.id, estado_id=activo.id
@@ -235,14 +234,15 @@ def test_el_recorrido_completo(cadena, activo, permiso):
     matriz, norte, _ = cadena
     p = permiso("anular_factura", "Anular factura")
 
-    jose = _correr(
-        CREAR_USUARIO,
-        datos={
-            "username": "jose",
-            "email": "jose@acme.com",
-            "password": "Kx7pLm9Qw2",
-            "firstName": "José",
-        },
+    with empresa(matriz.id):
+        jose = _correr(
+            CREAR_USUARIO,
+            datos={
+                "username": "jose",
+                "email": "jose@acme.com",
+                "password": "Kx7pLm9Qw2",
+                "firstName": "José",
+            },
     )["crearUsuario"]
 
     _correr(

@@ -200,7 +200,10 @@ def test_el_permiso_generado_lo_entiende_has_perm(
     )
 
     juan = get_user_model().objects.create_user(
-        username="juan", email="juan@acme.com", password="Kx7pLm9Qw2"
+        username="juan",
+        email="juan@acme.com",
+        password="Kx7pLm9Qw2",
+        matriz=empresa_a,
     )
     m = membresias.afiliar(
         usuario_id=juan.id, empresa_id=empresa_a.id, estado_id=activo.id

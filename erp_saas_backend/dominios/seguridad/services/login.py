@@ -19,12 +19,10 @@ from dominios.seguridad import tokens
 from dominios.seguridad.models import SesionAcceso
 from dominios.seguridad.services import acceso as svc_acceso
 
-# El mismo texto para todos los fallos de credenciales. Ver el docstring.
+
 CREDENCIALES_INVALIDAS = "Usuario o contraseña incorrectos."
 
-# El refresh ya no sirve: robado, rotado o de una sesión cerrada. El código
-# viaja hasta `extensions["code"]` para que el cliente distinga ESTO —al login, sin
-# reintentar— de un acceso vencido, que sí se renueva.
+
 SESION_MUERTA = "La sesión venció. Inicie sesión nuevamente."
 CODIGO_SESION_MUERTA = "SESSION_EXPIRED"
 
@@ -75,9 +73,7 @@ def autenticar(*, identificador: str, password: str):
     tiempo de respuesta exista o no la persona."""
     usuario = authenticate(request=None, username=identificador, password=password)
     if usuario is None:
-        # El fallo no se registra en `Sesion_Acceso`: ocurre antes de
-        # elegir empresa y esa tabla necesita una. Va al log técnico hasta
-        # que exista la tabla de accesos del proveedor.
+       
         raise ValidationError(CREDENCIALES_INVALIDAS)
     return usuario
 
@@ -93,9 +89,7 @@ def empresas_de(usuario) -> list:
     ]
 
 
-# SIN `@transaction.atomic`, y es deliberado: un acceso rechazado escribe
-# su registro y después levanta. Con la función entera en una transacción,
-# el `raise` haría rollback y se llevaría puesto ese registro.
+
 def ingresar(
     *,
     identificador: str,
@@ -114,9 +108,7 @@ def ingresar(
 
     disponibles = empresas_de(usuario)
     if not disponibles:
-        # Se autenticó pero no trabaja en ninguna empresa activa. El
-        # mensaje SÍ puede ser específico: ya demostró quién es, y este
-        # caso lo resuelve un administrador, no la persona.
+       
         raise ValidationError(
             "Su usuario no está habilitado en ninguna empresa. Consulte con el "
             "administrador."
@@ -131,8 +123,7 @@ def ingresar(
             (m for m in disponibles if m.empresa_id == empresa_id), None
         )
         if elegida is None:
-            # Mismo mensaje que si la empresa no existiera: probando ids
-            # no se averigua cuáles hay.
+            
             raise ValidationError("Esa empresa no está disponible para su usuario.")
 
     return _abrir_sesion(
@@ -157,26 +148,22 @@ def _abrir_sesion(*, usuario, membresia, request, mac, momento) -> Ingreso:
         )
 
         if not veredicto:
-            # `atomic` acá adentro y no afuera: este registro queda
-            # commiteado por su cuenta y el `raise` de abajo no se lo lleva.
-            # `fin` se pone en el acto: una sesión bloqueada nunca estuvo
-            # abierta.
+            
             with transaction.atomic():
                 SesionAcceso.objects.create(
-                    usuario=usuario,
+                    usuario_empresa=membresia,
                     resultado=_resultado(NOMBRE_ACCESO_BLOQUEADO),
                     ip=ip,
                     user_agent=user_agent_de(request),
                     estado=_estado_activo(),
                     fin=datetime.datetime.now(datetime.UTC),
                 )
-            # El mensaje SÍ es específico: ya se autenticó, así que
-            # decirle por qué no puede entrar le ahorra un llamado.
+            
             raise ValidationError(veredicto.motivo)
 
         with transaction.atomic():
             sesion = SesionAcceso.objects.create(
-                usuario=usuario,
+                usuario_empresa=membresia,
                 resultado=_resultado(NOMBRE_ACCESO_EXITO),
                 ip=ip,
                 user_agent=user_agent_de(request),
@@ -202,7 +189,7 @@ def _abrir_sesion(*, usuario, membresia, request, mac, momento) -> Ingreso:
     )
 
 
-# Sin `@transaction.atomic` por lo mismo que `ingresar`: delega en él.
+
 def elegir_empresa(
     *,
     identificador: str,
@@ -239,37 +226,47 @@ def renovar(*, refresh: str) -> Ingreso:
         raise ValidationError(SESION_MUERTA, code=CODIGO_SESION_MUERTA) from error
 
     with sin_filtro_de_empresa():
-        # Sin filtro porque todavía no hay empresa en el contexto: se está
-        # justamente por ponerla, con lo que diga el token.
-        sesion = SesionAcceso.objects.filter(pk=datos["ses"]).first()
+        
+        sesion = (
+            SesionAcceso.objects.select_related("usuario_empresa__usuario")
+            .filter(pk=datos["ses"])
+            .first()
+        )
 
+   
     if sesion is None or not sesion.esta_abierta:
         raise ValidationError(SESION_MUERTA, code=CODIGO_SESION_MUERTA)
 
     if sesion.refresh_jti != datos.get("jti"):
-        # Refresh viejo. Ver el aviso del docstring.
+        
         raise ValidationError(SESION_MUERTA, code=CODIGO_SESION_MUERTA)
 
-    if not sesion.usuario.is_active:
+    membresia = sesion.usuario_empresa
+    if not membresia.usuario.is_active:
         raise ValidationError(SESION_MUERTA, code=CODIGO_SESION_MUERTA)
 
     acceso = tokens.emitir_acceso(
-        usuario_id=sesion.usuario_id,
-        empresa_id=sesion.empresa_id,
+        usuario_id=membresia.usuario_id,
+        empresa_id=membresia.empresa_id,
         sesion_id=sesion.pk,
     )
     nuevo_refresh, jti = tokens.emitir_refresh(
-        usuario_id=sesion.usuario_id,
-        empresa_id=sesion.empresa_id,
+        usuario_id=membresia.usuario_id,
+        empresa_id=membresia.empresa_id,
         sesion_id=sesion.pk,
     )
 
     with sin_filtro_de_empresa():
         sesion.refresh_jti = jti
-        sesion.save(update_fields=["refresh_jti"])
+       
+        sesion.ultima_actividad = datetime.datetime.now(datetime.UTC)
+        sesion.save(update_fields=["refresh_jti", "ultima_actividad"])
 
     return Ingreso(
-        usuario=sesion.usuario, acceso=acceso, refresh=nuevo_refresh, sesion=sesion
+        usuario=membresia.usuario,
+        acceso=acceso,
+        refresh=nuevo_refresh,
+        sesion=sesion,
     )
 
 

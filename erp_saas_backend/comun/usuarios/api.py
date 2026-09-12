@@ -11,12 +11,12 @@ Superficie pública de `usuarios`. El resto de la app es privado.
 
 Crear un usuario NO lo mete en ninguna empresa: para eso está
 `comun.membresias.afiliar()`. Son dos pasos a propósito — la misma
-persona trabaja en varias empresas y su cuenta es una sola
-.
+persona trabaja en varias empresas de su cliente y su cuenta es una sola.
 
-Y no lleva filtro por empresa: es identidad global. La pantalla
-"usuarios de mi empresa" NO sale de acá, sale de `membresias`, que sí
-filtra.
+ CADA CUENTA ES DE UN CLIENTE, y se deduce de la empresa de la sesión:
+no se pasa por parámetro. Sin sesión no se puede dar de alta a nadie.
+La pantalla "usuarios de mi empresa" NO sale de acá, sale de
+`membresias`, que sí filtra.
 """
 
 from django.contrib.auth import get_user_model
@@ -28,7 +28,15 @@ Usuario = get_user_model()
 
 
 def obtener_usuario(usuario_id: int):
+    """SIN comprobar el cliente: para resolver a alguien que ya se sabe
+    cuál es —el login, el nombre de una fila de membresía—. Lo que sale a
+    una consulta pública va por `obtener_usuario_del_cliente`."""
     return _repo.obtener(usuario_id)
+
+
+def obtener_usuario_del_cliente(usuario_id: int):
+    """La cuenta, solo si es del cliente de la sesión. Levanta si no."""
+    return _svc.obtener_del_cliente(usuario_id)
 
 
 def obtener_usuarios(usuario_ids) -> dict[int, "Usuario"]:
@@ -83,6 +91,7 @@ def reactivar_usuario(usuario_id: int):
 
 __all__ = [
     "obtener_usuario",
+    "obtener_usuario_del_cliente",
     "obtener_usuarios",
     "obtener_por_username",
     "obtener_por_email",

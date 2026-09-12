@@ -1,13 +1,14 @@
 """
 Acceso a datos de `Usuario`.
 
- SIN FILTRO DE EMPRESA, y no es un olvido: es identidad GLOBAL. Juan es
-la misma persona en el gimnasio y en la farmacia.
+ Cada cuenta pertenece a un cliente (`matriz`), o a ninguno si es del
+proveedor. Juan trabajando en el gimnasio y en la farmacia son DOS
+cuentas, y ninguna de las dos se entera de la otra.
 
-Eso NO significa que cualquiera pueda listar a todos los usuarios del
-SaaS: la pantalla "usuarios de mi empresa" no sale de acá, sale de
-`comun/membresias`, que sí filtra. Lo de acá se usa para resolver a una
-persona que ya se sabe cuál es —el login, el alta— y para leer sus datos.
+Las consultas de acá no llevan filtro por empresa: el login tiene que
+encontrar la cuenta antes de saber dónde va a trabajar. Quién puede ver
+o tocar a quién lo deciden los services, no esta capa. Y la pantalla
+"usuarios de mi empresa" no sale de acá: sale de `comun/membresias`.
 """
 
 from django.contrib.auth import get_user_model
@@ -46,8 +47,11 @@ def existe_username(username: str, excluir_id: int | None = None) -> bool:
     return qs.exists()
 
 
-def existe_email(email: str, excluir_id: int | None = None) -> bool:
-    qs = Usuario.objects.filter(email__iexact=email)
+def existe_email(
+    email: str, matriz_id: int | None, excluir_id: int | None = None
+) -> bool:
+    """Dentro del cliente: el mismo correo puede estar en otro."""
+    qs = Usuario.objects.filter(email__iexact=email, matriz_id=matriz_id)
     if excluir_id is not None:
         qs = qs.exclude(pk=excluir_id)
     return qs.exists()

@@ -14,9 +14,12 @@ HOY = datetime.date(2026, 9, 7)
 
 
 @pytest.fixture
-def juan():
+def juan(empresa_a):
     return Usuario.objects.create_user(
-        username="juan", email="juan@acme.com", password="Kx7pLm9Qw2"
+        username="juan",
+        email="juan@acme.com",
+        password="Kx7pLm9Qw2",
+        matriz=empresa_a,
     )
 
 
@@ -86,7 +89,10 @@ def test_una_empresa_no_ve_a_los_empleados_de_la_otra(
     juan, empresa_a, empresa_b, afiliar, catalogo
 ):
     ana = Usuario.objects.create_user(
-        username="ana", email="ana@otra.com", password="Zq4tRn8Vd3"
+        username="ana",
+        email="ana@otra.com",
+        password="Zq4tRn8Vd3",
+        matriz=empresa_b,
     )
     afiliar(juan, empresa_a)
     afiliar(ana, empresa_b)

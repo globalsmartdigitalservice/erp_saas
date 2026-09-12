@@ -12,6 +12,8 @@ from comun.tipologias.constantes import (
     NOMBRE_ACCESO_EXITO,
     NOMBRE_ACCESO_FALLO,
 )
+from core.tenancy import empresa
+from dominios.seguridad import api as seguridad
 from dominios.seguridad.permisos import content_type_del_ancla
 from dominios.seguridad.permisos_graphql import SIN_PERMISO, SIN_SESION
 
@@ -58,7 +60,10 @@ def graphql_encendido(settings):
 @pytest.fixture
 def juan(empresa_a, activo):
     persona = Usuario.objects.create_user(
-        username="juan", email="juan@acme.com", password="Kx7pLm9Qw2"
+        username="juan",
+        email="juan@acme.com",
+        password="Kx7pLm9Qw2",
+        matriz=empresa_a,
     )
     membresias.afiliar(
         usuario_id=persona.id, empresa_id=empresa_a.id, estado_id=activo.id
@@ -93,19 +98,22 @@ def _crear_rol(cliente, activo):
     )
 
 
-def _dar_permiso(persona, codename: str):
-    """
-    Le da el permiso por el camino del PROVEEDOR (`auth_group`), que es el
-    que resuelve el backend para `is_staff`.
-    """
-    from django.contrib.auth.models import Group
-
+def _darle_el_permiso(persona, empresa_a, activo, codename: str):
+    """Por el camino real de un cliente: un rol de su empresa, con el
+    permiso adentro, asignado a su membresía."""
     permiso, _ = Permission.objects.get_or_create(
-        content_type=content_type_del_ancla(), codename=codename, defaults={"name": codename}
+        content_type=content_type_del_ancla(),
+        codename=codename,
+        defaults={"name": codename},
     )
-    grupo, _ = Group.objects.get_or_create(name="prueba")
-    grupo.permissions.add(permiso)
-    persona.groups.add(grupo)
+    with empresa(empresa_a.id):
+        rol = seguridad.crear_rol(nombre="Supervisor", estado_id=activo.id)
+        seguridad.agregar_permiso(grupo_id=rol.id, auth_permission_id=permiso.id)
+        seguridad.asignar_rol(
+            membresia_id=membresias.membresia_de(persona.id).id,
+            grupo_id=rol.id,
+            estado_id=activo.id,
+        )
     return permiso
 
 
@@ -129,10 +137,8 @@ def test_el_mensaje_no_dice_QUE_permiso_falta(client, juan, activo):
     assert PERMISO_CREAR_ROL not in _error(_crear_rol(client, activo))
 
 
-def test_con_el_permiso_pasa(client, juan, activo):
-    juan.is_staff = True  # para resolver por auth_group
-    juan.save(update_fields=["is_staff"])
-    _dar_permiso(juan, PERMISO_CREAR_ROL)
+def test_con_el_permiso_pasa(client, juan, empresa_a, activo):
+    _darle_el_permiso(juan, empresa_a, activo, PERMISO_CREAR_ROL)
     _entrar(client)
 
     respuesta = _crear_rol(client, activo)
@@ -141,16 +147,15 @@ def test_con_el_permiso_pasa(client, juan, activo):
     assert respuesta.json()["data"]["crearRol"]["nombre"] == "Cajero"
 
 
-def test_el_superusuario_pasa_sin_permisos(client, empresa_a, activo):
-    jefe = Usuario.objects.create_superuser(
-        username="jefe", email="jefe@proveedor.com", password="Kx7pLm9Qw2"
-    )
-    membresias.afiliar(
-        usuario_id=jefe.id, empresa_id=empresa_a.id, estado_id=activo.id
-    )
-    _entrar(client, "jefe")
-
-    assert _crear_rol(client, activo).json().get("errors") is None
+#  NO hay test de "el superusuario pasa sin permisos", y no es un olvido.
+#
+# Un superusuario es del PROVEEDOR: no pertenece a ningún cliente, así que
+# no puede tener membresías, y sin membresía no hay sesión en el ERP. La
+# llave maestra de `permisos_graphql.py` quedó inalcanzable desde acá, que
+# es una propiedad buena: el ERP no tiene puerta trasera.
+#
+# Cuando exista el panel del proveedor, ese camino se decide allá — con su
+# propia sesión y sus propias guardas.
 
 
 def test_una_mutation_sin_decorador_funciona_con_solo_estar_logueado(

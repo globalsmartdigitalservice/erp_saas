@@ -24,9 +24,24 @@ def _validar_usuario(usuario_id: int) -> Usuario:
     if not usuario.is_active:
         raise ValidationError(
             f"El usuario '{usuario.username}' está dado de baja del sistema. "
-            f"Reactivalo antes de afiliarlo a una empresa."
+            f"Reactívelo antes de afiliarlo a una empresa."
         )
     return usuario
+
+
+
+EMPRESA_NO_DISPONIBLE = "Esa empresa no está disponible."
+
+
+def _exigir_del_mismo_cliente(usuario, empresa_id: int) -> None:
+    """Una cuenta solo trabaja en empresas de SU cliente.
+
+    Sin esto, el administrador de un cliente afilia a su gente —o a la
+    ajena— a la empresa de otro, y desde ahí le ve las ventas.
+    """
+    matriz = empresas.matriz_de(empresa_id)
+    if matriz is None or usuario.matriz_id != matriz.pk:
+        raise ValidationError(EMPRESA_NO_DISPONIBLE)
 
 
 def _validar_fechas(fecha_asignacion, fecha_finalizacion) -> None:
@@ -49,14 +64,12 @@ def afiliar(
     """Da de alta a una persona en UNA empresa."""
     _validar_estado(estado_id)
     usuario = _validar_usuario(usuario_id)
-
-    if empresas.obtener_empresa(empresa_id) is None:
-        raise ValidationError(f"No existe la empresa {empresa_id}.")
+    _exigir_del_mismo_cliente(usuario, empresa_id)
 
     if repo.existe_en(usuario_id, empresa_id):
         raise ValidationError(
             f"'{usuario.username}' ya está dado de alta en esa empresa. "
-            f"Si se había ido y volvió, reactivá su membresía en vez de "
+            f"Si se había ido y volvió, reactive su membresía en vez de "
             f"crear otra: así el historial queda en un solo lugar."
         )
 
@@ -91,11 +104,12 @@ def afiliar_al_grupo(
     y nadie se daría cuenta hasta que reclame.
     """
     _validar_estado(estado_id)
-    _validar_usuario(usuario_id)
+    usuario = _validar_usuario(usuario_id)
+    _exigir_del_mismo_cliente(usuario, empresa_id)
 
     grupo = empresas.descendientes_de(empresa_id)
     if not grupo:
-        raise ValidationError(f"No existe la empresa {empresa_id}.")
+        raise ValidationError(EMPRESA_NO_DISPONIBLE)
 
     fecha = fecha_asignacion or datetime.date.today()
     creadas = []

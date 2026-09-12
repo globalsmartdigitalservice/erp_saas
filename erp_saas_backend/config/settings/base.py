@@ -110,6 +110,17 @@ AUTHENTICATION_BACKENDS = ["dominios.seguridad.autenticacion.BackendDeEmpresa"]
 JWT_VIDA_ACCESO = datetime.timedelta(minutes=15)
 JWT_VIDA_REFRESH = datetime.timedelta(days=7)
 
+
+# renovacion, que solo ocurre cuando hay actividad real.
+SESSION_IDLE_TIMEOUT = datetime.timedelta(minutes=30)
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    }
+}
+
 COOKIE_ACCESO = "erp_acceso"
 COOKIE_REFRESH = "erp_refresh"
 

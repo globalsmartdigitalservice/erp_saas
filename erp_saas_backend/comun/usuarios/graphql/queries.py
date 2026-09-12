@@ -1,8 +1,11 @@
 """Las consultas de usuarios."""
 
 import strawberry
+from django.core.exceptions import ValidationError
+from graphql import GraphQLError
 
 from comun.usuarios import api as usuarios
+from dominios.seguridad.permisos_graphql import requiere_autenticacion
 
 from .types import UsuarioType
 
@@ -11,13 +14,18 @@ from .types import UsuarioType
 class UsuarioQueries:
     @strawberry.field(
         description=(
-            "Un usuario por su id. Para ver los de una empresa usá "
-            "`miembros`, que filtra."
+            "Un usuario de SU cliente, por id. Para ver los de una empresa "
+            "use `miembros`, que filtra."
         )
     )
-    def usuario(self, id: strawberry.ID) -> UsuarioType | None:
-        fila = usuarios.obtener_usuario(int(id))
-        return UsuarioType.desde_modelo(fila) if fila else None
+    @requiere_autenticacion
+    def usuario(self, info: strawberry.Info, id: strawberry.ID) -> UsuarioType | None:
+        
+        try:
+            fila = usuarios.obtener_usuario_del_cliente(int(id))
+        except ValidationError as error:
+            raise GraphQLError("; ".join(error.messages)) from error
+        return UsuarioType.desde_modelo(fila)
 
 
 @strawberry.type

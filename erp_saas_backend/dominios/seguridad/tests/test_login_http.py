@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -8,7 +10,10 @@ from comun.tipologias.constantes import (
     NOMBRE_ACCESO_BLOQUEADO,
     NOMBRE_ACCESO_EXITO,
     NOMBRE_ACCESO_FALLO,
+    NOMBRE_ESTADO_BAJA,
 )
+from core.tenancy import empresa
+from dominios.seguridad.models import SesionAcceso
 
 pytestmark = pytest.mark.django_db
 
@@ -27,6 +32,11 @@ mutation ($datos: IngresarInput!) {
 """
 
 
+# Una consulta cualquiera que necesite la empresa de la sesión: sin ella,
+# el aislamiento levanta y la respuesta viene con errores.
+MIEMBROS = "{ miembros { id } }"
+
+
 @pytest.fixture
 def activo(catalogo):
     return catalogo["estado_activo"]
@@ -43,9 +53,12 @@ def resultados(catalogo):
 
 
 @pytest.fixture
-def juan():
+def juan(empresa_a):
     return Usuario.objects.create_user(
-        username="juan", email="juan@acme.com", password="Kx7pLm9Qw2"
+        username="juan",
+        email="juan@acme.com",
+        password="Kx7pLm9Qw2",
+        matriz=empresa_a,
     )
 
 
@@ -169,10 +182,10 @@ def test_un_token_manoseado_no_abre_sesion(client, en_gimnasio):
 
 
 def test_con_dos_empresas_no_se_abre_sesion_hasta_elegir(
-    client, juan, en_gimnasio, empresa_b, activo
+    client, juan, en_gimnasio, sucursal_a, activo
 ):
     membresias.afiliar(
-        usuario_id=juan.id, empresa_id=empresa_b.id, estado_id=activo.id
+        usuario_id=juan.id, empresa_id=sucursal_a.id, estado_id=activo.id
     )
 
     respuesta = _pedir(
@@ -186,10 +199,10 @@ def test_con_dos_empresas_no_se_abre_sesion_hasta_elegir(
 
 
 def test_elegir_empresa_abre_la_sesion_en_esa(
-    client, juan, en_gimnasio, empresa_b, activo
+    client, juan, en_gimnasio, sucursal_a, activo
 ):
     membresias.afiliar(
-        usuario_id=juan.id, empresa_id=empresa_b.id, estado_id=activo.id
+        usuario_id=juan.id, empresa_id=sucursal_a.id, estado_id=activo.id
     )
 
     _pedir(
@@ -202,12 +215,12 @@ def test_elegir_empresa_abre_la_sesion_en_esa(
         }
         """,
         datos={"identificador": "juan", "password": "Kx7pLm9Qw2"},
-        empresa=str(empresa_b.id),
+        empresa=str(sucursal_a.id),
     )
 
     datos = _pedir(client, "{ empresaActual }").json()["data"]
 
-    assert datos["empresaActual"] == str(empresa_b.id)
+    assert datos["empresaActual"] == str(sucursal_a.id)
 
 
 def test_renovar_cambia_las_cookies(client, en_gimnasio):
@@ -241,7 +254,10 @@ def test_las_consultas_devuelven_solo_lo_de_la_empresa_de_la_sesion(
     client, juan, en_gimnasio, empresa_a, empresa_b, activo
 ):
     ana = Usuario.objects.create_user(
-        username="ana", email="ana@otra.com", password="Zq4tRn8Vd3"
+        username="ana",
+        email="ana@otra.com",
+        password="Zq4tRn8Vd3",
+        matriz=empresa_b,
     )
     membresias.afiliar(
         usuario_id=ana.id, empresa_id=empresa_b.id, estado_id=activo.id
@@ -275,3 +291,46 @@ def test_la_cabecera_de_empresa_no_le_gana_al_token(
     )
 
     assert respuesta.json()["data"]["empresaActual"] == str(empresa_a.id)
+
+
+def test_al_desafiliar_la_sesion_abierta_muere_EN_EL_ACTO(
+    client, en_gimnasio, empresa_a, catalogo
+):
+    """El agujero grande que se tapó.
+
+    Antes, dar de baja a alguien no lo sacaba: su token ya llevaba la
+    empresa adentro y la renovación tampoco miraba la membresía, así que
+    se quedaba adentro mientras siguiera renovando. **No era una ventana
+    de 15 minutos: era indefinida.**
+    """
+    _pedir(client, INGRESAR, datos={"identificador": "juan", "password": "Kx7pLm9Qw2"})
+    assert _pedir(client, MIEMBROS).json().get("errors") is None
+
+    baja = catalogo["tipologia"](AGRUPADOR.ESTADO_REGISTRO, NOMBRE_ESTADO_BAJA)
+    with empresa(empresa_a.id):
+        membresias.desafiliar(membresia_id=en_gimnasio.id, estado_baja_id=baja.id)
+
+    # Sin volver a entrar ni esperar nada: la siguiente petición ya no pasa.
+    assert _pedir(client, MIEMBROS).json().get("errors") is not None
+
+
+def test_la_sesion_olvidada_se_vence_sola(client, en_gimnasio, empresa_a):
+    """La terminal que alguien dejó abierta y se fue.
+
+    Nadie la cierra —la gente cierra el navegador, no la sesión—, así que
+    el `fin` queda vacío para siempre. Lo que la corta es la inactividad.
+    """
+    _pedir(client, INGRESAR, datos={"identificador": "juan", "password": "Kx7pLm9Qw2"})
+    assert _pedir(client, MIEMBROS).json().get("errors") is None
+
+    with empresa(empresa_a.id):
+        sesion = SesionAcceso.objects.first()
+        sesion.ultima_actividad = (
+            datetime.datetime.now(datetime.UTC)
+            - settings.SESSION_IDLE_TIMEOUT
+            - datetime.timedelta(minutes=1)
+        )
+        sesion.save(update_fields=["ultima_actividad"])
+
+    assert sesion.fin is None  # nadie la cerró
+    assert _pedir(client, MIEMBROS).json().get("errors") is not None

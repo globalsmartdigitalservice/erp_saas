@@ -18,9 +18,12 @@ def activo(catalogo):
 
 
 @pytest.fixture
-def juan():
+def juan(empresa_a):
     return Usuario.objects.create_user(
-        username="juan", email="juan@acme.com", password="Kx7pLm9Qw2"
+        username="juan",
+        email="juan@acme.com",
+        password="Kx7pLm9Qw2",
+        matriz=empresa_a,
     )
 
 
@@ -38,11 +41,12 @@ def permiso(db):
 
 
 @pytest.fixture
-def cadena(crear_empresa):
-    matriz = crear_empresa("Supermercado Central")
-    norte = crear_empresa("Sucursal Norte", padre=matriz)
-    sur = crear_empresa("Sucursal Sur", padre=matriz)
-    return matriz, norte, sur
+def cadena(crear_empresa, empresa_a):
+    """La empresa de Juan con dos sucursales: una cuenta solo trabaja en
+    empresas de su propio cliente."""
+    norte = crear_empresa("Sucursal Norte", padre=empresa_a)
+    sur = crear_empresa("Sucursal Sur", padre=empresa_a)
+    return empresa_a, norte, sur
 
 
 @pytest.fixture
@@ -82,17 +86,17 @@ def test_sin_rol_no_hay_permiso(juan, empresa_a, activo, permiso):
         assert not juan.has_perm(codigo)
 
 
-def test_el_permiso_de_una_empresa_no_vale_en_la_otra(juan, empresa_a, empresa_b, dar_rol, activo):
+def test_el_permiso_de_una_empresa_no_vale_en_la_otra(juan, empresa_a, sucursal_a, dar_rol, activo):
     codigo = dar_rol(juan, empresa_a, "Cajero", "emitir_factura")
     membresias.afiliar(
-        usuario_id=juan.id, empresa_id=empresa_b.id, estado_id=activo.id
+        usuario_id=juan.id, empresa_id=sucursal_a.id, estado_id=activo.id
     )
 
     with empresa(empresa_a.id):
         assert juan.has_perm(codigo)
 
     juan_otra_vez = Usuario.objects.get(pk=juan.pk)
-    with empresa(empresa_b.id):
+    with empresa(sucursal_a.id):
         assert not juan_otra_vez.has_perm(codigo)
 
 
@@ -206,9 +210,12 @@ def test_un_usuario_que_no_existe_no_entra(db):
     assert authenticate(username="nadie@acme.com", password="Kx7pLm9Qw2") is None
 
 
-def test_si_el_texto_es_de_dos_personas_no_entra_ninguna(juan):
+def test_si_el_texto_es_de_dos_personas_no_entra_ninguna(juan, empresa_a):
     Usuario.objects.create_user(
-        username="juan@acme.com", email="otra@acme.com", password="Zq4tRn8Vd3"
+        username="juan@acme.com",
+        email="otra@acme.com",
+        password="Zq4tRn8Vd3",
+        matriz=empresa_a,
     )
 
     assert authenticate(username="juan@acme.com", password="Kx7pLm9Qw2") is None

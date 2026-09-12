@@ -42,9 +42,12 @@ def resultados(catalogo):
 
 
 @pytest.fixture
-def juan():
+def juan(empresa_a):
     return Usuario.objects.create_user(
-        username="juan", email="juan@acme.com", password="Kx7pLm9Qw2"
+        username="juan",
+        email="juan@acme.com",
+        password="Kx7pLm9Qw2",
+        matriz=empresa_a,
     )
 
 
@@ -56,9 +59,10 @@ def en_gimnasio(juan, empresa_a, activo, resultados):
 
 
 @pytest.fixture
-def en_dos_empresas(juan, en_gimnasio, empresa_b, activo):
+def en_dos_empresas(juan, en_gimnasio, sucursal_a, activo):
+    """En la matriz y en su sucursal: el gerente de la cadena."""
     membresias.afiliar(
-        usuario_id=juan.id, empresa_id=empresa_b.id, estado_id=activo.id
+        usuario_id=juan.id, empresa_id=sucursal_a.id, estado_id=activo.id
     )
     return en_gimnasio
 
@@ -117,23 +121,23 @@ def test_entra_por_correo(en_gimnasio):
 
 
 def test_con_varias_empresas_devuelve_la_lista_y_NO_un_token(
-    en_dos_empresas, empresa_a, empresa_b
+    en_dos_empresas, empresa_a, sucursal_a
 ):
     ingreso = login.ingresar(identificador="juan", password="Kx7pLm9Qw2")
 
     assert ingreso.necesita_elegir_empresa
     assert ingreso.acceso == ""
-    assert {m.empresa_id for m in ingreso.empresas} == {empresa_a.id, empresa_b.id}
+    assert {m.empresa_id for m in ingreso.empresas} == {empresa_a.id, sucursal_a.id}
 
 
 def test_elegir_empresa_devuelve_el_token_de_esa_empresa(
-    en_dos_empresas, empresa_b
+    en_dos_empresas, sucursal_a
 ):
     ingreso = login.elegir_empresa(
-        identificador="juan", password="Kx7pLm9Qw2", empresa_id=empresa_b.id
+        identificador="juan", password="Kx7pLm9Qw2", empresa_id=sucursal_a.id
     )
 
-    assert tokens.leer(ingreso.acceso, tipo=tokens.TIPO_ACCESO)["emp"] == empresa_b.id
+    assert tokens.leer(ingreso.acceso, tipo=tokens.TIPO_ACCESO)["emp"] == sucursal_a.id
 
 
 def test_sin_ninguna_empresa_no_entra(juan, resultados):
@@ -181,13 +185,13 @@ def test_el_rechazo_por_horario_TAMBIEN_queda_registrado(
 
 
 def test_otra_empresa_no_ve_los_accesos(
-    en_dos_empresas, empresa_a, empresa_b, resultados
+    en_dos_empresas, empresa_a, sucursal_a, resultados
 ):
     login.elegir_empresa(
         identificador="juan", password="Kx7pLm9Qw2", empresa_id=empresa_a.id
     )
 
-    with empresa(empresa_b.id):
+    with empresa(sucursal_a.id):
         assert SesionAcceso.objects.count() == 0
 
 
