@@ -33,42 +33,45 @@ def test_query_idioma_inexistente_devuelve_null():
     assert resultado.data["idioma"] is None
 
 
-def test_mutation_crear_idioma(db):
+def test_mutation_crear_idioma(contexto_proveedor):
     consulta = """
         mutation {
           crearIdioma(datos: { codigo: "PT", nombre: "Portugués" })
           { id codigo nombre activo }
         }
     """
-    resultado = schema.execute_sync(consulta)
+    resultado = schema.execute_sync(consulta, context_value=contexto_proveedor)
 
     assert resultado.errors is None
     assert resultado.data["crearIdioma"]["codigo"] == "pt"
 
 
-def test_mutation_con_codigo_invalido_devuelve_error_legible(db):
+def test_mutation_con_codigo_invalido_devuelve_error_legible(contexto_proveedor):
     consulta = """
         mutation {
           crearIdioma(datos: { codigo: "portugués", nombre: "Portugués" }) { id }
         }
     """
-    resultado = schema.execute_sync(consulta)
+    resultado = schema.execute_sync(consulta, context_value=contexto_proveedor)
 
     assert resultado.errors is not None
     assert "código de idioma" in resultado.errors[0].message
 
 
-def test_mutation_desactivar_y_activar(espanol):
+def test_mutation_desactivar_y_activar(contexto_proveedor, espanol):
     apagar = """mutation ($id: ID!) { desactivarIdioma(id: $id) { activo } }"""
     prender = """mutation ($id: ID!) { activarIdioma(id: $id) { activo } }"""
     variables = {"id": str(espanol.pk)}
 
-    assert schema.execute_sync(apagar, variable_values=variables).data[
-        "desactivarIdioma"
-    ] == {"activo": False}
-    assert schema.execute_sync(prender, variable_values=variables).data[
-        "activarIdioma"
-    ] == {"activo": True}
+    def correr(consulta):
+        return schema.execute_sync(
+            consulta,
+            variable_values=variables,
+            context_value=contexto_proveedor,
+        ).data
+
+    assert correr(apagar)["desactivarIdioma"] == {"activo": False}
+    assert correr(prender)["activarIdioma"] == {"activo": True}
 
 
 def test_el_input_de_actualizar_no_expone_activo():

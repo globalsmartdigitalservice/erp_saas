@@ -47,7 +47,7 @@ def test_listar_paises_no_tiene_n_mas_1(estado_activo):
     assert len(con_cinco) == len(con_uno)
 
 
-def test_mutation_crear_pais(estado_activo):
+def test_mutation_crear_pais(contexto_proveedor, estado_activo):
     consulta = """
         mutation ($estadoId: ID!) {
           crearPais(datos: {
@@ -56,7 +56,9 @@ def test_mutation_crear_pais(estado_activo):
         }
     """
     resultado = schema.execute_sync(
-        consulta, variable_values={"estadoId": str(estado_activo.pk)}
+        consulta,
+        variable_values={"estadoId": str(estado_activo.pk)},
+        context_value=contexto_proveedor,
     )
 
     assert resultado.errors is None
@@ -65,6 +67,7 @@ def test_mutation_crear_pais(estado_activo):
 
 
 def test_mutation_con_estado_invalido_devuelve_error_legible(
+    contexto_proveedor,
     tipologia_de_otro_agrupador,
 ):
     consulta = """
@@ -75,20 +78,26 @@ def test_mutation_con_estado_invalido_devuelve_error_legible(
         }
     """
     resultado = schema.execute_sync(
-        consulta, variable_values={"estadoId": str(tipologia_de_otro_agrupador.pk)}
+        consulta,
+        variable_values={"estadoId": str(tipologia_de_otro_agrupador.pk)},
+        context_value=contexto_proveedor,
     )
 
     assert resultado.errors is not None
     assert "Se esperaba un estado de país" in resultado.errors[0].message
 
 
-def test_mutation_desactivar_pais(bolivia, estado_de_baja):
+def test_mutation_desactivar_pais(contexto_proveedor, bolivia, estado_de_baja):
     consulta = """
         mutation ($id: ID!) {
           desactivarPais(id: $id) { estado { nombre } }
         }
     """
-    resultado = schema.execute_sync(consulta, variable_values={"id": str(bolivia.pk)})
+    resultado = schema.execute_sync(
+        consulta,
+        variable_values={"id": str(bolivia.pk)},
+        context_value=contexto_proveedor,
+    )
 
     assert resultado.errors is None
     assert resultado.data["desactivarPais"]["estado"]["nombre"] == "BAJA"

@@ -8,6 +8,8 @@ from comun.monedas import api as monedas
 from comun.tipologias import api as tipologias
 from comun.tipologias.graphql.types import TipologiaType
 
+from dominios.seguridad.permisos_graphql import requiere_autenticacion
+
 from .types import MonedaType, TipoCambioType
 
 
@@ -43,8 +45,6 @@ class MonedaQueries:
         return MonedaType.desde_modelo(fila, estados.get(fila.estado_id))
 
 
-
-
 @strawberry.type
 class CotizacionQueries:
     @strawberry.field(
@@ -53,8 +53,10 @@ class CotizacionQueries:
         "devuelve la del viernes. Solo las de la empresa activa, y las "
         "anuladas no cuentan."
     )
+    @requiere_autenticacion
     def cotizacion(
         self,
+        info: strawberry.Info,
         moneda_origen_id: strawberry.ID,
         moneda_destino_id: strawberry.ID,
         fecha: datetime.date,
@@ -70,8 +72,10 @@ class CotizacionQueries:
         description="El historial de cotizaciones de un par de monedas, de "
         "la más nueva a la más vieja."
     )
+    @requiere_autenticacion
     def cotizaciones(
         self,
+        info: strawberry.Info,
         moneda_origen_id: strawberry.ID,
         moneda_destino_id: strawberry.ID,
         desde: datetime.date | None = None,

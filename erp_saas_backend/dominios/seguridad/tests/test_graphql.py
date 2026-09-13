@@ -9,6 +9,7 @@ from comun.catalogo_modulos import api as modulos
 from comun.membresias import api as membresias
 from config.schema import schema
 from core.tenancy import empresa
+from core.tests.contexto_graphql import Contexto
 
 pytestmark = pytest.mark.django_db
 
@@ -45,19 +46,6 @@ def permiso(db):
 # consultas, no la autorización. Eso está en `test_guards.py`.
 
 
-class _PeticionFalsa:
-    def __init__(self, usuario):
-        self.user = usuario
-        self.META = {}
-        self.COOKIES = {}
-
-
-class _ContextoFalso:
-    def __init__(self, usuario):
-        self.request = _PeticionFalsa(usuario)
-        self.response = None
-
-
 # Lo llena la fixture de abajo. Un módulo global y no un parámetro para
 # no tener que pasarlo por las ~20 llamadas de este archivo.
 _COMO = {}
@@ -78,7 +66,7 @@ def _correr(consulta, **variables):
     resultado = schema.execute_sync(
         consulta,
         variable_values=variables or None,
-        context_value=_ContextoFalso(_COMO["usuario"]),
+        context_value=Contexto(_COMO["usuario"]),
     )
     assert resultado.errors is None, resultado.errors
     return resultado.data
@@ -296,7 +284,7 @@ def test_el_recorrido_completo(cadena, activo, permiso):
             # Con contexto: lo que se prueba acá es la regla de la casa
             # matriz, no la autorización. Sin él, el guard rechazaría
             # antes y el test verificaría otra cosa.
-            context_value=_ContextoFalso(_COMO["usuario"]),
+            context_value=Contexto(_COMO["usuario"]),
         )
         assert fallo.errors is not None
         assert "casa matriz" in str(fallo.errors[0].message)

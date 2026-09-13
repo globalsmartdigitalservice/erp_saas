@@ -49,6 +49,12 @@ def matriz_de(empresa_id: int) -> Empresa | None:
     return _svc.matriz_de(empresa_id)
 
 
+def exigir_del_grupo(empresa_id: int) -> int:
+    """El id, solo si es del grupo del cliente de la sesión. Si no lo es,
+    falla como si la empresa no existiera."""
+    return _svc.exigir_del_grupo(empresa_id)
+
+
 def ids_del_ambito(empresa_id: int) -> list[int]:
     """Los ids cuya CONFIGURACIÓN ve esta empresa: ella y su matriz. **No se
     usa para datos**: las ventas y el stock siguen con filtro exacto."""
@@ -142,6 +148,7 @@ __all__ = [
     "matriz_de",
     "descendientes_de",
     "ids_del_ambito",
+    "exigir_del_grupo",
     "hay_empresas_con_idioma",
     "idioma_de",
     "hay_empresas_con_moneda",

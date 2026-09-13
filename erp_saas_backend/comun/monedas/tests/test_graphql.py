@@ -57,7 +57,9 @@ def test_listar_monedas_no_tiene_n_mas_1(estado_activo):
     assert len(con_cinco) == len(con_una)
 
 
-def test_query_cotizacion_devuelve_la_vigente(empresa_a, dolar, boliviano):
+def test_query_cotizacion_devuelve_la_vigente(
+    contexto_con_sesion, empresa_a, dolar, boliviano
+):
     consulta = """
         query ($origen: ID!, $destino: ID!, $fecha: Date!) {
           cotizacion(
@@ -79,13 +81,14 @@ def test_query_cotizacion_devuelve_la_vigente(empresa_a, dolar, boliviano):
                 "destino": str(boliviano.pk),
                 "fecha": DOMINGO.isoformat(),
             },
+            context_value=contexto_con_sesion,
         )
 
     assert resultado.errors is None
     assert resultado.data["cotizacion"]["fecha"] == VIERNES.isoformat()
 
 
-def test_mutation_crear_moneda(estado_activo):
+def test_mutation_crear_moneda(contexto_proveedor, estado_activo):
     consulta = """
         mutation ($estadoId: ID!) {
           crearMoneda(datos: {
@@ -95,7 +98,9 @@ def test_mutation_crear_moneda(estado_activo):
         }
     """
     resultado = schema.execute_sync(
-        consulta, variable_values={"estadoId": str(estado_activo.pk)}
+        consulta,
+        variable_values={"estadoId": str(estado_activo.pk)},
+        context_value=contexto_proveedor,
     )
 
     assert resultado.errors is None
@@ -104,6 +109,7 @@ def test_mutation_crear_moneda(estado_activo):
 
 
 def test_mutation_con_estado_invalido_devuelve_error_legible(
+    contexto_proveedor,
     tipologia_de_otro_agrupador,
 ):
     consulta = """
@@ -114,7 +120,9 @@ def test_mutation_con_estado_invalido_devuelve_error_legible(
         }
     """
     resultado = schema.execute_sync(
-        consulta, variable_values={"estadoId": str(tipologia_de_otro_agrupador.pk)}
+        consulta,
+        variable_values={"estadoId": str(tipologia_de_otro_agrupador.pk)},
+        context_value=contexto_proveedor,
     )
 
     assert resultado.errors is not None
@@ -194,13 +202,17 @@ def test_mutation_anular_cotizacion(empresa_a, dolar, boliviano, estado_de_baja)
         )
 
 
-def test_mutation_desactivar_moneda(dolar, estado_de_baja):
+def test_mutation_desactivar_moneda(contexto_proveedor, dolar, estado_de_baja):
     consulta = """
         mutation ($id: ID!) {
           desactivarMoneda(id: $id) { estado { nombre } }
         }
     """
-    resultado = schema.execute_sync(consulta, variable_values={"id": str(dolar.pk)})
+    resultado = schema.execute_sync(
+        consulta,
+        variable_values={"id": str(dolar.pk)},
+        context_value=contexto_proveedor,
+    )
 
     assert resultado.errors is None
     assert resultado.data["desactivarMoneda"]["estado"]["nombre"] == "BAJA"

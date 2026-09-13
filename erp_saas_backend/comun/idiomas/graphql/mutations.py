@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from graphql import GraphQLError
 
 from dominios.seguridad.permisos import auto_permisos
+from dominios.seguridad.permisos_graphql import solo_proveedor
 
 from comun.idiomas import api as idiomas
 
@@ -27,7 +28,8 @@ def _traducir(error: ValidationError) -> GraphQLError:
 @strawberry.type
 class IdiomaMutations:
     @strawberry.mutation(description="Crea un idioma. Catálogo del sistema.")
-    def crear_idioma(self, datos: CrearIdiomaInput) -> IdiomaType:
+    @solo_proveedor
+    def crear_idioma(self, info: strawberry.Info, datos: CrearIdiomaInput) -> IdiomaType:
         try:
             fila = idiomas.crear_idioma(
                 codigo=datos.codigo, nombre=datos.nombre, activo=datos.activo
@@ -40,8 +42,11 @@ class IdiomaMutations:
         description="Cambia el código o el nombre. Para prenderlo o apagarlo "
         "están activarIdioma y desactivarIdioma."
     )
+    @solo_proveedor
     def actualizar_idioma(
-        self, id: strawberry.ID, datos: ActualizarIdiomaInput
+        self,
+        info: strawberry.Info,
+        id: strawberry.ID, datos: ActualizarIdiomaInput
     ) -> IdiomaType:
         campos = {
             campo: valor
@@ -58,7 +63,8 @@ class IdiomaMutations:
         description="Soft delete: la fila queda, deja de ofrecerse. Es "
         "idempotente."
     )
-    def desactivar_idioma(self, id: strawberry.ID) -> IdiomaType:
+    @solo_proveedor
+    def desactivar_idioma(self, info: strawberry.Info, id: strawberry.ID) -> IdiomaType:
         try:
             fila = idiomas.desactivar_idioma(int(id))
         except ValidationError as error:
@@ -66,7 +72,8 @@ class IdiomaMutations:
         return IdiomaType.desde_modelo(fila)
 
     @strawberry.mutation(description="Vuelve a habilitar un idioma. Es idempotente.")
-    def activar_idioma(self, id: strawberry.ID) -> IdiomaType:
+    @solo_proveedor
+    def activar_idioma(self, info: strawberry.Info, id: strawberry.ID) -> IdiomaType:
         try:
             fila = idiomas.activar_idioma(int(id))
         except ValidationError as error:
@@ -91,7 +98,8 @@ class TraduccionMutations:
         "crea. Nunca pisa la de fábrica ni la de la casa matriz: la propia "
         "les gana al leer."
     )
-    def guardar_traduccion(self, datos: GuardarTraduccionInput) -> TraduccionType:
+    @solo_proveedor
+    def guardar_traduccion(self, info: strawberry.Info, datos: GuardarTraduccionInput) -> TraduccionType:
         try:
             fila = idiomas.guardar_traduccion(
                 entidad_tipo=datos.entidad_tipo,
@@ -115,7 +123,8 @@ class TraduccionMutations:
         description="Saca una traducción: el registro vuelve a mostrarse "
         "en su idioma original. Solo se borran las propias."
     )
-    def borrar_traduccion(self, id: strawberry.ID) -> bool:
+    @solo_proveedor
+    def borrar_traduccion(self, info: strawberry.Info, id: strawberry.ID) -> bool:
         try:
             idiomas.borrar_traduccion(int(id))
         except ValidationError as error:

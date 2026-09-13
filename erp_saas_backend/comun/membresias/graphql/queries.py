@@ -6,9 +6,9 @@ from comun.membresias import api as membresias
 from comun.usuarios import api as usuarios
 from comun.usuarios.graphql.types import UsuarioType
 
+from dominios.seguridad.permisos_graphql import requiere_autenticacion
+
 from .types import MembresiaType
-
-
 
 
 @strawberry.type
@@ -19,7 +19,10 @@ class MembresiaQueries:
             "de la empresa; NO devuelve gente de otros clientes."
         )
     )
-    def miembros(self, estado_id: strawberry.ID | None = None) -> list[MembresiaType]:
+    @requiere_autenticacion
+    def miembros(
+        self, info: strawberry.Info, estado_id: strawberry.ID | None = None
+    ) -> list[MembresiaType]:
         filas = membresias.listar_membresias(
             int(estado_id) if estado_id is not None else None
         )
@@ -35,7 +38,10 @@ class MembresiaQueries:
         ]
 
     @strawberry.field(description="La membresía de una persona en la empresa activa.")
-    def membresia(self, usuario_id: strawberry.ID) -> MembresiaType | None:
+    @requiere_autenticacion
+    def membresia(
+        self, info: strawberry.Info, usuario_id: strawberry.ID
+    ) -> MembresiaType | None:
         fila = membresias.membresia_de(int(usuario_id))
         if fila is None:
             return None

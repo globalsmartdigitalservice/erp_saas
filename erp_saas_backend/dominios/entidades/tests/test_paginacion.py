@@ -126,11 +126,12 @@ def test_el_desplazamiento_negativo_se_rechaza(empresa_a):
             entidades.listar_entidades(desde=-1)
 
 
-def test_la_query_devuelve_items_e_info(empresa_a, treinta):
+def test_la_query_devuelve_items_e_info(contexto_con_sesion, empresa_a, treinta):
     with empresa(empresa_a.id):
         resultado = schema.execute_sync(
             "{ entidades(limite: 5, desde: 10) "
-            "{ items { nombre } info { total limite desde haySiguiente } } }"
+            "{ items { nombre } info { total limite desde haySiguiente } } }",
+            context_value=contexto_con_sesion,
         )
 
     assert resultado.errors is None
@@ -144,17 +145,20 @@ def test_la_query_devuelve_items_e_info(empresa_a, treinta):
     }
 
 
-def test_la_query_avisa_cuando_la_pagina_es_muy_profunda(empresa_a):
+def test_la_query_avisa_cuando_la_pagina_es_muy_profunda(
+    contexto_con_sesion, empresa_a
+):
     with empresa(empresa_a.id):
         resultado = schema.execute_sync(
-            f"{{ entidades(desde: {VENTANA_MAXIMA}) {{ info {{ total }} }} }}"
+            f"{{ entidades(desde: {VENTANA_MAXIMA}) {{ info {{ total }} }} }}",
+            context_value=contexto_con_sesion,
         )
 
     assert resultado.errors is not None
     assert "filtros" in resultado.errors[0].message
 
 
-def test_paginar_no_agrega_consultas_por_fila(empresa_a, treinta):
+def test_paginar_no_agrega_consultas_por_fila(contexto_con_sesion, empresa_a, treinta):
     consulta = (
         "{ entidades(limite: %d) { items { nombre tipoEntidad { nombre } "
         "tipoDocumento { nombre } estado { nombre } } } }"
@@ -162,9 +166,9 @@ def test_paginar_no_agrega_consultas_por_fila(empresa_a, treinta):
 
     with empresa(empresa_a.id):
         with CaptureQueriesContext(connection) as con_dos:
-            schema.execute_sync(consulta % 2)
+            schema.execute_sync(consulta % 2, context_value=contexto_con_sesion)
 
         with CaptureQueriesContext(connection) as con_veinte:
-            schema.execute_sync(consulta % 20)
+            schema.execute_sync(consulta % 20, context_value=contexto_con_sesion)
 
     assert len(con_dos) == len(con_veinte)

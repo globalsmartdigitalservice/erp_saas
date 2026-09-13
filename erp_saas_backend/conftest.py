@@ -133,3 +133,33 @@ def sucursal_a(crear_empresa, empresa_a):
     diferencia es lo que prueban los tests de herencia.
     """
     return crear_empresa("Sucursal de A", padre=empresa_a)
+
+
+@pytest.fixture
+def usuario_proveedor(db):
+    """Una cuenta sin cliente: `matriz` vacía.
+
+    Va por `objects.create()` porque `create_user()` exige el cliente a
+    propósito. No es superusuario: así se comprueba que `@solo_proveedor`
+    pasa por la matriz vacía y no por `is_superuser`.
+    """
+    from comun.usuarios.models import Usuario
+
+    return Usuario.objects.create(username="proveedor", email="proveedor@erp.test")
+
+
+@pytest.fixture
+def contexto_proveedor(usuario_proveedor):
+    from core.tests.contexto_graphql import Contexto
+
+    return Contexto(usuario_proveedor)
+
+
+@pytest.fixture
+def contexto_con_sesion(contexto_proveedor):
+    """Cualquier sesión abierta, para los guards que solo piden estar dentro.
+
+    Reusa la cuenta del proveedor porque una de cliente necesita una empresa
+    ya creada, y acá no se prueba de quién es la cuenta sino que haya sesión.
+    """
+    return contexto_proveedor

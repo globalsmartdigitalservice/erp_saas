@@ -11,6 +11,8 @@ from comun.membresias import api as membresias
 from comun.membresias.graphql.types import EmpresaDelUsuarioType
 from comun.usuarios.graphql.types import UsuarioType
 
+from dominios.seguridad.permisos_graphql import requiere_autenticacion
+
 from .tipos_acceso import (
     DispositivoAutorizadoType,
     DispositivoType,
@@ -30,7 +32,10 @@ class SeguridadQueries:
             "editar."
         )
     )
-    def roles(self, estado_id: strawberry.ID | None = None) -> list[RolType]:
+    @requiere_autenticacion
+    def roles(
+        self, info: strawberry.Info, estado_id: strawberry.ID | None = None
+    ) -> list[RolType]:
         activa = empresa_actual()
         filas = seguridad.listar_roles_con_conteo(
             int(estado_id) if estado_id is not None else None
@@ -38,14 +43,18 @@ class SeguridadQueries:
         return [RolType.desde_modelo(r, activa) for r in filas]
 
     @strawberry.field(description="Un rol por su id.")
-    def rol(self, id: strawberry.ID) -> RolType | None:
+    @requiere_autenticacion
+    def rol(self, info: strawberry.Info, id: strawberry.ID) -> RolType | None:
         fila = seguridad.obtener_rol(int(id))
         return RolType.desde_modelo(fila, empresa_actual()) if fila else None
 
     @strawberry.field(
         description="Qué puede hacer un rol. Funciona también con los heredados."
     )
-    def permisos_del_rol(self, rol_id: strawberry.ID) -> list[PermisoDelRolType]:
+    @requiere_autenticacion
+    def permisos_del_rol(
+        self, info: strawberry.Info, rol_id: strawberry.ID
+    ) -> list[PermisoDelRolType]:
         return [
             PermisoDelRolType.desde_modelo(linea)
             for linea in seguridad.listar_permisos_del_rol(int(rol_id))
@@ -57,7 +66,10 @@ class SeguridadQueries:
             "terminados. Es el historial: quién le dio qué, cuándo y por qué."
         )
     )
-    def roles_de(self, membresia_id: strawberry.ID) -> list[RolAsignadoType]:
+    @requiere_autenticacion
+    def roles_de(
+        self, info: strawberry.Info, membresia_id: strawberry.ID
+    ) -> list[RolAsignadoType]:
         activa = empresa_actual()
         return [
             RolAsignadoType.desde_modelo(
@@ -73,15 +85,21 @@ class SeguridadQueries:
             "está `misPermisos`, que no pide nada."
         )
     )
-    def permisos_de(self, membresia_id: strawberry.ID) -> list[str]:
+    @requiere_autenticacion
+    def permisos_de(
+        self, info: strawberry.Info, membresia_id: strawberry.ID
+    ) -> list[str]:
         return sorted(seguridad.permisos_de(int(membresia_id)))
 
 
 @strawberry.type
 class AccesoQueries:
     @strawberry.field(description="Los equipos registrados en esta empresa.")
+    @requiere_autenticacion
     def dispositivos(
-        self, estado_id: strawberry.ID | None = None
+        self,
+        info: strawberry.Info,
+        estado_id: strawberry.ID | None = None,
     ) -> list[DispositivoType]:
         return [
             DispositivoType.desde_modelo(d)
@@ -93,8 +111,11 @@ class AccesoQueries:
     @strawberry.field(
         description="Los equipos de una persona acá, autorizados y dados de baja."
     )
+    @requiere_autenticacion
     def dispositivos_de(
-        self, membresia_id: strawberry.ID
+        self,
+        info: strawberry.Info,
+        membresia_id: strawberry.ID,
     ) -> list[DispositivoAutorizadoType]:
         return [
             DispositivoAutorizadoType.desde_modelo(a)
@@ -108,15 +129,21 @@ class AccesoQueries:
             "en la pantalla."
         )
     )
-    def horarios_de(self, membresia_id: strawberry.ID) -> list[HorarioAccesoType]:
+    @requiere_autenticacion
+    def horarios_de(
+        self, info: strawberry.Info, membresia_id: strawberry.ID
+    ) -> list[HorarioAccesoType]:
         return [
             HorarioAccesoType.desde_modelo(h)
             for h in seguridad.horarios_de(int(membresia_id))
         ]
 
     @strawberry.field(description="Los días sueltos: PERMISO o BLOQUEO.")
+    @requiere_autenticacion
     def excepciones_de(
-        self, membresia_id: strawberry.ID
+        self,
+        info: strawberry.Info,
+        membresia_id: strawberry.ID,
     ) -> list[ExcepcionHorarioType]:
         return [
             ExcepcionHorarioType.desde_modelo(e)
@@ -131,8 +158,10 @@ class AccesoQueries:
             "sin ella no se comprueba el equipo."
         )
     )
+    @requiere_autenticacion
     def puede_entrar(
         self,
+        info: strawberry.Info,
         membresia_id: strawberry.ID,
         momento: datetime.datetime | None = None,
         mac: str | None = None,

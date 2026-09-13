@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from graphql import GraphQLError
 
 from dominios.seguridad.permisos import auto_permisos
+from dominios.seguridad.permisos_graphql import solo_proveedor
 
 from comun.monedas import api as monedas
 from comun.tipologias import api as tipologias
@@ -35,7 +36,8 @@ def _traducir(error: ValidationError) -> GraphQLError:
 @strawberry.type
 class MonedaMutations:
     @strawberry.mutation(description="Crea una moneda. Catálogo del sistema.")
-    def crear_moneda(self, datos: CrearMonedaInput) -> MonedaType:
+    @solo_proveedor
+    def crear_moneda(self, info: strawberry.Info, datos: CrearMonedaInput) -> MonedaType:
         try:
             fila = monedas.crear_moneda(
                 descripcion=datos.descripcion,
@@ -51,8 +53,11 @@ class MonedaMutations:
         description="Cambia los datos de una moneda del catálogo. Qué "
         "empresa la usa como base no se decide acá."
     )
+    @solo_proveedor
     def actualizar_moneda(
-        self, id: strawberry.ID, datos: ActualizarMonedaInput
+        self,
+        info: strawberry.Info,
+        id: strawberry.ID, datos: ActualizarMonedaInput
     ) -> MonedaType:
         campos = {
             campo: valor
@@ -78,7 +83,8 @@ class MonedaMutations:
         "queda, se le pone el estado Baja. Rechaza las que alguna empresa "
         "esté usando."
     )
-    def desactivar_moneda(self, id: strawberry.ID) -> MonedaType:
+    @solo_proveedor
+    def desactivar_moneda(self, info: strawberry.Info, id: strawberry.ID) -> MonedaType:
         try:
             fila = monedas.desactivar_moneda(int(id))
         except ValidationError as error:

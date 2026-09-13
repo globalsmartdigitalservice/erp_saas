@@ -170,18 +170,22 @@ def _clase_de(funcion):
 
 
 def solo_proveedor(func):
-    """Exige `is_staff`: la persona tiene que ser del PROVEEDOR.
+    """La cuenta no tiene que pertenecer a ningún cliente.
 
     Va sobre las mutations del catálogo del sistema —monedas, países,
     idiomas—: un permiso suelto no alcanza porque se le puede dar a un
-    cliente por error, y ninguno debería crear monedas para los demás."""
+    cliente por error, y ninguno debería crear monedas para los demás.
+
+    Pregunta por `matriz` y no por `is_staff`: aquel significa "entra al
+    /admin/ de Django", que no es lo mismo — hay gente del proveedor que
+    no lo necesita."""
 
     @functools.wraps(func)
     def guard(*args, **kwargs):
         usuario = _exigir_sesion(args, kwargs, func)
 
-        if not (usuario.is_staff or usuario.is_superuser):
-            # Mismo texto que "no tenés el permiso": distinguirlos le diría
+        if getattr(usuario, "matriz_id", None) is not None:
+            # Mismo texto que "no tiene el permiso": distinguirlos le diría
             # a un cliente que esa operación existe.
             raise GraphQLError(SIN_PERMISO, extensions={"code": CODIGO_SIN_PERMISO})
 

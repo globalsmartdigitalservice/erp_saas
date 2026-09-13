@@ -26,15 +26,11 @@ EXCEPCIONES = {
         "El aislamiento de la jerarquía matriz→sucursal se resuelve en el "
         "service, no con el manager."
     ),
-    # ─── Identidad: la misma persona en varias empresas ───
+    # ─── Identidad: la cuenta es de un CLIENTE, no de una empresa ───
     "segu_usuario": (
-        "Es la IDENTIDAD, no un dato de cliente, y NO es un catálogo del "
-        "proveedor: son personas reales. Juan es el mismo aunque trabaje "
-        "en el gimnasio y en la farmacia. Si esta tabla llevara empresa "
-        "haría falta un Juan por empresa, y con eso vuelve la contraseña "
-        "repetida entre clientes. En qué empresas está vive en "
-        "Usuario_Empresa, que SÍ es tenant; qué puede hacer en cada una, "
-        "en los grupos de dominios/seguridad."
+        "La cuenta es de un CLIENTE, no de una empresa: eso lo dice la "
+        "columna `matriz`. En qué empresas del grupo trabaja vive en "
+        "Usuario_Empresa, que sí es tenant."
     ),
     # ─── No es una tabla ───
     "seguridad_permisodenegocio": (

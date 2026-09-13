@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from graphql import GraphQLError
 
 from dominios.seguridad.permisos import auto_permisos
+from dominios.seguridad.permisos_graphql import solo_proveedor
 
 from comun.geografia import api as geografia
 from comun.tipologias import api as tipologias
@@ -40,7 +41,8 @@ def _traducir(error: ValidationError) -> GraphQLError:
 @strawberry.type
 class PaisMutations:
     @strawberry.mutation(description="Crea un país. Catálogo del sistema.")
-    def crear_pais(self, datos: CrearPaisInput) -> PaisType:
+    @solo_proveedor
+    def crear_pais(self, info: strawberry.Info, datos: CrearPaisInput) -> PaisType:
         try:
             fila = geografia.crear_pais(
                 cod_pais=datos.cod_pais,
@@ -53,7 +55,8 @@ class PaisMutations:
         return _a_pais(fila)
 
     @strawberry.mutation(description="Actualiza los campos enviados de un país.")
-    def actualizar_pais(self, id: strawberry.ID, datos: ActualizarPaisInput) -> PaisType:
+    @solo_proveedor
+    def actualizar_pais(self, info: strawberry.Info, id: strawberry.ID, datos: ActualizarPaisInput) -> PaisType:
         campos = {
             "cod_pais": datos.cod_pais,
             "nombre": datos.nombre,
@@ -72,7 +75,8 @@ class PaisMutations:
         description="Da de baja un país. Soft delete: pasa al estado Baja, "
         "no se borra."
     )
-    def desactivar_pais(self, id: strawberry.ID) -> PaisType:
+    @solo_proveedor
+    def desactivar_pais(self, info: strawberry.Info, id: strawberry.ID) -> PaisType:
         try:
             fila = geografia.desactivar_pais(int(id))
         except ValidationError as e:
@@ -87,7 +91,8 @@ class UbicacionMutations:
         description="Crea una división geográfica. El nivel lo calcula el "
         "sistema a partir del padre."
     )
-    def crear_ubicacion(self, datos: CrearUbicacionInput) -> UbicacionGeograficaType:
+    @solo_proveedor
+    def crear_ubicacion(self, info: strawberry.Info, datos: CrearUbicacionInput) -> UbicacionGeograficaType:
         try:
             fila = geografia.crear_ubicacion(
                 pais_id=int(datos.pais_id),
@@ -109,8 +114,11 @@ class UbicacionMutations:
         description="Cambia de quién cuelga una ubicación. Rechaza el "
         "movimiento si formaría un ciclo."
     )
+    @solo_proveedor
     def mover_ubicacion(
-        self, id: strawberry.ID, nuevo_padre_id: strawberry.ID | None = None
+        self,
+        info: strawberry.Info,
+        id: strawberry.ID, nuevo_padre_id: strawberry.ID | None = None
     ) -> UbicacionGeograficaType:
         try:
             fila = geografia.mover_ubicacion(
@@ -121,7 +129,8 @@ class UbicacionMutations:
         return _a_ubicacion(fila)
 
     @strawberry.mutation(description="Da de baja una ubicación. Soft delete.")
-    def desactivar_ubicacion(self, id: strawberry.ID) -> UbicacionGeograficaType:
+    @solo_proveedor
+    def desactivar_ubicacion(self, info: strawberry.Info, id: strawberry.ID) -> UbicacionGeograficaType:
         try:
             fila = geografia.desactivar_ubicacion(int(id))
         except ValidationError as e:

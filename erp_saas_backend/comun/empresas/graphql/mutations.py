@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from graphql import GraphQLError
 
 from dominios.seguridad.permisos import auto_permisos
+from dominios.seguridad.permisos_graphql import solo_proveedor
 
 from comun.empresas import api as empresas
 
@@ -33,7 +34,8 @@ class EmpresaMutations:
         description="Alta de un cliente. Crea la empresa y su primer país en "
         "una sola transacción."
     )
-    def crear_empresa(self, datos: CrearEmpresaInput) -> EmpresaType:
+    @solo_proveedor
+    def crear_empresa(self, info: strawberry.Info, datos: CrearEmpresaInput) -> EmpresaType:
         try:
             fila = empresas.crear_empresa(
                 ident_tributaria=datos.ident_tributaria,
@@ -53,8 +55,11 @@ class EmpresaMutations:
         return _a_empresa(fila)
 
     @strawberry.mutation(description="Cambia los datos de una empresa.")
+    @solo_proveedor
     def actualizar_empresa(
-        self, id: strawberry.ID, datos: ActualizarEmpresaInput
+        self,
+        info: strawberry.Info,
+        id: strawberry.ID, datos: ActualizarEmpresaInput
     ) -> EmpresaType:
         campos = {
             campo: valor
@@ -81,7 +86,8 @@ class EmpresaMutations:
         description="Soft delete: la fila queda, se le pone el estado "
         "Inactiva. Falla si tiene sucursales activas."
     )
-    def desactivar_empresa(self, id: strawberry.ID) -> EmpresaType:
+    @solo_proveedor
+    def desactivar_empresa(self, info: strawberry.Info, id: strawberry.ID) -> EmpresaType:
         try:
             fila = empresas.desactivar_empresa(int(id))
         except ValidationError as error:

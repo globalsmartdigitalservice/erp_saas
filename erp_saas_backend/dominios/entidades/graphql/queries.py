@@ -10,6 +10,7 @@ from core.graphql import InfoDePagina, Pagina
 from core.paginacion import VentanaDemasiadoProfunda
 from dominios.entidades import api as entidades
 from dominios.entidades.models import CategoriaEntidad
+from dominios.seguridad.permisos_graphql import requiere_autenticacion
 
 from .types import (
     CategoriaEntidadType,
@@ -195,8 +196,12 @@ class EntidadQueries:
         "defecto 25, tope 100. SIN sus colecciones: para roles, direcciones, "
         "contactos y encuestas usá `entidad(id)` o las consultas sueltas."
     )
+    @requiere_autenticacion
     def entidades(
-        self, limite: int | None = None, desde: int = 0
+        self,
+        info: strawberry.Info,
+        limite: int | None = None,
+        desde: int = 0,
     ) -> Pagina[EntidadType]:
         try:
             pagina = entidades.listar_entidades(limite=limite, desde=desde)
@@ -214,7 +219,8 @@ class EntidadQueries:
         description="Una entidad con TODO: sus roles, direcciones, contactos "
         "y encuestas."
     )
-    def entidad(self, id: strawberry.ID) -> EntidadType | None:
+    @requiere_autenticacion
+    def entidad(self, info: strawberry.Info, id: strawberry.ID) -> EntidadType | None:
         fila = entidades.obtener_entidad(int(id))
         if fila is None:
             return None
@@ -224,7 +230,10 @@ class EntidadQueries:
         description="Busca una entidad por su documento. El documento vacío "
         "no se busca: todas las que no lo tienen empatarían."
     )
-    def entidad_por_documento(self, documento: str) -> EntidadType | None:
+    @requiere_autenticacion
+    def entidad_por_documento(
+        self, info: strawberry.Info, documento: str
+    ) -> EntidadType | None:
         fila = entidades.buscar_entidad_por_documento(documento)
         if fila is None:
             return None
@@ -238,7 +247,8 @@ class CategoriaEntidadQueries:
         "nombre y la descripción vienen en el idioma activo; lo que no esté "
         "traducido sale como lo cargó el cliente."
     )
-    def categorias_entidad(self) -> list[CategoriaEntidadType]:
+    @requiere_autenticacion
+    def categorias_entidad(self, info: strawberry.Info) -> list[CategoriaEntidadType]:
         return list(
             _categorias_traducidas(entidades.listar_categorias()).values()
         )
@@ -252,24 +262,36 @@ class DetalleDeEntidadQueries:
     """
 
     @strawberry.field(description="Los roles de una entidad.")
-    def roles_de_entidad(self, entidad_id: strawberry.ID) -> list[RolEntidadType]:
+    @requiere_autenticacion
+    def roles_de_entidad(
+        self, info: strawberry.Info, entidad_id: strawberry.ID
+    ) -> list[RolEntidadType]:
         return _armar_roles(entidades.listar_roles_de(int(entidad_id)))
 
     @strawberry.field(description="Las direcciones de una entidad.")
+    @requiere_autenticacion
     def direcciones_de_entidad(
-        self, entidad_id: strawberry.ID
+        self,
+        info: strawberry.Info,
+        entidad_id: strawberry.ID,
     ) -> list[DireccionType]:
         return _armar_direcciones(entidades.listar_direcciones_de(int(entidad_id)))
 
     @strawberry.field(description="Los contactos de una entidad.")
+    @requiere_autenticacion
     def contactos_de_entidad(
-        self, entidad_id: strawberry.ID
+        self,
+        info: strawberry.Info,
+        entidad_id: strawberry.ID,
     ) -> list[ContactoEntidadType]:
         return _armar_contactos(entidades.listar_contactos_de(int(entidad_id)))
 
     @strawberry.field(description="Las encuestas de una entidad, de la más nueva.")
+    @requiere_autenticacion
     def encuestas_de_entidad(
-        self, entidad_id: strawberry.ID
+        self,
+        info: strawberry.Info,
+        entidad_id: strawberry.ID,
     ) -> list[EncuestaSatisfaccionType]:
         return [
             EncuestaSatisfaccionType.desde_modelo(e)

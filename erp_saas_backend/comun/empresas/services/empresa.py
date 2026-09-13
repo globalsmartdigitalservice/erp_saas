@@ -5,6 +5,7 @@ from comun.empresas.models import Empresa
 from comun.empresas.repository import empresa as repo
 from comun.tipologias import api as tipologias
 from comun.tipologias.constantes import AGRUPADOR
+from core.tenancy import empresa_actual
 
 # Un CONTRATO con la semilla, no etiquetas: el código busca estas filas
 # POR NOMBRE. Si `cargar_tipologias.py` las escribe distinto, el alta de
@@ -303,3 +304,26 @@ def ids_del_ambito(empresa_id: int) -> list[int]:
     if matriz.pk == empresa_id:
         return [empresa_id]
     return [empresa_id, matriz.pk]
+
+
+def exigir_del_grupo(empresa_id: int) -> int:
+    """El id pedido, solo si es del grupo del cliente de la sesión.
+
+    `Empresa` no puede tener el filtro de tenancy —un `empresa_id` que
+    apunta a sí misma no filtra nada—, así que la comprobación se escribe
+    acá y la llaman las consultas que reciben un id de afuera.
+
+    El mismo mensaje que si no existiera: decir "no tiene permiso sobre la
+    empresa 7" confirma que el 7 existe, y probando números se arma el
+    padrón de clientes del SaaS.
+    """
+    de_la_sesion = empresa_actual()
+    if de_la_sesion is None:
+        raise ValidationError("No hay empresa en la sesión.")
+
+    mia = matriz_de(de_la_sesion)
+    suya = matriz_de(empresa_id)
+    if mia is None or suya is None or mia.pk != suya.pk:
+        raise ValidationError(f"No existe la empresa {empresa_id}.")
+
+    return empresa_id

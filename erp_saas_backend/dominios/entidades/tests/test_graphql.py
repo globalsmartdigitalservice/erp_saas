@@ -10,13 +10,14 @@ from dominios.entidades import api as entidades
 pytestmark = pytest.mark.django_db
 
 
-def test_query_entidades(empresa_a, crear_entidad):
+def test_query_entidades(contexto_con_sesion, empresa_a, crear_entidad):
     with empresa(empresa_a.id):
         crear_entidad("Juan", documento="1234567")
 
         resultado = schema.execute_sync(
             "{ entidades { items { nombre documento tipoEntidad { nombre } "
-            "estado { nombre } } info { total } } }"
+            "estado { nombre } } info { total } } }",
+            context_value=contexto_con_sesion,
         )
 
     assert resultado.errors is None
@@ -31,13 +32,16 @@ def test_query_entidades(empresa_a, crear_entidad):
     assert resultado.data["entidades"]["info"]["total"] == 1
 
 
-def test_la_lista_no_trae_las_colecciones(empresa_a, crear_entidad, rol_de):
+def test_la_lista_no_trae_las_colecciones(
+    contexto_con_sesion, empresa_a, crear_entidad, rol_de
+):
     with empresa(empresa_a.id):
         juan = crear_entidad("Juan")
         rol_de(juan)
 
         resultado = schema.execute_sync(
-            "{ entidades { items { nombre roles { id } } } }"
+            "{ entidades { items { nombre roles { id } } } }",
+            context_value=contexto_con_sesion,
         )
 
     assert resultado.errors is None
@@ -45,6 +49,7 @@ def test_la_lista_no_trae_las_colecciones(empresa_a, crear_entidad, rol_de):
 
 
 def test_el_detalle_si_trae_las_colecciones(
+        contexto_con_sesion,
     empresa_a, crear_entidad, rol_de, crear_contacto, catalogo_entidades
 ):
     with empresa(empresa_a.id):
@@ -63,6 +68,7 @@ def test_el_detalle_si_trae_las_colecciones(
             "roles { tipoRol { nombre } } direcciones { calle } "
             "contactos { nombre } } }",
             variable_values={"id": str(juan.pk)},
+            context_value=contexto_con_sesion,
         )
 
     assert resultado.errors is None
@@ -75,6 +81,7 @@ def test_el_detalle_si_trae_las_colecciones(
 
 
 def test_la_entidad_de_otra_empresa_devuelve_null(
+        contexto_con_sesion,
     empresa_a, empresa_b, crear_entidad
 ):
     with empresa(empresa_a.id):
@@ -84,20 +91,24 @@ def test_la_entidad_de_otra_empresa_devuelve_null(
         resultado = schema.execute_sync(
             'query ($id: ID!) { entidad(id: $id) { nombre } }',
             variable_values={"id": str(juan.pk)},
+            context_value=contexto_con_sesion,
         )
 
     assert resultado.errors is None
     assert resultado.data["entidad"] is None
 
 
-def test_listar_entidades_no_crece_con_la_cantidad(empresa_a, crear_entidad):
+def test_listar_entidades_no_crece_con_la_cantidad(
+    contexto_con_sesion, empresa_a, crear_entidad
+):
     with empresa(empresa_a.id):
         crear_entidad("Sola", documento="1")
 
         with CaptureQueriesContext(connection) as con_una:
             schema.execute_sync(
                 "{ entidades { items { nombre tipoEntidad { nombre } "
-                "tipoDocumento { nombre } estado { nombre } } } }"
+                "tipoDocumento { nombre } estado { nombre } } } }",
+                context_value=contexto_con_sesion,
             )
 
         for n in range(2, 11):
@@ -106,7 +117,8 @@ def test_listar_entidades_no_crece_con_la_cantidad(empresa_a, crear_entidad):
         with CaptureQueriesContext(connection) as con_diez:
             resultado = schema.execute_sync(
                 "{ entidades { items { nombre tipoEntidad { nombre } "
-                "tipoDocumento { nombre } estado { nombre } } } }"
+                "tipoDocumento { nombre } estado { nombre } } } }",
+                context_value=contexto_con_sesion,
             )
 
     assert resultado.errors is None
