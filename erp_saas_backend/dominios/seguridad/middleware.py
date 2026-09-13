@@ -4,6 +4,7 @@ Hace dos cosas, una por request:
 
     request.user           ← quién es
     empresa_actual()       ← en qué empresa está parado
+    idioma_actual()        ← en qué idioma quiere leer, si eligió uno
 
 Reemplaza al provisional de `core/tenancy/middleware.py`, que leía la
 empresa de una cabecera HTTP porque todavía no había login. Cambió una
@@ -39,6 +40,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 
 from comun.tipologias import api as tipologias
+from core.idioma import establecer_idioma, restaurar_idioma
 from core.tenancy import (
     establecer_empresa,
     restaurar_empresa,
@@ -72,9 +74,16 @@ class SesionPorTokenMiddleware:
         request.user = membresia.usuario
 
         marca = establecer_empresa(membresia.empresa_id)
+        marca_idioma = (
+            establecer_idioma(membresia.usuario.idioma_id)
+            if membresia.usuario.idioma_id
+            else None
+        )
         try:
             return self.get_response(request)
         finally:
+            if marca_idioma is not None:
+                restaurar_idioma(marca_idioma)
             restaurar_empresa(marca)
 
     def _leer_token(self, request) -> dict | None:

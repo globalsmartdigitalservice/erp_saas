@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 from core.tenancy import ModeloTenantDerivado
@@ -28,7 +29,7 @@ class HorarioExcepcion(ModeloTenantDerivado):
     motivo = models.CharField(max_length=200, blank=True)
 
     creado_por = models.ForeignKey(
-        "membresias.UsuarioEmpresa",
+        settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="+",
         null=True,

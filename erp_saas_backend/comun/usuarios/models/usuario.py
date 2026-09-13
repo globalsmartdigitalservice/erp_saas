@@ -26,6 +26,15 @@ class Usuario(AbstractUser):
         "debe cambiar la contraseña", default=False
     )
 
+    idioma = models.ForeignKey(
+        "idiomas.Idioma",
+        verbose_name="idioma preferido",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
+
     objects = UsuarioManager()
 
     class Meta:
