@@ -9,7 +9,7 @@ import { TipologiasRoutes } from "@/modules/tipologias/routes/TipologiasRoutes";
 import { AppShell } from "@/shared/components/layout/AppShell";
 import { ProtectedRoute } from "@/shared/components/ProtectedRoute";
 import { PreferenciasProvider } from "@/shared/preferencias";
-import { SesionProvider } from "@/shared/sesion";
+import { SessionProvider } from "@/shared/session";
 
 
 function App() {
@@ -20,7 +20,7 @@ function App() {
           <Toaster position="top-right" richColors />
 
           {/* Adentro del router: `<ProtectedRoute>` navega al login. */}
-          <SesionProvider>
+          <SessionProvider>
             <Routes>
               {/* Fuera del AppShell: el login no lleva menú ni encabezado. */}
               <Route path="/login" element={<LoginPage />} />
@@ -42,7 +42,7 @@ function App() {
                 }
               />
             </Routes>
-          </SesionProvider>
+          </SessionProvider>
         </BrowserRouter>
       </PreferenciasProvider>
     </ApolloProvider>

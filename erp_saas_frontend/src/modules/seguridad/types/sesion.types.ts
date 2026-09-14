@@ -15,7 +15,7 @@ export type UsuarioDeLaSesion = {
  * una y todavía no eligió: no hay sesión abierta y `empresas` trae las
  * opciones.
  */
-export type ResultadoIngreso = {
+export type ResultadoLogin = {
   necesitaElegirEmpresa: boolean;
   usuario: UsuarioDeLaSesion | null;
   empresas: EmpresaDelUsuario[];

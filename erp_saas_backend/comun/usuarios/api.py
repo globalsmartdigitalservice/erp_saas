@@ -1,22 +1,7 @@
-"""
-Superficie pública de `usuarios`. El resto de la app es privado.
+"""Superficie pública de `usuarios`: la identidad, no la membresía.
 
-    from comun.usuarios import api as usuarios
-
-    juan = usuarios.crear_usuario(
-        username="juan", email="juan@acme.com", password="...",
-    )
-
- ESTA APP ES LA IDENTIDAD, NO LA MEMBRESÍA.
-
-Crear un usuario NO lo mete en ninguna empresa: para eso está
-`comun.membresias.afiliar()`. Son dos pasos a propósito — la misma
-persona trabaja en varias empresas de su cliente y su cuenta es una sola.
-
- CADA CUENTA ES DE UN CLIENTE, y se deduce de la empresa de la sesión:
-no se pasa por parámetro. Sin sesión no se puede dar de alta a nadie.
-La pantalla "usuarios de mi empresa" NO sale de acá, sale de
-`membresias`, que sí filtra.
+Crear una cuenta no la mete en ninguna empresa —eso es `membresias.afiliar()`—
+y de qué cliente es sale de la empresa de la sesión, nunca por parámetro.
 """
 
 from django.contrib.auth import get_user_model
@@ -61,6 +46,11 @@ def obtener_por_email(email: str):
 def crear_usuario(**campos):
     """Alta en el sistema. Arranca con `debe_cambiar_password = True`."""
     return _svc.crear(**campos)
+
+
+def generar_password_temporal() -> str:
+    """Una contraseña de un solo uso, pensada para dictar por teléfono."""
+    return _svc.generar_password_temporal()
 
 
 def actualizar_usuario(usuario_id: int, **campos):

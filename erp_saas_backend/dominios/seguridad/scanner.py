@@ -25,11 +25,34 @@ PREFIJOS_DEL_PROYECTO = (
 )
 
 
+def _declara_permisos(clase) -> bool:
+    """¿La clase declara permisos ELLA MISMA, o solo los hereda?
+
+    Se mira `__dict__` y no `hasattr`, que sigue la herencia. Las clases que
+    solo componen —`GeografiaMutation(PaisMutations, UbicacionMutations)`—
+    heredan la marca de su primera base, así que con `hasattr` generarían los
+    permisos de TODOS sus métodos bajo el recurso de esa base: `crear_ubicacion`
+    quedaría además como `core_paises_crear_ubicacion`.
+
+    Y ese permiso de más no sobra, está muerto: `@requiere_permiso` deduce el
+    código de la clase donde el método está DEFINIDO. Asignarlo a un rol no
+    habilita nada, y nadie se entera. El escáner tiene que mirar la misma clase
+    que mira el guard."""
+    from dominios.seguridad.permisos import METADATA
+
+    if "_auto_permiso_clase" in clase.__dict__:
+        return True
+
+    return any(
+        hasattr(miembro, METADATA)
+        for miembro in clase.__dict__.values()
+        if inspect.isfunction(miembro)
+    )
+
+
 def clases_con_permisos(stdout=None) -> list[type]:
     """Solo las decoradas, a nivel de clase o de algún método: así no se
     arrastran mutations que todavía no decidieron su permiso."""
-    from dominios.seguridad.permisos import METADATA
-
     encontradas = []
 
     for config in apps.get_app_configs():
@@ -54,12 +77,7 @@ def clases_con_permisos(stdout=None) -> list[type]:
             if clase.__module__ != modulo.__name__:
                 # Importada de otro lado; se escanea donde vive.
                 continue
-            decorada_la_clase = hasattr(clase, "_auto_permiso_clase")
-            decorado_un_metodo = any(
-                hasattr(m, METADATA)
-                for _, m in inspect.getmembers(clase, inspect.isfunction)
-            )
-            if decorada_la_clase or decorado_un_metodo:
+            if _declara_permisos(clase):
                 encontradas.append(clase)
 
     return encontradas

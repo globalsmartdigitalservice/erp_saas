@@ -36,6 +36,12 @@ def obtener_paises(pais_ids) -> dict[int, Pais]:
     return _repo_pais.obtener_varios(pais_ids)
 
 
+def obtener_pais_por_codigo(cod_pais: str) -> Pais | None:
+    """Por su código corto (`BO`), como en monedas e idiomas. Los códigos son
+    estables entre bases; los ids no, y por eso los comandos hablan en códigos."""
+    return _repo_pais.obtener_por_codigo((cod_pais or "").strip().upper())
+
+
 def listar_paises() -> list[Pais]:
     return _repo_pais.listar()
 

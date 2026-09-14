@@ -24,6 +24,15 @@ queda pegada a la siguiente petición.
 sin empresa: quién puede hacer qué lo deciden los resolvers y `has_perm()`,
 y un middleware que devuelve 401 a todo dejaría afuera al propio login.
 
+ DEJA `usuario_del_token` ADEMÁS DE `user`, y no es redundante: a `user` lo
+puede haber puesto Django desde la cookie del `/admin/`, que no pasa por
+ninguna de las comprobaciones de acá. Las guardas de GraphQL necesitan saber
+cuál de los dos fue, y por eso existe esta marca. Ver `TRUST_DJANGO_SESSION`.
+
+Y no se puede resolver poniendo `AnonymousUser` cuando no hay token: este
+middleware corre para TODAS las peticiones, así que eso dejaría el `/admin/`
+inutilizable.
+
  SE COMPRUEBA LA SESIÓN CONTRA LA BASE EN CADA PETICIÓN, y eso no es un
 lujo: sin esto, dar de baja a alguien no lo saca del sistema. Su token ya
 lleva la empresa adentro y la renovación tampoco mira la membresía, así
@@ -72,6 +81,7 @@ class SesionPorTokenMiddleware:
             return self.get_response(request)
 
         request.user = membresia.usuario
+        request.usuario_del_token = membresia.usuario
 
         marca = establecer_empresa(membresia.empresa_id)
         marca_idioma = (

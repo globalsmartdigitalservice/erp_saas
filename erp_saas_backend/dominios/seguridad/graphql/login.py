@@ -51,8 +51,8 @@ def _borrar_cookies(info) -> None:
     respuesta.delete_cookie(settings.COOKIE_REFRESH)
 
 
-@strawberry.type(name="ResultadoIngreso")
-class ResultadoIngresoType:
+@strawberry.type(name="ResultadoLogin")
+class ResultadoLoginType:
     """No trae los tokens: van en cookies `HttpOnly`.
 
     `necesitaElegirEmpresa` en true significa que trabaja en más de una y
@@ -63,7 +63,7 @@ class ResultadoIngresoType:
     empresas: list[EmpresaDelUsuarioType]
 
     @classmethod
-    def desde_ingreso(cls, ingreso) -> "ResultadoIngresoType":
+    def desde_ingreso(cls, ingreso) -> "ResultadoLoginType":
         return cls(
             necesita_elegir_empresa=ingreso.necesita_elegir_empresa,
             usuario=UsuarioType.desde_modelo(ingreso.usuario),
@@ -73,8 +73,8 @@ class ResultadoIngresoType:
         )
 
 
-@strawberry.input(name="IngresarInput")
-class IngresarInput:
+@strawberry.input(name="LoginInput")
+class LoginInput:
     """`identificador` es el nombre de usuario o el correo. `mac` la manda
     el cliente instalado; sin ella no se comprueba el equipo."""
 
@@ -93,9 +93,9 @@ class LoginMutations:
             "cookies HttpOnly, no en la respuesta."
         )
     )
-    def ingresar(
-        self, info: strawberry.Info, datos: IngresarInput
-    ) -> ResultadoIngresoType:
+    def login(
+        self, info: strawberry.Info, datos: LoginInput
+    ) -> ResultadoLoginType:
         try:
             ingreso = svc.ingresar(
                 identificador=datos.identificador,
@@ -111,7 +111,7 @@ class LoginMutations:
 
         if not ingreso.necesita_elegir_empresa:
             _poner_cookies(info, ingreso)
-        return ResultadoIngresoType.desde_ingreso(ingreso)
+        return ResultadoLoginType.desde_ingreso(ingreso)
 
     @strawberry.mutation(
         description=(
@@ -123,9 +123,9 @@ class LoginMutations:
     def elegir_empresa(
         self,
         info: strawberry.Info,
-        datos: IngresarInput,
+        datos: LoginInput,
         empresa_id: strawberry.ID,
-    ) -> ResultadoIngresoType:
+    ) -> ResultadoLoginType:
         try:
             ingreso = svc.elegir_empresa(
                 identificador=datos.identificador,
@@ -138,7 +138,7 @@ class LoginMutations:
             raise _traducir(error) from error
 
         _poner_cookies(info, ingreso)
-        return ResultadoIngresoType.desde_ingreso(ingreso)
+        return ResultadoLoginType.desde_ingreso(ingreso)
 
     @strawberry.mutation(
         description=(
@@ -146,7 +146,7 @@ class LoginMutations:
             "uno nuevo y el anterior deja de servir."
         )
     )
-    def renovar_sesion(self, info: strawberry.Info) -> ResultadoIngresoType:
+    def refresh_session(self, info: strawberry.Info) -> ResultadoLoginType:
         crudo = info.context.request.COOKIES.get(settings.COOKIE_REFRESH)
         if not crudo:
             raise GraphQLError(
@@ -163,7 +163,7 @@ class LoginMutations:
             raise _traducir(error) from error
 
         _poner_cookies(info, ingreso)
-        return ResultadoIngresoType.desde_ingreso(ingreso)
+        return ResultadoLoginType.desde_ingreso(ingreso)
 
     @strawberry.mutation(
         description=(
@@ -171,7 +171,7 @@ class LoginMutations:
             "acceso que ya está emitido sigue valiendo hasta 15 minutos."
         )
     )
-    def salir(self, info: strawberry.Info) -> bool:
+    def logout(self, info: strawberry.Info) -> bool:
         crudo = info.context.request.COOKIES.get(settings.COOKIE_ACCESO)
         _borrar_cookies(info)
 

@@ -194,7 +194,7 @@ class SesionQueries:
             "frontend al cargar, para saber si mostrar el login."
         )
     )
-    def yo(self, info: strawberry.Info) -> UsuarioType | None:
+    def me(self, info: strawberry.Info) -> UsuarioType | None:
         usuario = getattr(info.context.request, "user", None)
         if usuario is None or not usuario.is_authenticated:
             return None

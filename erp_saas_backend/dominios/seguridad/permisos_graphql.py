@@ -20,6 +20,7 @@ producción."""
 import functools
 
 import strawberry
+from django.conf import settings
 from graphql import GraphQLError
 
 from dominios.seguridad.permisos import METADATA, codename_de
@@ -58,8 +59,29 @@ def _info_de(args, kwargs):
 
 
 def _usuario_de(info):
+    """Quién llama, y POR QUÉ PUERTA entró.
+
+    `request.user` lo puede haber puesto el middleware del ERP desde el token,
+    o Django desde la cookie del `/admin/`. La segunda no registra la sesión,
+    no comprueba horario ni equipo, no la corta `desafiliar`, y por ella el
+    superusuario pasa por encima de todos los permisos.
+
+    Por eso solo se acepta la marca que deja el middleware del ERP. A la cookie
+    de Django se le cree únicamente si `TRUST_DJANGO_SESSION` lo habilita, que
+    en producción es `False` y en desarrollo `True` — ahí sirve para probar
+    desde GraphiQL sin montar un login."""
     peticion = getattr(info.context, "request", None)
-    return getattr(peticion, "user", None)
+    if peticion is None:
+        return None
+
+    usuario = getattr(peticion, "usuario_del_token", None)
+    if usuario is not None:
+        return usuario
+
+    if settings.TRUST_DJANGO_SESSION:
+        return getattr(peticion, "user", None)
+
+    return None
 
 
 def _exigir_sesion(args, kwargs, func):
@@ -143,7 +165,11 @@ def _armar_guard(func, codigo_fijo):
 
 def _codigo_deducido(func) -> str | None:
     """Es EL MISMO cálculo que hace el generador, así que no se pueden
-    desincronizar: los dos salen de la misma declaración."""
+    desincronizar: los dos salen de la clase donde el método está DEFINIDO.
+
+    Esa última parte es el invariante, no un detalle. Si el escáner mirara
+    también las clases que solo componen, generaría permisos que acá no se van
+    a pedir nunca. Ver `scanner._declara_permisos`."""
     propia = getattr(func, METADATA, None)
     if propia is not None:
         return codename_de(propia["recurso"], propia["operacion"])

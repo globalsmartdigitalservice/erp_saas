@@ -11,11 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { useSesion } from "@/shared/sesion";
+import { useSession } from "@/shared/session";
 
 export function MenuDeUsuario() {
   const { t } = useTranslation();
-  const { usuario, salir } = useSesion();
+  const { usuario, logout } = useSession();
   const [saliendo, setSaliendo] = useState(false);
 
   if (usuario === null) return null;
@@ -23,7 +23,7 @@ export function MenuDeUsuario() {
   async function cerrarSesion() {
     setSaliendo(true);
     try {
-      await salir();
+      await logout();
     } finally {
 
       setSaliendo(false);

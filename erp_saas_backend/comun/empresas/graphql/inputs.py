@@ -48,3 +48,21 @@ class AgregarPaisInput:
     logo: str = ""
     latitud: decimal.Decimal | None = None
     longitud: decimal.Decimal | None = None
+
+
+@strawberry.input
+class ActualizarPaisDeEmpresaInput:
+    """Los datos de contacto de la ficha, y nada más.
+
+    No lleva `empresaId` —sale de la sesión— ni `paisId`: cambiar el país es
+    borrar la ficha de uno y crear la de otro, y eso se hace explícito.
+    Un campo en nulo significa "no lo toques"."""
+
+    ubicacion_geografica_id: strawberry.ID | None = None
+    direccion: str | None = None
+    telefono: str | None = None
+    email: str | None = None
+    sitio_web: str | None = None
+    logo: str | None = None
+    latitud: decimal.Decimal | None = None
+    longitud: decimal.Decimal | None = None

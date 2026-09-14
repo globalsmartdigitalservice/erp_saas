@@ -1,3 +1,5 @@
+import secrets
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -8,6 +10,25 @@ from comun.usuarios.repository import usuario as repo
 from core.tenancy import empresa_actual
 
 Usuario = get_user_model()
+
+
+ALFABETO_DICTABLE = "abcdefghjkmnpqrstuvwxyz23456789"
+
+_LARGO_DEL_GRUPO = 4
+_GRUPOS = 3
+
+
+def generar_password_temporal() -> str:
+    """Una contraseña de un solo uso, para dictar: `k7pm-q3wx-t9fh`.
+
+    La usan el alta de un cliente y el reseteo del administrador. Nunca se
+    guarda en claro: se muestra una vez y quien la recibe está obligado a
+    cambiarla en el primer ingreso."""
+    grupos = (
+        "".join(secrets.choice(ALFABETO_DICTABLE) for _ in range(_LARGO_DEL_GRUPO))
+        for _ in range(_GRUPOS)
+    )
+    return "-".join(grupos)
 
 
 def _normalizar_email(email: str) -> str:
@@ -188,7 +209,7 @@ def cambiar_password(
     _validar_password(password_nueva, usuario)
 
     usuario.set_password(password_nueva)
-    # Se apaga acá: ya la cambió, que era lo que se le estaba pidiendo.
+  
     usuario.debe_cambiar_password = False
     usuario.save(update_fields=["password", "debe_cambiar_password"])
     return usuario

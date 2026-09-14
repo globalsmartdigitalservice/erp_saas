@@ -1,7 +1,7 @@
 import { Loader2 } from "lucide-react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
-import { useSesion } from "@/shared/sesion";
+import { useSession } from "@/shared/session";
 
 /**
  * Deja pasar solo con sesión abierta.
@@ -16,7 +16,7 @@ import { useSesion } from "@/shared/sesion";
  * a venir vacía.
  */
 export function ProtectedRoute() {
-  const { usuario, cargando } = useSesion();
+  const { usuario, cargando } = useSession();
   const ubicacion = useLocation();
 
   if (cargando) {

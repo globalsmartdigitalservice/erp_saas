@@ -19,7 +19,7 @@ import {
 
 
 //  La EMPRESA salió de acá con el login: vive en el token y la responde
-// `useSesion()`. Guardarla en el navegador daría dos fuentes de verdad, y la
+// `useSession()`. Guardarla en el navegador daría dos fuentes de verdad, y la
 // del navegador puede quedar vieja.
 type Preferencias = {
   idiomaId: string | null;

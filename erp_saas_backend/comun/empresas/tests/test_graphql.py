@@ -144,6 +144,89 @@ def test_mutation_con_rubro_invalido_devuelve_error_legible(
     assert "Se esperaba un valor de 'rubro'" in resultado.errors[0].message
 
 
+AGREGAR_MONEDA = """
+    mutation ($moneda: ID!) {
+      agregarMonedaAEmpresa(monedaId: $moneda) { id esMonedaOficial }
+    }
+"""
+
+
+def _monedas_de(empresa_id) -> set[int]:
+    return {fila.moneda_id for fila in empresas.listar_monedas_de(empresa_id)}
+
+
+@pytest.fixture
+def dolar(catalogo_empresas):
+    from comun.monedas import api as monedas
+
+    return monedas.crear_moneda(
+        descripcion="Dólar estadounidense",
+        codigo="USD",
+        estado_id=catalogo_empresas["estado_activo"].pk,
+    )
+
+
+def test_agregar_moneda_sin_sesion_no_escribe(matriz, dolar, catalogo_empresas):
+    """Hasta el 2026-09-14 esta mutation no tenía ninguna guarda ni recibía
+    `info`: le cambiaba las monedas a cualquier empresa del sistema, sin
+    cookie y sin sesión. El test existe porque quitar el decorador no rompe
+    nada más — la reapertura sería silenciosa."""
+    from core.tests.contexto_graphql import Contexto
+    from dominios.seguridad.permisos_graphql import SIN_SESION
+
+    with empresa(matriz.pk):
+        resultado = schema.execute_sync(
+            AGREGAR_MONEDA,
+            variable_values={"moneda": str(dolar.pk)},
+            context_value=Contexto(None),
+        )
+
+    assert resultado.errors[0].message == SIN_SESION
+    assert _monedas_de(matriz.pk) == {catalogo_empresas["moneda"].pk}
+
+
+def test_la_moneda_se_agrega_a_la_empresa_de_la_sesion(
+    matriz, otra_empresa, dolar, catalogo_empresas
+):
+    """La empresa sale del token, no del input. El caso permitido al lado del
+    prohibido: agregar tiene que seguir funcionando, y tiene que escribir
+    donde está parada la sesión."""
+    from django.contrib.auth import get_user_model
+
+    from core.tests.contexto_graphql import Contexto
+
+    Usuario = get_user_model()
+    # Del proveedor: pasa el guard por `is_superuser`. Acá se prueba EN QUÉ
+    # empresa escribe, no quién puede — eso ya lo cubre `test_guards.py`.
+    del_proveedor = Usuario.objects.create_superuser(
+        username="carla", email="carla@acme.test", password="Kx7pLm9Qw2"
+    )
+
+    with empresa(matriz.pk):
+        resultado = schema.execute_sync(
+            AGREGAR_MONEDA,
+            variable_values={"moneda": str(dolar.pk)},
+            context_value=Contexto(del_proveedor),
+        )
+
+    assert resultado.errors is None
+    assert dolar.pk in _monedas_de(matriz.pk)
+    assert dolar.pk not in _monedas_de(otra_empresa.pk)
+
+
+def test_agregar_moneda_ya_no_recibe_la_empresa():
+    """Se mira el SDL y no el `type_map`: si el campo desapareciera o se
+    renombrara, `next()` levanta y el test se pone en rojo. Buscando una clave
+    en un diccionario, en cambio, pasaría sin haber probado nada."""
+    firma = next(
+        linea
+        for linea in schema.as_str().splitlines()
+        if "agregarMonedaAEmpresa(" in linea
+    )
+
+    assert "empresaId" not in firma
+
+
 def test_el_input_no_expone_es_matriz():
     campos = {
         campo.name

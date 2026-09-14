@@ -13,3 +13,8 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.dummy.DummyCache",
     }
 }
+
+# Los tests corren con la puerta CERRADA, como producción. Con la de
+# desarrollo, un guard que aceptara la cookie de Django pasaría los tests y
+# fallaría donde importa.
+TRUST_DJANGO_SESSION = False

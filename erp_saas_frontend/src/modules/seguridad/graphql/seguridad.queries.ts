@@ -3,7 +3,7 @@ import { gql } from "@apollo/client";
 
 export const SESION_ACTUAL = gql`
   query SesionActual {
-    yo {
+    me {
       id
       nombreCompleto
     }

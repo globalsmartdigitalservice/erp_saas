@@ -43,6 +43,7 @@ APPS_PROPIAS = [
     "servicios.integraciones",
     "dominios.entidades",
     "dominios.seguridad",
+    "procesos",
 ]
 
 INSTALLED_APPS = APPS_DJANGO + APPS_TERCEROS + APPS_PROPIAS
@@ -86,6 +87,13 @@ WSGI_APPLICATION = "config.wsgi.application"
 GRAPHQL_HABILITADO = False
 
 TENANCY_POR_CABECERA = False
+
+# ¿GraphQL le cree a la cookie de sesión de Django, la del /admin/?
+# En producción NO: esa puerta no registra la sesión, no comprueba horario ni
+# equipo, no la corta `desafiliar`, y por ella el superusuario pasa por encima
+# de todos los permisos. En desarrollo se enciende para poder probar desde
+# GraphiQL sin montar un login.
+TRUST_DJANGO_SESSION = False
 
 
 DATABASES = {

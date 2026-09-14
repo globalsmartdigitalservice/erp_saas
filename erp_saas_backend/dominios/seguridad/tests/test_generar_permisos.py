@@ -12,6 +12,7 @@ from dominios.seguridad.permisos import (
     content_type_del_ancla,
     escanear,
 )
+from dominios.seguridad.scanner import _declara_permisos
 from core.tenancy import empresa
 
 pytestmark = pytest.mark.django_db
@@ -39,6 +40,17 @@ class MutationDeVentas:
 class MutationSinDecorar:
     def hacer_algo(self):
         pass
+
+
+@auto_permisos(recurso="COMPRAS_ORDENES")
+class MutationDeCompras:
+    def emitir_orden(self):
+        pass
+
+
+class MutationQueSoloCompone(MutationDeVentas, MutationDeCompras):
+    """La convención del proyecto: `XxxMutations` por tema, y una `XxxMutation`
+    que las junta para el schema. Esta última no declara nada propio."""
 
 
 @pytest.fixture
@@ -91,6 +103,23 @@ def test_el_decorador_del_metodo_gana_sobre_el_de_la_clase(db):
 
 def test_una_clase_sin_decorar_no_declara_nada(db):
     assert escanear([MutationSinDecorar]) == []
+
+
+def test_una_clase_que_solo_compone_no_declara_permisos(db):
+    """El escáner tiene que mirar lo que la clase declara ELLA MISMA.
+
+    Con `hasattr` —que sigue la herencia— una clase que solo compone hereda la
+    marca de su primera base y le aplica ese recurso a los métodos de las otras.
+    Eso generó 28 permisos en este proyecto, y ninguno estaba de más: estaban
+    MUERTOS, porque el guard deduce el código de la clase donde el método está
+    definido. Asignarlos a un rol no habilita nada y nadie se entera."""
+    assert _declara_permisos(MutationDeVentas)
+    assert _declara_permisos(MutationDeCompras)
+    assert not _declara_permisos(MutationQueSoloCompone)
+
+    fantasmas = {d["codename"] for d in escanear([MutationQueSoloCompone])}
+    assert "ventas_facturas_emitir_orden" in fantasmas
+    assert "compras_ordenes_emitir_orden" not in fantasmas
 
 
 def test_el_recurso_va_en_el_codename(db):

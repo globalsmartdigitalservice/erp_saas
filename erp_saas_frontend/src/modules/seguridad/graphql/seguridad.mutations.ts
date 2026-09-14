@@ -5,9 +5,9 @@ import { gql } from "@apollo/client";
  * navegador guarda y manda solo. El frontend nunca los ve ni los toca.
  */
 
-export const INGRESAR = gql`
-  mutation Ingresar($datos: IngresarInput!) {
-    ingresar(datos: $datos) {
+export const LOGIN = gql`
+  mutation Login($datos: LoginInput!) {
+    login(datos: $datos) {
       necesitaElegirEmpresa
       usuario {
         id
@@ -24,7 +24,7 @@ export const INGRESAR = gql`
 `;
 
 export const ELEGIR_EMPRESA = gql`
-  mutation ElegirEmpresa($datos: IngresarInput!, $empresaId: ID!) {
+  mutation ElegirEmpresa($datos: LoginInput!, $empresaId: ID!) {
     elegirEmpresa(datos: $datos, empresaId: $empresaId) {
       necesitaElegirEmpresa
       usuario {
@@ -36,8 +36,8 @@ export const ELEGIR_EMPRESA = gql`
 `;
 
 /** Cierra la sesión en el backend, que además borra las dos cookies. */
-export const SALIR = gql`
-  mutation Salir {
-    salir
+export const LOGOUT = gql`
+  mutation Logout {
+    logout
   }
 `;

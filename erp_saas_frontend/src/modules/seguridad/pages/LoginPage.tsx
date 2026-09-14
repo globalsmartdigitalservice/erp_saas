@@ -7,21 +7,21 @@ import { EmpresasDelUsuario } from "@/modules/seguridad/components/EmpresasDelUs
 import { FormularioLogin } from "@/modules/seguridad/components/FormularioLogin";
 import {
   ELEGIR_EMPRESA,
-  INGRESAR,
+  LOGIN,
 } from "@/modules/seguridad/graphql/seguridad.mutations";
 import type {
   Credenciales,
   EmpresaDelUsuario,
-  ResultadoIngreso,
+  ResultadoLogin,
 } from "@/modules/seguridad/types/sesion.types";
 import { mensajeDeError } from "@/shared/lib/errores";
-import { useSesion } from "@/shared/sesion";
+import { useSession } from "@/shared/session";
 
 
 export function LoginPage() {
   const { t } = useTranslation();
   const ubicacion = useLocation();
-  const { usuario, cargando, refrescar } = useSesion();
+  const { usuario, cargando, refrescar } = useSession();
 
  
   const destino = (ubicacion.state as { desde?: string } | null)?.desde ?? "/";
@@ -31,11 +31,11 @@ export function LoginPage() {
   const [eligiendo, setEligiendo] = useState<string | null>(null);
   const [entrando, setEntrando] = useState(false);
 
-  const [ingresar, ingreso] = useMutation<{ ingresar: ResultadoIngreso }>(INGRESAR);
+  const [login, ingreso] = useMutation<{ login: ResultadoLogin }>(LOGIN);
 
   
   const [elegirEmpresa, eleccion] = useMutation<{
-    elegirEmpresa: Pick<ResultadoIngreso, "necesitaElegirEmpresa" | "usuario">;
+    elegirEmpresa: Pick<ResultadoLogin, "necesitaElegirEmpresa" | "usuario">;
   }>(ELEGIR_EMPRESA);
 
   const enSegundoPaso = empresas.length > 0;
@@ -47,8 +47,8 @@ export function LoginPage() {
 
   async function entrar(datos: Credenciales) {
     setEntrando(true);
-    const resultado = await ingresar({ variables: { datos } });
-    const respuesta = resultado.data?.ingresar;
+    const resultado = await login({ variables: { datos } });
+    const respuesta = resultado.data?.login;
 
     if (!respuesta) {
       setEntrando(false);

@@ -7,6 +7,10 @@ def obtener(pais_id: int) -> Pais | None:
     return Pais.objects.filter(pk=pais_id).first()
 
 
+def obtener_por_codigo(cod_pais: str) -> Pais | None:
+    return Pais.objects.filter(cod_pais__iexact=cod_pais).first()
+
+
 def obtener_varios(pais_ids) -> dict[int, Pais]:
     """
     Versión por lote. Obligatoria en todo lo que cruce una frontera

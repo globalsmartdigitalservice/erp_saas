@@ -8,8 +8,8 @@ import {
   type ReactNode,
 } from "react";
 
-import { SESION_EXPIRADA } from "@/config/refresh";
-import { SALIR } from "@/modules/seguridad/graphql/seguridad.mutations";
+import { SESSION_EXPIRED_EVENT } from "@/config/refresh";
+import { LOGOUT } from "@/modules/seguridad/graphql/seguridad.mutations";
 import { SESION_ACTUAL } from "@/modules/seguridad/graphql/seguridad.queries";
 import type {
   EmpresaDelUsuario,
@@ -21,7 +21,7 @@ type EmpresaDeLaSesion = Pick<
   "empresaId" | "razonSocial" | "esMatriz"
 >;
 
-type Sesion = {
+type Session = {
   usuario: UsuarioDeLaSesion | null;
   empresa: EmpresaDeLaSesion | null;
   permisos: string[];
@@ -29,16 +29,16 @@ type Sesion = {
   cargando: boolean;
   /** Después de entrar, para que la app deje de creer que no hay nadie. */
   refrescar: () => Promise<void>;
-  salir: () => Promise<void>;
+  logout: () => Promise<void>;
 };
 
 type Respuesta = {
-  yo: UsuarioDeLaSesion | null;
+  me: UsuarioDeLaSesion | null;
   miEmpresa: EmpresaDeLaSesion | null;
   misPermisos: string[];
 };
 
-const Contexto = createContext<Sesion | null>(null);
+const Contexto = createContext<Session | null>(null);
 
 /**
  * Quién está conectado, según el backend.
@@ -51,16 +51,16 @@ const Contexto = createContext<Sesion | null>(null);
  *  ESTE PROVIDER NO NAVEGA. Solo dice qué hay; quien manda al login es
  * `<ProtectedRoute>`. Así la regla de a dónde ir vive en un lugar y no en dos.
  */
-export function SesionProvider({ children }: { children: ReactNode }) {
+export function SessionProvider({ children }: { children: ReactNode }) {
   const client = useApolloClient();
   const { data, loading, refetch } = useQuery<Respuesta>(SESION_ACTUAL);
-  const [pedirSalida] = useMutation(SALIR);
+  const [pedirSalida] = useMutation(LOGOUT);
 
   const refrescar = useCallback(async () => {
     await refetch();
   }, [refetch]);
 
-  const salir = useCallback(async () => {
+  const logout = useCallback(async () => {
     await pedirSalida();
     // `resetStore` vuelve a correr las consultas activas, y la del arranque
     // es una de ellas: la sesión queda en null sin pedirla a mano.
@@ -75,30 +75,30 @@ export function SesionProvider({ children }: { children: ReactNode }) {
       void refetch();
     }
 
-    window.addEventListener(SESION_EXPIRADA, alExpirar);
-    return () => window.removeEventListener(SESION_EXPIRADA, alExpirar);
+    window.addEventListener(SESSION_EXPIRED_EVENT, alExpirar);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, alExpirar);
   }, [refetch]);
 
-  const valor = useMemo<Sesion>(
+  const valor = useMemo<Session>(
     () => ({
-      usuario: data?.yo ?? null,
+      usuario: data?.me ?? null,
       empresa: data?.miEmpresa ?? null,
       permisos: data?.misPermisos ?? [],
       cargando: loading,
       refrescar,
-      salir,
+      logout,
     }),
-    [data, loading, refrescar, salir],
+    [data, loading, refrescar, logout],
   );
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
 }
 
-export function useSesion(): Sesion {
+export function useSession(): Session {
   const valor = useContext(Contexto);
   if (valor === null) {
     throw new Error(
-      "useSesion() se usó fuera de <SesionProvider>. Revise App.tsx.",
+      "useSession() se usó fuera de <SessionProvider>. Revise App.tsx.",
     );
   }
   return valor;

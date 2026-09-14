@@ -1,7 +1,7 @@
 import { Building2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { useSesion } from "@/shared/sesion";
+import { useSession } from "@/shared/session";
 
 /**
  * La empresa en la que está parada la sesión. SOLO LECTURA.
@@ -13,7 +13,7 @@ import { useSesion } from "@/shared/sesion";
  */
 export function EmpresaDeLaSesion() {
   const { t } = useTranslation();
-  const { empresa } = useSesion();
+  const { empresa } = useSession();
 
   if (empresa === null) return null;
 

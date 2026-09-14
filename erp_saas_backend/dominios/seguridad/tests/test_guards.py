@@ -12,6 +12,7 @@ from comun.tipologias.constantes import (
     NOMBRE_ACCESO_EXITO,
     NOMBRE_ACCESO_FALLO,
 )
+from config.schema import schema
 from core.tenancy import empresa
 from dominios.seguridad import api as seguridad
 from dominios.seguridad.permisos import content_type_del_ancla
@@ -82,7 +83,7 @@ def _pedir(cliente, consulta, **variables):
 def _entrar(cliente, usuario="juan"):
     return _pedir(
         cliente,
-        "mutation ($d: IngresarInput!) { ingresar(datos: $d) { usuario { username } } }",
+        "mutation ($d: LoginInput!) { login(datos: $d) { usuario { username } } }",
         d={"identificador": usuario, "password": "Kx7pLm9Qw2"},
     )
 
@@ -90,6 +91,24 @@ def _entrar(cliente, usuario="juan"):
 def _error(respuesta) -> str:
     errores = respuesta.json().get("errors") or []
     return errores[0]["message"] if errores else ""
+
+
+def _mensajes(resultado) -> list[str]:
+    """Los mensajes de un `execute_sync`, que devuelve el resultado en vez de
+    una respuesta HTTP."""
+    return [e.message for e in (resultado.errors or [])]
+
+
+class _ContextoDeDjango:
+    """Una petición como la que deja el `/admin/`: con `user` puesto por Django
+    y SIN la marca del middleware del ERP. El ayudante normal de tests pone las
+    dos, así que no sirve para probar esta diferencia."""
+
+    def __init__(self, usuario):
+        self.request = type(
+            "_Peticion", (), {"user": usuario, "META": {}, "COOKIES": {}}
+        )()
+        self.response = None
 
 
 def _crear_rol(cliente, activo):
@@ -147,15 +166,64 @@ def test_con_el_permiso_pasa(client, juan, empresa_a, activo):
     assert respuesta.json()["data"]["crearRol"]["nombre"] == "Cajero"
 
 
-#  NO hay test de "el superusuario pasa sin permisos", y no es un olvido.
-#
-# Un superusuario es del PROVEEDOR: no pertenece a ningún cliente, así que
-# no puede tener membresías, y sin membresía no hay sesión en el ERP. La
-# llave maestra de `permisos_graphql.py` quedó inalcanzable desde acá, que
-# es una propiedad buena: el ERP no tiene puerta trasera.
-#
-# Cuando exista el panel del proveedor, ese camino se decide allá — con su
-# propia sesión y sus propias guardas.
+def test_el_superusuario_pasa_sin_permisos(db, activo, empresa_a):
+    """La llave maestra del proveedor: `permisos_graphql.py` deja pasar al
+    superusuario sin mirar ningún permiso.
+
+    ⚠️ Este test se había BORRADO el 2026-09-11 con el argumento de que esa
+    línea era inalcanzable —un superusuario no tiene cliente, así que no tiene
+    membresía, así que no abre sesión en el ERP—. Era falso: la cookie del
+    `/admin/` autentica en GraphQL igual. Hoy esa puerta la gobierna
+    `TRUST_DJANGO_SESSION`, pero la línea sigue viva y se prueba."""
+    from core.tests.contexto_graphql import Contexto
+
+    jefe = Usuario.objects.create_superuser(
+        username="proveedor.jefe", email="jefe@erp.test", password="Kx7pLm9Qw2"
+    )
+
+    with empresa(empresa_a.id):
+        resultado = schema.execute_sync(
+            CREAR_ROL,
+            variable_values={"datos": {"nombre": "Cajero", "estadoId": str(activo.id)}},
+            context_value=Contexto(jefe),
+        )
+
+    assert resultado.errors is None
+    assert resultado.data["crearRol"]["nombre"] == "Cajero"
+
+
+def test_la_cookie_del_admin_no_entra_cuando_el_interruptor_esta_cerrado(
+    db, activo, empresa_a, settings
+):
+    """Lo que promete `TRUST_DJANGO_SESSION`, y que nada más verifica.
+
+    Se arma una petición como la que deja el `/admin/`: con `user` puesto por
+    Django y SIN la marca del middleware del ERP. Cerrado, no entra; abierto,
+    entra — y esa es toda la diferencia entre producción y desarrollo."""
+    jefe = Usuario.objects.create_superuser(
+        username="proveedor.jefe2", email="jefe2@erp.test", password="Kx7pLm9Qw2"
+    )
+    contexto = _ContextoDeDjango(jefe)
+
+    settings.TRUST_DJANGO_SESSION = False
+    cerrado = schema.execute_sync(
+        CREAR_ROL,
+        variable_values={"datos": {"nombre": "Cajero", "estadoId": str(activo.id)}},
+        context_value=contexto,
+    )
+    assert SIN_SESION in _mensajes(cerrado)
+
+    settings.TRUST_DJANGO_SESSION = True
+    with empresa(empresa_a.id):
+        abierto = schema.execute_sync(
+            CREAR_ROL,
+            variable_values={
+                "datos": {"nombre": "Cajero", "estadoId": str(activo.id)}
+            },
+            context_value=contexto,
+        )
+    assert abierto.errors is None
+    assert abierto.data["crearRol"]["nombre"] == "Cajero"
 
 
 def test_una_mutation_sin_decorador_funciona_con_solo_estar_logueado(

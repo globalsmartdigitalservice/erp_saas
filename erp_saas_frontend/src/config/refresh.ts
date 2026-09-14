@@ -3,8 +3,12 @@ import { onError } from "@apollo/client/link/error";
 
 import { ENV } from "./environment";
 
-/** El aviso de que ya no hay sesión. Lo escucha el proveedor de sesión. */
-export const SESION_EXPIRADA = "erp:sesion-expirada";
+/** El aviso de que ya no hay sesión. Lo escucha el proveedor de sesión.
+ *
+ * Lleva `_EVENT` porque el código de error del backend se llama igual y vive
+ * en este mismo archivo: son dos cosas distintas, y una sola palabra para las
+ * dos no compila. */
+export const SESSION_EXPIRED_EVENT = "erp:session-expired";
 
 // Los códigos viajan en `extensions.code`, la convención de Apollo. Se decide
 // por código y NO por el texto del mensaje: reescribir una palabra en el
@@ -19,7 +23,7 @@ const SESSION_EXPIRED = "SESSION_EXPIRED";
 // el viejo: la sesión muere sin motivo.
 const REFRESH_COOLDOWN_MS = 2000;
 
-const REFRESH_MUTATION = "mutation { renovarSesion { usuario { id } } }";
+const REFRESH_MUTATION = "mutation { refreshSession { usuario { id } } }";
 
 let refreshPromise: Promise<boolean> | null = null;
 let lastRefreshSuccessAt = 0;
@@ -67,7 +71,7 @@ function refreshOnce(): Promise<boolean> {
 }
 
 function sinSesion(): Observable<FetchResult> {
-  window.dispatchEvent(new Event(SESION_EXPIRADA));
+  window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
   return new Observable<FetchResult>((observador) => observador.complete());
 }
 
