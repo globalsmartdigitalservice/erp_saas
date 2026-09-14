@@ -5,7 +5,10 @@ from django.core.exceptions import ValidationError
 from graphql import GraphQLError
 
 from dominios.seguridad.permisos import auto_permisos
-from dominios.seguridad.permisos_graphql import requiere_permiso
+from dominios.seguridad.permisos_graphql import (
+    requiere_permiso,
+    usuario_de_la_sesion,
+)
 
 from core.tenancy import empresa_actual
 from dominios.seguridad import api as seguridad
@@ -32,6 +35,12 @@ def _traducir(error: ValidationError) -> GraphQLError:
 
 def _a_rol(fila) -> RolType:
     return RolType.desde_modelo(fila, empresa_actual())
+
+
+def _autor(info) -> int:
+    """Quién firma la fila. Sale de la sesión, nunca del input: si llegara
+    de afuera, cualquiera le atribuiría el registro a otro."""
+    return usuario_de_la_sesion(info).pk
 
 
 @auto_permisos(recurso="SEGU_ROLES")
@@ -136,6 +145,7 @@ class SeguridadMutations:
                 fecha_inicio=datos.fecha_inicio,
                 fecha_fin=datos.fecha_fin,
                 motivo=datos.motivo,
+                asignado_por_id=_autor(info),
             )
         except ValidationError as error:
             raise _traducir(error) from error
@@ -205,6 +215,7 @@ class AccesoMutations:
                 estado_id=int(datos.estado_id),
                 fecha_inicio=datos.fecha_inicio,
                 fecha_fin=datos.fecha_fin,
+                autorizado_por_id=_autor(info),
             )
         except ValidationError as error:
             raise _traducir(error) from error
@@ -271,6 +282,7 @@ class AccesoMutations:
                 hora_inicio=datos.hora_inicio,
                 hora_fin=datos.hora_fin,
                 motivo=datos.motivo,
+                creado_por_id=_autor(info),
             )
         except ValidationError as error:
             raise _traducir(error) from error

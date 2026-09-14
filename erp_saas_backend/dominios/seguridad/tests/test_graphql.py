@@ -11,6 +11,7 @@ from config.schema import schema
 from core.tenancy import empresa
 from core.tests.afiliacion import afiliar_en
 from core.tests.contexto_graphql import Contexto
+from dominios.seguridad.models import GrupoUsuario
 
 pytestmark = pytest.mark.django_db
 
@@ -315,6 +316,37 @@ def test_el_recorrido_completo(cadena, activo, permiso):
     persona = Usuario.objects.get(pk=int(jose["id"]))
     with empresa(norte.id):
         assert persona.has_perm(mis[0])
+
+
+def test_la_asignacion_de_rol_guarda_quien_la_hizo(empresa_a, activo):
+    """El autor sale de la sesión, no del input. La falla sería SILENCIOSA:
+    sin el dato la fila se crea igual, la mutation devuelve su id, y recién se
+    descubre al auditar quién le dio ese rol a quién."""
+    jose = Usuario.objects.create_user(
+        username="jose",
+        email="jose@acme.com",
+        password="Kx7pLm9Qw2",
+        matriz=empresa_a,
+    )
+    suya = afiliar_en(empresa_a.id, usuario_id=jose.id, estado_id=activo.id)
+
+    with empresa(empresa_a.id):
+        rol = _correr(
+            "mutation ($d: CrearRolInput!) { crearRol(datos: $d) { id } }",
+            d={"nombre": "Cajero", "estadoId": str(activo.id)},
+        )["crearRol"]
+        asignada = _correr(
+            "mutation ($d: AsignarRolInput!) { asignarRol(datos: $d) { id } }",
+            d={
+                "membresiaId": str(suya.id),
+                "rolId": rol["id"],
+                "estadoId": str(activo.id),
+            },
+        )["asignarRol"]
+
+        fila = GrupoUsuario.objects.get(pk=int(asignada["id"]))
+
+    assert fila.asignado_por_id == _COMO["usuario"].pk
 
 
 def test_el_arbol_de_pantallas_trae_sus_acciones(activo, permiso):
