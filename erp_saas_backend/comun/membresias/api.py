@@ -1,24 +1,8 @@
-"""
-Superficie pública de `membresias`. El resto de la app es privado.
+"""Superficie pública de `membresias`: dónde trabaja cada persona.
 
-Nadie de afuera importa `models`, `repository` ni `services`
-.
-
-Uso:
-
-    from comun.membresias import api as membresias
-
-    # el login, antes de saber en qué empresa estás
-    donde_trabaja = membresias.empresas_de(usuario.pk)
-
-    # el alta de todos los días
-    membresias.afiliar(usuario_id=..., empresa_id=..., estado_id=...)
-
-    # el gerente de la cadena, de una sola vez
-    membresias.afiliar_al_grupo(usuario_id=..., empresa_id=matriz.pk, estado_id=...)
-
-Las lecturas van directo al repository; las escrituras pasan siempre por
-services, que es donde están los invariantes.
+Las escrituras pasan siempre por `services`, que es donde están los
+invariantes; las lecturas van directo al `repository`. Afiliar no recibe la
+empresa: sale de la sesión.
 """
 
 import datetime
@@ -63,14 +47,12 @@ def empresas_de(usuario_id: int) -> list[UsuarioEmpresa]:
 def afiliar(
     *,
     usuario_id: int,
-    empresa_id: int,
     fecha_asignacion: datetime.date | None = None,
     estado_id: int,
 ) -> UsuarioEmpresa:
-    """Da de alta a una persona en UNA empresa."""
+    """Da de alta a una persona en la empresa de la sesión."""
     return _svc.afiliar(
         usuario_id=usuario_id,
-        empresa_id=empresa_id,
         fecha_asignacion=fecha_asignacion,
         estado_id=estado_id,
     )
@@ -79,19 +61,18 @@ def afiliar(
 def afiliar_al_grupo(
     *,
     usuario_id: int,
-    empresa_id: int,
     fecha_asignacion: datetime.date | None = None,
     estado_id: int,
 ) -> list[UsuarioEmpresa]:
     """
-    Da de alta a una persona en una empresa y en TODAS sus sucursales.
+    Da de alta a una persona en la empresa de la sesión y en TODAS sus
+    sucursales.
 
     Devuelve solo las membresías creadas; donde ya estaba, se saltea.
     Es el "dar de alta en todo el grupo".
     """
     return _svc.afiliar_al_grupo(
         usuario_id=usuario_id,
-        empresa_id=empresa_id,
         fecha_asignacion=fecha_asignacion,
         estado_id=estado_id,
     )

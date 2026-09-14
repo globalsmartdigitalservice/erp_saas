@@ -9,6 +9,7 @@ from comun.catalogo_modulos import api as modulos
 from comun.membresias import api as membresias
 from config.schema import schema
 from core.tenancy import empresa
+from core.tests.afiliacion import afiliar_en
 from core.tests.contexto_graphql import Contexto
 
 pytestmark = pytest.mark.django_db
@@ -153,18 +154,18 @@ def test_afiliar_al_grupo_y_ver_el_selector(cadena, activo):
             },
         )["crearUsuario"]
 
-    creadas = _correr(
-        """
-        mutation ($datos: AfiliarInput!) {
-          afiliarAlGrupo(datos: $datos) { id }
-        }
-        """,
-        datos={
-            "usuarioId": jose["id"],
-            "empresaId": str(matriz.id),
-            "estadoId": str(activo.id),
-        },
-    )["afiliarAlGrupo"]
+    with empresa(matriz.id):
+        creadas = _correr(
+            """
+            mutation ($datos: AfiliarInput!) {
+              afiliarAlGrupo(datos: $datos) { id }
+            }
+            """,
+            datos={
+                "usuarioId": jose["id"],
+                "estadoId": str(activo.id),
+            },
+        )["afiliarAlGrupo"]
 
     assert len(creadas) == 3
 
@@ -187,8 +188,8 @@ def test_los_miembros_son_solo_los_de_la_empresa_activa(cadena, activo):
         password="Zq4tRn8Vd3",
         matriz=matriz,
     )
-    membresias.afiliar(usuario_id=jose.id, empresa_id=matriz.id, estado_id=activo.id)
-    membresias.afiliar(usuario_id=ana.id, empresa_id=norte.id, estado_id=activo.id)
+    afiliar_en(matriz.id, usuario_id=jose.id, estado_id=activo.id)
+    afiliar_en(norte.id, usuario_id=ana.id, estado_id=activo.id)
 
     with empresa(matriz.id):
         datos = _correr("{ miembros { usuario { username } } }")
@@ -206,9 +207,7 @@ def test_la_lista_de_miembros_no_dispara_una_consulta_por_persona(
             password="Kx7pLm9Qw2",
             matriz=empresa_a,
         )
-        membresias.afiliar(
-            usuario_id=u.id, empresa_id=empresa_a.id, estado_id=activo.id
-        )
+        afiliar_en(empresa_a.id, usuario_id=u.id, estado_id=activo.id)
 
     with empresa(empresa_a.id):
         # 1 membresías + 1 usuarios por lote
@@ -233,14 +232,14 @@ def test_el_recorrido_completo(cadena, activo, permiso):
             },
     )["crearUsuario"]
 
-    _correr(
-        "mutation ($d: AfiliarInput!) { afiliarAlGrupo(datos: $d) { id } }",
-        d={
-            "usuarioId": jose["id"],
-            "empresaId": str(matriz.id),
-            "estadoId": str(activo.id),
-        },
-    )
+    with empresa(matriz.id):
+        _correr(
+            "mutation ($d: AfiliarInput!) { afiliarAlGrupo(datos: $d) { id } }",
+            d={
+                "usuarioId": jose["id"],
+                "estadoId": str(activo.id),
+            },
+        )
 
     # 3 — la matriz arma el rol
     with empresa(matriz.id):

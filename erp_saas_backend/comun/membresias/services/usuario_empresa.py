@@ -8,7 +8,9 @@ from comun.membresias.models import UsuarioEmpresa
 from comun.membresias.repository import usuario_empresa as repo
 from comun.tipologias import api as tipologias
 from comun.tipologias.constantes import AGRUPADOR
+from comun.usuarios import api as usuarios
 from comun.usuarios.models import Usuario
+from core.tenancy import empresa_actual
 
 
 def _validar_estado(estado_id: int) -> None:
@@ -17,10 +19,15 @@ def _validar_estado(estado_id: int) -> None:
     )
 
 
-def _validar_usuario(usuario_id: int) -> Usuario:
-    usuario = Usuario.objects.filter(pk=usuario_id).first()
-    if usuario is None:
-        raise ValidationError(f"No existe el usuario {usuario_id}.")
+def _persona_del_cliente(usuario_id: int) -> Usuario:
+    """La persona, si es del cliente de la sesión.
+
+    El orden importa: quién es dueño de esa cuenta se comprueba ANTES que
+    cualquier otra cosa. Validando primero el estado, el mensaje "el usuario
+    'jperez' está dado de baja" entregaba el nombre de alguien de otro
+    cliente a quien probara ids."""
+    usuario = usuarios.obtener_usuario_del_cliente(usuario_id)
+
     if not usuario.is_active:
         raise ValidationError(
             f"El usuario '{usuario.username}' está dado de baja del sistema. "
@@ -33,15 +40,20 @@ def _validar_usuario(usuario_id: int) -> Usuario:
 EMPRESA_NO_DISPONIBLE = "Esa empresa no está disponible."
 
 
-def _exigir_del_mismo_cliente(usuario, empresa_id: int) -> None:
-    """Una cuenta solo trabaja en empresas de SU cliente.
+def _empresa_de_la_sesion() -> int:
+    """Dónde se afilia: la empresa donde está parado quien llama.
 
-    Sin esto, el administrador de un cliente afilia a su gente —o a la
-    ajena— a la empresa de otro, y desde ahí le ve las ventas.
-    """
-    matriz = empresas.matriz_de(empresa_id)
-    if matriz is None or usuario.matriz_id != matriz.pk:
-        raise ValidationError(EMPRESA_NO_DISPONIBLE)
+    No se recibe por parámetro. Mientras venía de afuera había que comprobar
+    que la cuenta y la empresa fueran del mismo cliente, y esa comprobación no
+    podía saber cuál de los dos era el ajeno: los dos los mandaba quien
+    llamaba. Saliendo de la sesión, las dos pertenencias quedan garantizadas
+    por construcción."""
+    empresa_id = empresa_actual()
+    if empresa_id is None:
+        raise ValidationError(
+            "No hay empresa en la sesión: no se sabe a cuál afiliar."
+        )
+    return empresa_id
 
 
 def _validar_fechas(fecha_asignacion, fecha_finalizacion) -> None:
@@ -57,14 +69,13 @@ def _validar_fechas(fecha_asignacion, fecha_finalizacion) -> None:
 def afiliar(
     *,
     usuario_id: int,
-    empresa_id: int,
     fecha_asignacion: datetime.date | None = None,
     estado_id: int,
 ) -> UsuarioEmpresa:
-    """Da de alta a una persona en UNA empresa."""
+    """Da de alta a una persona en la empresa de la sesión."""
+    empresa_id = _empresa_de_la_sesion()
     _validar_estado(estado_id)
-    usuario = _validar_usuario(usuario_id)
-    _exigir_del_mismo_cliente(usuario, empresa_id)
+    usuario = _persona_del_cliente(usuario_id)
 
     if repo.existe_en(usuario_id, empresa_id):
         raise ValidationError(
@@ -86,7 +97,6 @@ def afiliar(
 def afiliar_al_grupo(
     *,
     usuario_id: int,
-    empresa_id: int,
     fecha_asignacion: datetime.date | None = None,
     estado_id: int,
 ) -> list[UsuarioEmpresa]:
@@ -103,9 +113,9 @@ def afiliar_al_grupo(
     Un alta a medias dejaría al gerente con acceso a la mitad del grupo
     y nadie se daría cuenta hasta que reclame.
     """
+    empresa_id = _empresa_de_la_sesion()
     _validar_estado(estado_id)
-    usuario = _validar_usuario(usuario_id)
-    _exigir_del_mismo_cliente(usuario, empresa_id)
+    usuario = _persona_del_cliente(usuario_id)
 
     grupo = empresas.descendientes_de(empresa_id)
     if not grupo:

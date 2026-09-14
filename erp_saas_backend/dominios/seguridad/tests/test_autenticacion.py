@@ -5,6 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from comun.membresias import api as membresias
 from core.tenancy import empresa
+from core.tests.afiliacion import afiliar_en
 from dominios.seguridad import api as seguridad
 
 pytestmark = pytest.mark.django_db
@@ -55,9 +56,7 @@ def dar_rol(activo, permiso):
 
     def _dar(usuario, la_empresa, nombre_rol, codename):
         p, codigo = permiso(codename)
-        m = membresias.afiliar(
-            usuario_id=usuario.id, empresa_id=la_empresa.id, estado_id=activo.id
-        )
+        m = afiliar_en(la_empresa.id, usuario_id=usuario.id, estado_id=activo.id)
         with empresa(la_empresa.id):
             rol = seguridad.crear_rol(nombre=nombre_rol, estado_id=activo.id)
             seguridad.agregar_permiso(grupo_id=rol.id, auth_permission_id=p.id)
@@ -78,9 +77,7 @@ def test_has_perm_ve_los_permisos_del_rol(juan, empresa_a, dar_rol):
 
 def test_sin_rol_no_hay_permiso(juan, empresa_a, activo, permiso):
     _, codigo = permiso("emitir_factura")
-    membresias.afiliar(
-        usuario_id=juan.id, empresa_id=empresa_a.id, estado_id=activo.id
-    )
+    afiliar_en(empresa_a.id, usuario_id=juan.id, estado_id=activo.id)
 
     with empresa(empresa_a.id):
         assert not juan.has_perm(codigo)
@@ -88,9 +85,7 @@ def test_sin_rol_no_hay_permiso(juan, empresa_a, activo, permiso):
 
 def test_el_permiso_de_una_empresa_no_vale_en_la_otra(juan, empresa_a, sucursal_a, dar_rol, activo):
     codigo = dar_rol(juan, empresa_a, "Cajero", "emitir_factura")
-    membresias.afiliar(
-        usuario_id=juan.id, empresa_id=sucursal_a.id, estado_id=activo.id
-    )
+    afiliar_en(sucursal_a.id, usuario_id=juan.id, estado_id=activo.id)
 
     with empresa(empresa_a.id):
         assert juan.has_perm(codigo)
@@ -140,9 +135,7 @@ def test_auth_group_no_da_permisos(juan, empresa_a, activo, permiso):
     grupo_django = Group.objects.create(name="Vendedores de toda la instalación")
     grupo_django.permissions.add(p)
     juan.groups.add(grupo_django)
-    membresias.afiliar(
-        usuario_id=juan.id, empresa_id=empresa_a.id, estado_id=activo.id
-    )
+    afiliar_en(empresa_a.id, usuario_id=juan.id, estado_id=activo.id)
 
     with empresa(empresa_a.id):
         assert not juan.has_perm(codigo)

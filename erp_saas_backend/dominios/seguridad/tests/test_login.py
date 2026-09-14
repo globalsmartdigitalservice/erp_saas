@@ -16,6 +16,7 @@ from dominios.seguridad import api as seguridad
 from dominios.seguridad import tokens
 from dominios.seguridad.models import SesionAcceso
 from dominios.seguridad.services import login
+from core.tests.afiliacion import afiliar_en
 
 pytestmark = pytest.mark.django_db
 
@@ -53,17 +54,13 @@ def juan(empresa_a):
 
 @pytest.fixture
 def en_gimnasio(juan, empresa_a, activo, resultados):
-    return membresias.afiliar(
-        usuario_id=juan.id, empresa_id=empresa_a.id, estado_id=activo.id
-    )
+    return afiliar_en(empresa_a.id, usuario_id=juan.id, estado_id=activo.id)
 
 
 @pytest.fixture
 def en_dos_empresas(juan, en_gimnasio, sucursal_a, activo):
     """En la matriz y en su sucursal: el gerente de la cadena."""
-    membresias.afiliar(
-        usuario_id=juan.id, empresa_id=sucursal_a.id, estado_id=activo.id
-    )
+    afiliar_en(sucursal_a.id, usuario_id=juan.id, estado_id=activo.id)
     return en_gimnasio
 
 

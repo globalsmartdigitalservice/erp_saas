@@ -11,6 +11,7 @@ from core.tenancy import empresa_actual
 # POR NOMBRE. Si `cargar_tipologias.py` las escribe distinto, el alta de
 # sucursal y la baja de empresa dejan de encontrar su fila.
 NOMBRE_TIPO_MATRIZ = "CASA MATRIZ"
+NOMBRE_TIPO_SUCURSAL = "SUCURSAL"
 NOMBRE_ESTADO_ACTIVA = "ACTIVA"
 NOMBRE_ESTADO_INACTIVA = "INACTIVA"
 

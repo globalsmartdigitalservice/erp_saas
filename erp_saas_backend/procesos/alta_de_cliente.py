@@ -129,7 +129,7 @@ def dar_de_alta(
             seg_apellido=administrador.seg_apellido,
         )
         membresia = membresias.afiliar(
-            usuario_id=cuenta.pk, empresa_id=empresa.pk, estado_id=activo.pk
+            usuario_id=cuenta.pk, estado_id=activo.pk
         )
         rol = seguridad.crear_rol(
             nombre=NOMBRE_DEL_ROL_INICIAL, estado_id=activo.pk

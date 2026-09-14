@@ -12,6 +12,7 @@ from comun.tipologias.constantes import (
     NOMBRE_EXCEPCION_PERMISO,
 )
 from core.tenancy import empresa
+from core.tests.afiliacion import afiliar_en
 from dominios.seguridad import api as seguridad
 
 pytestmark = pytest.mark.django_db
@@ -59,9 +60,7 @@ def juan(empresa_a):
 
 @pytest.fixture
 def en_gimnasio(juan, empresa_a, activo):
-    return membresias.afiliar(
-        usuario_id=juan.id, empresa_id=empresa_a.id, estado_id=activo.id
-    )
+    return afiliar_en(empresa_a.id, usuario_id=juan.id, estado_id=activo.id)
 
 
 @pytest.fixture
@@ -70,9 +69,7 @@ def en_sucursal(juan, sucursal_a, activo):
 
     El caso real: trabaja de mañana en una sucursal y de tarde en la otra,
     con horarios y equipos distintos en cada una."""
-    return membresias.afiliar(
-        usuario_id=juan.id, empresa_id=sucursal_a.id, estado_id=activo.id
-    )
+    return afiliar_en(sucursal_a.id, usuario_id=juan.id, estado_id=activo.id)
 
 
 def _a_las(fecha: datetime.date, hora: str) -> datetime.datetime:

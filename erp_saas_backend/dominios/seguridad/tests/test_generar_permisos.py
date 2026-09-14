@@ -14,6 +14,7 @@ from dominios.seguridad.permisos import (
 )
 from dominios.seguridad.scanner import _declara_permisos
 from core.tenancy import empresa
+from core.tests.afiliacion import afiliar_en
 
 pytestmark = pytest.mark.django_db
 
@@ -234,9 +235,7 @@ def test_el_permiso_generado_lo_entiende_has_perm(
         password="Kx7pLm9Qw2",
         matriz=empresa_a,
     )
-    m = membresias.afiliar(
-        usuario_id=juan.id, empresa_id=empresa_a.id, estado_id=activo.id
-    )
+    m = afiliar_en(empresa_a.id, usuario_id=juan.id, estado_id=activo.id)
     with empresa(empresa_a.id):
         rol = seguridad.crear_rol(nombre="Cajero", estado_id=activo.id)
         seguridad.agregar_permiso(grupo_id=rol.id, auth_permission_id=permiso.id)

@@ -29,13 +29,14 @@ def _a_membresia(fila) -> MembresiaType:
 @auto_permisos(recurso="SEGU_MIEMBROS")
 @strawberry.type
 class MembresiaMutations:
-    @strawberry.mutation(description="Da de alta a una persona en UNA empresa.")
+    @strawberry.mutation(
+        description="Da de alta a una persona en la empresa de la sesión."
+    )
     @requiere_permiso
     def afiliar(self, info: strawberry.Info, datos: AfiliarInput) -> MembresiaType:
         try:
             fila = membresias.afiliar(
                 usuario_id=int(datos.usuario_id),
-                empresa_id=int(datos.empresa_id),
                 estado_id=int(datos.estado_id),
                 fecha_asignacion=datos.fecha_asignacion,
             )
@@ -45,9 +46,9 @@ class MembresiaMutations:
 
     @strawberry.mutation(
         description=(
-            "Da de alta a una persona en una empresa Y EN TODAS SUS "
-            "SUCURSALES. Es el 'dar de alta en todo el grupo' para el gerente "
-            "de una cadena. Devuelve solo las membresías CREADAS: donde ya "
+            "Da de alta a una persona en la empresa de la sesión Y EN "
+            "TODAS SUS SUCURSALES. Es el 'dar de alta en todo el grupo' "
+            "para el gerente de una cadena. Devuelve solo las creadas: donde ya "
             "estaba, se saltea sin dar error."
         )
     )
@@ -56,7 +57,6 @@ class MembresiaMutations:
         try:
             filas = membresias.afiliar_al_grupo(
                 usuario_id=int(datos.usuario_id),
-                empresa_id=int(datos.empresa_id),
                 estado_id=int(datos.estado_id),
                 fecha_asignacion=datos.fecha_asignacion,
             )

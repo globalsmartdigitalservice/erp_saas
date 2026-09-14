@@ -7,8 +7,9 @@ import strawberry
 
 @strawberry.input(name="AfiliarInput")
 class AfiliarInput:
+    """No lleva `empresaId`: se afilia a la empresa de la sesión."""
+
     usuario_id: strawberry.ID
-    empresa_id: strawberry.ID
     estado_id: strawberry.ID
     fecha_asignacion: datetime.date | None = None
 

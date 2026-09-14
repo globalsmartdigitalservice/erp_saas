@@ -13,6 +13,7 @@ from comun.tipologias.constantes import (
     NOMBRE_ESTADO_BAJA,
 )
 from core.tenancy import empresa
+from core.tests.afiliacion import afiliar_en
 from dominios.seguridad.models import SesionAcceso
 
 pytestmark = pytest.mark.django_db
@@ -64,9 +65,7 @@ def juan(empresa_a):
 
 @pytest.fixture
 def en_gimnasio(juan, empresa_a, activo):
-    return membresias.afiliar(
-        usuario_id=juan.id, empresa_id=empresa_a.id, estado_id=activo.id
-    )
+    return afiliar_en(empresa_a.id, usuario_id=juan.id, estado_id=activo.id)
 
 
 @pytest.fixture(autouse=True)
@@ -184,9 +183,7 @@ def test_un_token_manoseado_no_abre_sesion(client, en_gimnasio):
 def test_con_dos_empresas_no_se_abre_sesion_hasta_elegir(
     client, juan, en_gimnasio, sucursal_a, activo
 ):
-    membresias.afiliar(
-        usuario_id=juan.id, empresa_id=sucursal_a.id, estado_id=activo.id
-    )
+    afiliar_en(sucursal_a.id, usuario_id=juan.id, estado_id=activo.id)
 
     respuesta = _pedir(
         client, LOGIN, datos={"identificador": "juan", "password": "Kx7pLm9Qw2"}
@@ -201,9 +198,7 @@ def test_con_dos_empresas_no_se_abre_sesion_hasta_elegir(
 def test_elegir_empresa_abre_la_sesion_en_esa(
     client, juan, en_gimnasio, sucursal_a, activo
 ):
-    membresias.afiliar(
-        usuario_id=juan.id, empresa_id=sucursal_a.id, estado_id=activo.id
-    )
+    afiliar_en(sucursal_a.id, usuario_id=juan.id, estado_id=activo.id)
 
     _pedir(
         client,
@@ -259,9 +254,7 @@ def test_las_consultas_devuelven_solo_lo_de_la_empresa_de_la_sesion(
         password="Zq4tRn8Vd3",
         matriz=empresa_b,
     )
-    membresias.afiliar(
-        usuario_id=ana.id, empresa_id=empresa_b.id, estado_id=activo.id
-    )
+    afiliar_en(empresa_b.id, usuario_id=ana.id, estado_id=activo.id)
 
     _pedir(client, LOGIN, datos={"identificador": "juan", "password": "Kx7pLm9Qw2"})
 

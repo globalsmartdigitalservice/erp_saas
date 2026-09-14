@@ -10,6 +10,7 @@ from comun.membresias import api as membresias
 from comun.tipologias.constantes import AGRUPADOR, NOMBRE_ESTADO_BAJA
 from core.tenancy import SinEmpresaEnContexto, empresa
 from dominios.seguridad import api as seguridad
+from core.tests.afiliacion import afiliar_en
 
 pytestmark = pytest.mark.django_db
 
@@ -53,9 +54,7 @@ def permiso(db):
 @pytest.fixture
 def afiliar(activo):
     def _afiliar(usuario, la_empresa):
-        return membresias.afiliar(
-            usuario_id=usuario.id, empresa_id=la_empresa.id, estado_id=activo.id
-        )
+        return afiliar_en(la_empresa.id, usuario_id=usuario.id, estado_id=activo.id)
 
     return _afiliar
 

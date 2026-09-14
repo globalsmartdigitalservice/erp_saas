@@ -14,6 +14,7 @@ from comun.tipologias.constantes import (
 )
 from config.schema import schema
 from core.tenancy import empresa
+from core.tests.afiliacion import afiliar_en
 from dominios.seguridad import api as seguridad
 from dominios.seguridad.permisos import content_type_del_ancla
 from dominios.seguridad.permisos_graphql import SIN_PERMISO, SIN_SESION
@@ -66,9 +67,7 @@ def juan(empresa_a, activo):
         password="Kx7pLm9Qw2",
         matriz=empresa_a,
     )
-    membresias.afiliar(
-        usuario_id=persona.id, empresa_id=empresa_a.id, estado_id=activo.id
-    )
+    afiliar_en(empresa_a.id, usuario_id=persona.id, estado_id=activo.id)
     return persona
 
 
