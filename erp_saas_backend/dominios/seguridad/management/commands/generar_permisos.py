@@ -5,7 +5,7 @@ Lee las mutations decoradas con `@auto_permisos` y arma el catálogo:
 
     · el `auth_permission` que falte
     · la `Funcionalidad` que le pone nombre y pantalla
-    · INFORMA los que sobran, y NO los borra
+    · INFORMA los que sobran; con `--borrar-obsoletos` los limpia
 
  CON `--dry-run` NO ESCRIBE NADA. Es lo primero que hay que correr:
 este comando toca los permisos de todo el sistema, y conviene ver qué va
@@ -37,6 +37,14 @@ class Command(BaseCommand):
             "--dry-run",
             action="store_true",
             help="Muestra qué haría, sin escribir nada.",
+        )
+        parser.add_argument(
+            "--borrar-obsoletos",
+            action="store_true",
+            help=(
+                "Borra los permisos que ya no están en el código. Respeta "
+                "los que algún rol tenga asignados."
+            ),
         )
 
     def handle(self, *args, **opciones):
@@ -81,7 +89,7 @@ class Command(BaseCommand):
         for codename in nuevos:
             self.stdout.write(f"    + {codename}")
 
-        self._informar_sobrantes(declarados)
+        self._informar_sobrantes(declarados, opciones["borrar_obsoletos"])
 
     # ── lo que se escribe ──────────────────────────────────────────
 
@@ -154,34 +162,26 @@ class Command(BaseCommand):
                 )
             )
 
-    def _informar_sobrantes(self, declarados) -> None:
+    def _informar_sobrantes(self, declarados, borrar: bool) -> None:
         """
-         NO SE BORRAN, Y ES A PROPÓSITO.
+         NO SE BORRAN SOLOS, Y ES A PROPÓSITO.
 
-        Borrar un `auth_permission` le saca capacidades EN SILENCIO a
-        todos los roles que lo tenían asignado: la persona deja de poder
-        hacer algo y el mensaje que ve es "no tenés permiso", sin ninguna
-        pista. Y además `Grupo_Empresa_Permiso` lo tiene con `PROTECT`,
-        así que el borrado fallaría.
+        Un permiso que hoy falta del código puede ser un rename a medio
+        hacer o una operación que se está reescribiendo, y el catálogo lo
+        comparten TODOS los clientes: un borrado automático durante un
+        deploy les pega a todos a la vez.
 
-        Se listan y decide una persona.
+        Con `--borrar-obsoletos` se limpian, salvo los que algún rol tenga
+        asignados: ésos son configuración que armó una persona.
         """
         vivos = {d["codename"] for d in declarados}
-        sobrantes = (
+        sobrantes = list(
             Permission.objects.filter(content_type=content_type_del_ancla())
             .exclude(codename__in=vivos)
             .order_by("codename")
         )
         if not sobrantes:
             return
-
-        self.stdout.write(
-            self.style.WARNING(
-                f"\naviso: {sobrantes.count()} permiso(s) en la base que YA NO están "
-                f"en el código. NO se borran: hacerlo le sacaría capacidades en "
-                f"silencio a los roles que los tengan. Revisalos a mano:"
-            )
-        )
 
         with sin_filtro_de_empresa():
             en_uso = set(
@@ -190,9 +190,65 @@ class Command(BaseCommand):
                 ).values_list("auth_permission_id", flat=True)
             )
 
+        if borrar:
+            self._borrar_sobrantes(sobrantes, en_uso)
+            return
+
+        self.stdout.write("")
+        self.stdout.write(
+            self.style.WARNING(
+                f"aviso: {len(sobrantes)} permiso(s) en la base que YA NO están "
+                f"en el código. No se borran solos: uno puede ser un rename a "
+                f"medio hacer, y el catálogo lo comparten todos los clientes. "
+                f"Para limpiarlos: --borrar-obsoletos."
+            )
+        )
+        self._listar(sobrantes, en_uso)
+
+    def _listar(self, sobrantes, en_uso) -> None:
         for permiso in sobrantes:
             marca = " (EN USO por algún rol)" if permiso.pk in en_uso else ""
             self.stdout.write(f"    - {permiso.codename}{marca}")
+
+    def _borrar_sobrantes(self, sobrantes, en_uso) -> None:
+        """Los que ningún rol usa. La `Funcionalidad` se va con ellos porque
+        es derivada —la creó este comando— y además los tiene con `PROTECT`."""
+        borrados, retenidos = [], []
+
+        with transaction.atomic():
+            for permiso in sobrantes:
+                if permiso.pk in en_uso:
+                    retenidos.append(permiso.codename)
+                    continue
+
+                funcionalidad = modulos.funcionalidad_del_permiso(permiso.pk)
+                if funcionalidad is not None:
+                    modulos.borrar_funcionalidad(funcionalidad.pk)
+
+                permiso.delete()
+                borrados.append(permiso.codename)
+
+        self.stdout.write("")
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"OK: {len(borrados)} permiso(s) obsoleto(s) borrado(s)."
+            )
+        )
+        for codename in borrados:
+            self.stdout.write(f"    - {codename}")
+
+        if not retenidos:
+            return
+
+        self.stdout.write("")
+        self.stdout.write(
+            self.style.WARNING(
+                f"aviso: {len(retenidos)} no se borraron porque algún rol los "
+                f"tiene asignados. Quítelos del rol primero:"
+            )
+        )
+        for codename in retenidos:
+            self.stdout.write(f"    - {codename}")
 
     def _simular(self, declarados) -> None:
         ancla = content_type_del_ancla()
@@ -207,4 +263,4 @@ class Command(BaseCommand):
             estado = "ya está" if d["codename"] in existentes else "SE CREARÍA"
             self.stdout.write(f"  [{estado}] {d['codename']}  ← {d['metodo']}")
 
-        self._informar_sobrantes(declarados)
+        self._informar_sobrantes(declarados, borrar=False)

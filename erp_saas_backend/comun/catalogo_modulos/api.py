@@ -145,5 +145,11 @@ def desactivar_funcionalidad(funcionalidad_id: int) -> Funcionalidad:
     return _svc_func.desactivar(funcionalidad_id)
 
 
+def borrar_funcionalidad(funcionalidad_id: int) -> None:
+    """Borrado real, para cuando el permiso que describe ya no existe en el
+    código. Lo usa `generar_permisos --borrar-obsoletos`."""
+    return _svc_func.borrar(funcionalidad_id)
+
+
 def quitar_dependencia(modulo_id: int, depende_de_id: int) -> None:
     return _svc_dep.quitar(modulo_id, depende_de_id)

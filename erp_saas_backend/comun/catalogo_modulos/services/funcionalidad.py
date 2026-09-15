@@ -123,3 +123,16 @@ def desactivar(funcionalidad_id: int) -> Funcionalidad:
         )
 
     return repo.actualizar(fila, estado_id=baja.pk)
+
+
+def borrar(funcionalidad_id: int) -> None:
+    """Borrado DE VERDAD, y es a propósito: esta fila es derivada.
+
+    La crea `generar_permisos` para ponerle nombre y pantalla a un permiso,
+    así que cuando el permiso desaparece del código no queda nada que
+    describir. Para sacarla del menú sin borrarla está `desactivar`."""
+    fila = repo.obtener(funcionalidad_id)
+    if fila is None:
+        raise ValidationError(f"No existe la funcionalidad {funcionalidad_id}.")
+
+    fila.delete()

@@ -165,8 +165,8 @@ def test_correrlo_dos_veces_no_duplica(db, pantalla_roles):
 
 
 def test_no_borra_los_permisos_que_ya_no_estan_en_el_codigo(db, pantalla_roles):
-    """Borrar un `auth_permission` le saca capacidades EN SILENCIO a todos
-    los roles que lo tenían."""
+    """Por defecto se informan y nada más: uno que falta del código puede ser
+    un rename a medio hacer, y el catálogo lo comparten todos los clientes."""
     viejo = Permission.objects.create(
         content_type=content_type_del_ancla(),
         codename="segu_roles_operacion_que_ya_no_existe",
@@ -176,8 +176,35 @@ def test_no_borra_los_permisos_que_ya_no_estan_en_el_codigo(db, pantalla_roles):
     salida = _correr()
 
     assert Permission.objects.filter(pk=viejo.pk).exists()
-    assert "NO se borran" in salida
+    assert "No se borran solos" in salida
     assert viejo.codename in salida
+
+
+def test_borrar_obsoletos_respeta_los_que_un_rol_tiene_asignados(
+    db, pantalla_roles, activo, empresa_a
+):
+    """El borrado es explícito y aun así no se lleva puesta la configuración
+    de nadie. Si algún día se llevara un permiso asignado, ese rol perdería la
+    capacidad y nadie se enteraría hasta que alguien no pueda trabajar."""
+    asignado = Permission.objects.create(
+        content_type=content_type_del_ancla(),
+        codename="segu_roles_vieja_en_uso",
+        name="Vieja en uso",
+    )
+    libre = Permission.objects.create(
+        content_type=content_type_del_ancla(),
+        codename="segu_roles_vieja_suelta",
+        name="Vieja suelta",
+    )
+    with empresa(empresa_a.id):
+        rol = seguridad.crear_rol(nombre="Cajero", estado_id=activo.id)
+        seguridad.agregar_permiso(grupo_id=rol.id, auth_permission_id=asignado.id)
+
+    salida = _correr(borrar_obsoletos=True)
+
+    assert Permission.objects.filter(pk=asignado.pk).exists()
+    assert not Permission.objects.filter(pk=libre.pk).exists()
+    assert asignado.codename in salida
 
 
 def test_avisa_cuando_un_permiso_esta_en_uso(db, pantalla_roles, activo, empresa_a):
