@@ -10,6 +10,7 @@ from comun.tipologias.constantes import (
     NOMBRE_ACCESO_BLOQUEADO,
     NOMBRE_ACCESO_EXITO,
     NOMBRE_ACCESO_FALLO,
+    NOMBRE_ESTADO_BAJA,
 )
 from core.tenancy import empresa, sin_filtro_de_empresa
 from dominios.seguridad import api as seguridad
@@ -249,6 +250,18 @@ def test_el_usuario_dado_de_baja_no_puede_renovar(juan, en_gimnasio, resultados)
     resultado = login.login(identificador="juan", password="Kx7pLm9Qw2")
     juan.is_active = False
     juan.save(update_fields=["is_active"])
+
+    with pytest.raises(ValidationError, match="venció"):
+        login.refresh(token=resultado.refresh)
+
+
+def test_el_dado_de_baja_en_la_empresa_no_puede_renovar(
+    en_gimnasio, empresa_a, catalogo, resultados
+):
+    resultado = login.login(identificador="juan", password="Kx7pLm9Qw2")
+    baja = catalogo["tipologia"](AGRUPADOR.ESTADO_REGISTRO, NOMBRE_ESTADO_BAJA)
+    with empresa(empresa_a.id):
+        membresias.desafiliar(membresia_id=en_gimnasio.id, estado_baja_id=baja.id)
 
     with pytest.raises(ValidationError, match="venció"):
         login.refresh(token=resultado.refresh)

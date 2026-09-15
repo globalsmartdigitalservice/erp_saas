@@ -214,6 +214,30 @@ def elegir_empresa(
     )
 
 
+def sesion_vigente(datos: dict) -> SesionAcceso | None:
+    """La sesión del token si sigue en pie: abierta, con la cuenta y la membresía
+    activas, y en la empresa del token."""
+    with sin_filtro_de_empresa():
+        sesion = (
+            SesionAcceso.objects.select_related("usuario_empresa__usuario")
+            .filter(pk=datos.get("ses"))
+            .first()
+        )
+
+    if sesion is None or not sesion.esta_abierta:
+        return None
+
+    membresia = sesion.usuario_empresa
+    if not membresia.usuario.is_active:
+        return None
+    if membresia.estado_id != tipologias.id_del_estado_activo():
+        return None
+    if datos.get("emp") != membresia.empresa_id:
+        return None
+
+    return sesion
+
+
 @transaction.atomic
 def refresh(*, token: str) -> ResultadoLogin:
     """Cambia un refresh válido por un par nuevo, con rotación.
@@ -225,25 +249,11 @@ def refresh(*, token: str) -> ResultadoLogin:
     except tokens.InvalidTokenError as error:
         raise ValidationError(SESION_MUERTA, code=CODIGO_SESION_MUERTA) from error
 
-    with sin_filtro_de_empresa():
-        
-        sesion = (
-            SesionAcceso.objects.select_related("usuario_empresa__usuario")
-            .filter(pk=datos["ses"])
-            .first()
-        )
-
-   
-    if sesion is None or not sesion.esta_abierta:
-        raise ValidationError(SESION_MUERTA, code=CODIGO_SESION_MUERTA)
-
-    if sesion.refresh_jti != datos.get("jti"):
-        
+    sesion = sesion_vigente(datos)
+    if sesion is None or sesion.refresh_jti != datos.get("jti"):
         raise ValidationError(SESION_MUERTA, code=CODIGO_SESION_MUERTA)
 
     membresia = sesion.usuario_empresa
-    if not membresia.usuario.is_active:
-        raise ValidationError(SESION_MUERTA, code=CODIGO_SESION_MUERTA)
 
     acceso = tokens.emitir_acceso(
         usuario_id=membresia.usuario_id,
@@ -312,6 +322,7 @@ __all__ = [
     "login",
     "elegir_empresa",
     "refresh",
+    "sesion_vigente",
     "logout",
     "cerrar_sesiones_de",
     "autenticar",

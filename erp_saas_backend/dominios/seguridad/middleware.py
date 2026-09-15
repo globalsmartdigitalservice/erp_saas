@@ -48,15 +48,10 @@ mismo y se contestan cuatro cosas en vez de una.
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 
-from comun.tipologias import api as tipologias
 from core.idioma import establecer_idioma, restaurar_idioma
-from core.tenancy import (
-    establecer_empresa,
-    restaurar_empresa,
-    sin_filtro_de_empresa,
-)
+from core.tenancy import establecer_empresa, restaurar_empresa
 from dominios.seguridad import tokens
-from dominios.seguridad.models import SesionAcceso
+from dominios.seguridad.services import login
 
 
 class SesionPorTokenMiddleware:
@@ -110,36 +105,8 @@ class SesionPorTokenMiddleware:
             return None
 
     def _membresia_vigente(self, datos):
-        """La membresía de esta sesión, si todo sigue en pie.
-
-        Cuatro comprobaciones en UNA consulta: la sesión existe, sigue
-        abierta, la cuenta está activa y la persona sigue trabajando en esa
-        empresa.
-        """
-        with sin_filtro_de_empresa():
-            
-            sesion = (
-                SesionAcceso.objects.select_related("usuario_empresa__usuario")
-                .filter(pk=datos["ses"])
-                .first()
-            )
-
-        if sesion is None or not sesion.esta_abierta:
-            return None
-
-        membresia = sesion.usuario_empresa
-        if not membresia.usuario.is_active:
-            return None
-
-        activo = tipologias.id_del_estado_activo()
-        if membresia.estado_id != activo:
-            return None
-
-       
-        if datos.get("emp") != membresia.empresa_id:
-            return None
-
-        return membresia
+        sesion = login.sesion_vigente(datos)
+        return sesion.usuario_empresa if sesion else None
 
 
 class AnonimoPorDefectoMiddleware:
