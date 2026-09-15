@@ -7,6 +7,7 @@ from graphql import GraphQLError
 from dominios.seguridad.permisos import auto_permisos
 from dominios.seguridad.permisos_graphql import requiere_permiso
 
+from comun.membresias import api as membresias
 from comun.usuarios import api as usuarios
 
 from .inputs import ActualizarUsuarioInput
@@ -32,36 +33,14 @@ class UsuarioMutations:
         info: strawberry.Info, id: strawberry.ID, datos: ActualizarUsuarioInput
     ) -> UsuarioType:
         try:
+            persona = membresias.persona_de_la_empresa(int(id))
             fila = usuarios.actualizar_usuario(
-                int(id),
+                persona.pk,
                 email=datos.email,
                 first_name=datos.first_name,
                 last_name=datos.last_name,
                 seg_apellido=datos.seg_apellido,
             )
-        except ValidationError as error:
-            raise _traducir(error) from error
-        return UsuarioType.desde_modelo(fila)
-
-    @strawberry.mutation(
-        description=(
-            "Baja del sistema entero: no entra a ninguna empresa. Para "
-            "sacarlo de UNA, usá `desafiliar`."
-        )
-    )
-    @requiere_permiso
-    def desactivar_usuario(self, info: strawberry.Info, id: strawberry.ID) -> UsuarioType:
-        try:
-            fila = usuarios.desactivar_usuario(int(id))
-        except ValidationError as error:
-            raise _traducir(error) from error
-        return UsuarioType.desde_modelo(fila)
-
-    @strawberry.mutation(description="Vuelve a habilitar a una persona dada de baja.")
-    @requiere_permiso
-    def reactivar_usuario(self, info: strawberry.Info, id: strawberry.ID) -> UsuarioType:
-        try:
-            fila = usuarios.reactivar_usuario(int(id))
         except ValidationError as error:
             raise _traducir(error) from error
         return UsuarioType.desde_modelo(fila)

@@ -8,8 +8,12 @@ import strawberry
 from django.core.exceptions import ValidationError
 from graphql import GraphQLError
 
+from comun.membresias import api as membresias
+from comun.membresias.graphql.inputs import DesafiliarInput
 from comun.membresias.graphql.types import MembresiaType
+from comun.usuarios import api as usuarios
 from comun.usuarios.graphql.types import UsuarioType
+from core.tenancy import empresa as contexto_empresa
 from dominios.seguridad.permisos import auto_permisos, codename_de
 from dominios.seguridad.permisos_graphql import (
     exigir_permiso,
@@ -17,7 +21,12 @@ from dominios.seguridad.permisos_graphql import (
     requiere_permiso,
     usuario_de_la_sesion,
 )
-from procesos import alta_de_miembro, cambio_de_password, reseteo_de_password
+from procesos import (
+    administrar_miembros,
+    alta_de_miembro,
+    cambio_de_password,
+    reseteo_de_password,
+)
 
 from .inputs import (
     CambiarMiPasswordInput,
@@ -27,10 +36,18 @@ from .inputs import (
 from .types import AltaDeMiembroType
 
 PERMISO_ASIGNAR_ROL = codename_de("SEGU_ROLES", "asignar_rol")
+PERMISO_DESACTIVAR = codename_de("SEGU_USUARIOS", "desactivar_usuario")
+PERMISO_REACTIVAR = codename_de("SEGU_USUARIOS", "reactivar_usuario")
 
 
 def _traducir(error: ValidationError) -> GraphQLError:
     return GraphQLError("; ".join(error.messages))
+
+
+def _exigir_en_sus_empresas(info, usuario_id: int, codigo: str) -> None:
+    for membresia in administrar_miembros.membresias_vigentes_de(usuario_id):
+        with contexto_empresa(membresia.empresa_id):
+            exigir_permiso(info, codigo)
 
 
 @strawberry.type
@@ -131,8 +148,74 @@ class AltaDeMiembroMutations:
         )
 
 
+@auto_permisos(recurso="SEGU_USUARIOS")
+@strawberry.type
+class CuentaMutations:
+    @strawberry.mutation(
+        description=(
+            "Apaga la cuenta: la persona no entra a ninguna empresa. Exige el "
+            "permiso en cada empresa donde trabaja y rechaza si deja a alguna "
+            "sin quien la administre. Para sacarla de una sola, use `desafiliar`."
+        )
+    )
+    @requiere_permiso
+    def desactivar_usuario(self, info: strawberry.Info, id: strawberry.ID) -> UsuarioType:
+        try:
+            persona = membresias.persona_de_la_empresa(int(id))
+            _exigir_en_sus_empresas(info, persona.pk, PERMISO_DESACTIVAR)
+            cuenta = administrar_miembros.desactivar_cuenta(persona.pk)
+        except ValidationError as error:
+            raise _traducir(error) from error
+        return UsuarioType.desde_modelo(cuenta)
+
+    @strawberry.mutation(
+        description=(
+            "Vuelve a habilitar la cuenta. Exige el permiso en cada empresa "
+            "donde la persona trabaja."
+        )
+    )
+    @requiere_permiso
+    def reactivar_usuario(self, info: strawberry.Info, id: strawberry.ID) -> UsuarioType:
+        try:
+            persona = membresias.persona_de_la_empresa(int(id))
+            _exigir_en_sus_empresas(info, persona.pk, PERMISO_REACTIVAR)
+            cuenta = usuarios.reactivar_usuario(persona.pk)
+        except ValidationError as error:
+            raise _traducir(error) from error
+        return UsuarioType.desde_modelo(cuenta)
+
+
+@auto_permisos(recurso="SEGU_MIEMBROS")
+@strawberry.type
+class BajaDeMiembroMutations:
+    @strawberry.mutation(
+        description=(
+            "Saca a una persona de esta empresa: no borra la fila ni toca sus "
+            "otras empresas. Rechaza si es la última que puede administrarla."
+        )
+    )
+    @requiere_permiso
+    def desafiliar(self, info: strawberry.Info, datos: DesafiliarInput) -> MembresiaType:
+        try:
+            fila = administrar_miembros.desafiliar(
+                membresia_id=int(datos.membresia_id),
+                estado_baja_id=int(datos.estado_baja_id),
+                fecha_finalizacion=datos.fecha_finalizacion,
+            )
+        except ValidationError as error:
+            raise _traducir(error) from error
+        persona = usuarios.obtener_usuario(fila.usuario_id)
+        return MembresiaType.desde_modelo(
+            fila, UsuarioType.desde_modelo(persona) if persona else None
+        )
+
+
 @strawberry.type
 class ProcesosMutation(
-    CambioDePasswordMutations, ReseteoDePasswordMutations, AltaDeMiembroMutations
+    CambioDePasswordMutations,
+    ReseteoDePasswordMutations,
+    AltaDeMiembroMutations,
+    CuentaMutations,
+    BajaDeMiembroMutations,
 ):
     pass

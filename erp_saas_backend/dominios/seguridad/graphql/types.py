@@ -4,6 +4,8 @@ import datetime
 
 import strawberry
 
+from comun.usuarios.graphql.types import UsuarioType
+
 
 @strawberry.type(name="PermisoDelRol")
 class PermisoDelRolType:
@@ -88,4 +90,27 @@ class RolAsignadoType:
             fecha_fin=asignacion.fecha_fin,
             motivo=asignacion.motivo,
             estado_id=strawberry.ID(str(asignacion.estado_id)),
+        )
+
+
+@strawberry.type(name="Miembro")
+class MiembroType:
+    """Una persona de la empresa activa con sus roles de hoy: sin roles entra y no ve nada."""
+
+    id: strawberry.ID
+    usuario: UsuarioType | None
+    fecha_asignacion: datetime.date
+    fecha_finalizacion: datetime.date | None
+    estado_id: strawberry.ID
+    roles: list[RolType]
+
+    @classmethod
+    def desde_modelo(cls, membresia, roles: list[RolType]) -> "MiembroType":
+        return cls(
+            id=strawberry.ID(str(membresia.pk)),
+            usuario=UsuarioType.desde_modelo(membresia.usuario),
+            fecha_asignacion=membresia.fecha_asignacion,
+            fecha_finalizacion=membresia.fecha_finalizacion,
+            estado_id=strawberry.ID(str(membresia.estado_id)),
+            roles=roles,
         )

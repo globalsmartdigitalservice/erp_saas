@@ -11,7 +11,7 @@ from comun.membresias import api as membresias
 from comun.usuarios import api as usuarios
 from comun.usuarios.graphql.types import UsuarioType
 
-from .inputs import AfiliarInput, DesafiliarInput
+from .inputs import AfiliarInput
 from .types import MembresiaType
 
 
@@ -51,24 +51,6 @@ class MembresiaMutations:
         persona = usuarios.obtener_usuario(int(datos.usuario_id))
         resuelta = UsuarioType.desde_modelo(persona) if persona else None
         return [MembresiaType.desde_modelo(f, resuelta) for f in filas]
-
-    @strawberry.mutation(
-        description=(
-            "Saca a una persona de esta empresa. NO borra la fila ni la toca "
-            "en las otras empresas donde trabaje."
-        )
-    )
-    @requiere_permiso
-    def desafiliar(self, info: strawberry.Info, datos: DesafiliarInput) -> MembresiaType:
-        try:
-            fila = membresias.desafiliar(
-                membresia_id=int(datos.membresia_id),
-                estado_baja_id=int(datos.estado_baja_id),
-                fecha_finalizacion=datos.fecha_finalizacion,
-            )
-        except ValidationError as error:
-            raise _traducir(error) from error
-        return _a_membresia(fila)
 
     @strawberry.mutation(
         description=(

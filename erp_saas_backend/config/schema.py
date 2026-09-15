@@ -38,7 +38,7 @@ from dominios.entidades.graphql.mutations import EntidadesMutation
 from dominios.entidades.graphql.queries import EntidadesQuery
 from dominios.seguridad.graphql.login import LoginMutation
 from dominios.seguridad.graphql.mutations import SeguridadMutation
-from dominios.seguridad.graphql.queries import SeguridadQuery
+from dominios.seguridad.graphql.queries import MiembroQuery, SeguridadQuery
 from dominios.seguridad.password_pendiente import ExigirCambioDePassword
 from procesos.graphql.mutations import ProcesosMutation
 
@@ -56,6 +56,7 @@ class Query(
     MembresiaQuery,
     CatalogoModulosQuery,
     SeguridadQuery,
+    MiembroQuery,
 ):
     @strawberry.field(description="Comprobación de que el endpoint responde.")
     def version(self) -> str:

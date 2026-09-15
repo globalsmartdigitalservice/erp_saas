@@ -1,6 +1,7 @@
 """Las consultas de roles, permisos, equipos y horarios."""
 
 import datetime
+from collections import defaultdict
 
 import strawberry
 
@@ -11,7 +12,8 @@ from comun.membresias import api as membresias
 from comun.membresias.graphql.types import EmpresaDelUsuarioType
 from comun.usuarios.graphql.types import UsuarioType
 
-from dominios.seguridad.permisos_graphql import requiere_autenticacion
+from dominios.seguridad.permisos import auto_permisos
+from dominios.seguridad.permisos_graphql import requiere_autenticacion, requiere_permiso
 
 from .tipos_acceso import (
     DispositivoAutorizadoType,
@@ -20,7 +22,7 @@ from .tipos_acceso import (
     HorarioAccesoType,
     VeredictoType,
 )
-from .types import PermisoDelRolType, RolAsignadoType, RolType
+from .types import MiembroType, PermisoDelRolType, RolAsignadoType, RolType
 
 
 @strawberry.type
@@ -90,6 +92,34 @@ class SeguridadQueries:
         self, info: strawberry.Info, membresia_id: strawberry.ID
     ) -> list[str]:
         return sorted(seguridad.permisos_de(int(membresia_id)))
+
+
+@auto_permisos(recurso="SEGU_MIEMBROS")
+@strawberry.type
+class MiembroQueries:
+    @strawberry.field(
+        description=(
+            "Quiénes trabajan en la empresa activa, cada uno con sus roles "
+            "vigentes. NO devuelve gente de otros clientes."
+        )
+    )
+    @requiere_permiso
+    @auto_permisos(recurso="SEGU_MIEMBROS", operacion="listar")
+    def miembros(
+        self, info: strawberry.Info, estado_id: strawberry.ID | None = None
+    ) -> list[MiembroType]:
+        filas = membresias.listar_membresias(
+            int(estado_id) if estado_id is not None else None
+        )
+        activa = empresa_actual()
+        roles = defaultdict(list)
+        for asignacion in seguridad.roles_vigentes_de_varias_membresias(
+            [fila.pk for fila in filas]
+        ):
+            roles[asignacion.usuario_empresa_id].append(
+                RolType.desde_modelo(asignacion.grupo_empresa, activa)
+            )
+        return [MiembroType.desde_modelo(fila, roles[fila.pk]) for fila in filas]
 
 
 @strawberry.type
@@ -235,4 +265,9 @@ class SesionQueries:
 
 @strawberry.type
 class SeguridadQuery(SeguridadQueries, AccesoQueries, SesionQueries):
+    pass
+
+
+@strawberry.type
+class MiembroQuery(MiembroQueries):
     pass

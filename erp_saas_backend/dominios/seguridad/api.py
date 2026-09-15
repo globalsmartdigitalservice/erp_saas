@@ -105,6 +105,21 @@ def roles_de_varias_membresias(membresia_ids) -> list[GrupoUsuario]:
     return _repo_asig.listar_de_membresias(membresia_ids)
 
 
+def roles_vigentes_de_varias_membresias(membresia_ids) -> list[GrupoUsuario]:
+    """Los roles de hoy de varias personas, en una consulta."""
+    return _svc_asig.roles_vigentes_de_varias(membresia_ids)
+
+
+def exigir_que_quede_quien_administre(
+    *, excluir_membresia_id: int | None = None, excluir_asignacion_id: int | None = None
+) -> None:
+    """Rechaza lo que dejaría a la empresa activa sin nadie que pueda asignar roles."""
+    _svc_asig.exigir_que_quede_quien_administre(
+        excluir_membresia_id=excluir_membresia_id,
+        excluir_asignacion_id=excluir_asignacion_id,
+    )
+
+
 def asignar_rol(
     *,
     membresia_id: int,
@@ -255,6 +270,8 @@ __all__ = [
     "obtener_asignaciones",
     "historial_de",
     "roles_de_varias_membresias",
+    "roles_vigentes_de_varias_membresias",
+    "exigir_que_quede_quien_administre",
     "asignar_rol",
     "quitar_rol",
     "actualizar_asignacion",

@@ -50,12 +50,39 @@ def roles_vigentes_de(
      Las tres condiciones son necesarias. Sin la de `fecha_fin`, un
     reemplazo "por vacaciones" que venció en marzo seguiría habilitando en
     septiembre."""
-    hoy = hoy or datetime.date.today()
+    return roles_vigentes_de_varias([membresia_id], estado_id, hoy)
+
+
+def roles_vigentes_de_varias(
+    membresia_ids, estado_id: int, hoy: datetime.date | None = None
+) -> list[GrupoUsuario]:
     return list(
-        GrupoUsuario.objects.select_related(*_RELACIONES)
-        .filter(usuario_empresa_id=membresia_id, estado_id=estado_id)
-        .filter(fecha_inicio__lte=hoy)
-        .filter(Q(fecha_fin__isnull=True) | Q(fecha_fin__gte=hoy))
+        _vigentes(GrupoUsuario.objects.select_related(*_RELACIONES), estado_id, hoy)
+        .filter(usuario_empresa_id__in=list(membresia_ids))
+    )
+
+
+def asignaciones_con_permiso(
+    codename: str, estado_id: int, hoy: datetime.date | None = None
+) -> list[tuple[int, int]]:
+    """`(asignacion_id, membresia_id)` de quienes tienen ese permiso hoy en la
+    empresa activa, con la membresía activa y la cuenta habilitada."""
+    return list(
+        _vigentes(GrupoUsuario.objects.all(), estado_id, hoy)
+        .filter(
+            usuario_empresa__estado_id=estado_id,
+            usuario_empresa__usuario__is_active=True,
+            grupo_empresa__permisos__auth_permission__codename=codename,
+        )
+        .values_list("pk", "usuario_empresa_id")
+        .distinct()
+    )
+
+
+def _vigentes(qs, estado_id: int, hoy: datetime.date | None):
+    hoy = hoy or datetime.date.today()
+    return qs.filter(estado_id=estado_id, fecha_inicio__lte=hoy).filter(
+        Q(fecha_fin__isnull=True) | Q(fecha_fin__gte=hoy)
     )
 
 

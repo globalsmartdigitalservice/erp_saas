@@ -50,6 +50,11 @@ def empresas_de(usuario_id: int) -> list[UsuarioEmpresa]:
     return _repo.listar_de_usuario_en_todas_las_empresas(usuario_id)
 
 
+def membresias_de_usuario(usuario_id: int, estado_id: int) -> list[UsuarioEmpresa]:
+    """Las de esa persona en ese estado, en todas las empresas del cliente."""
+    return _repo.listar_de_usuario_con_estado(usuario_id, estado_id)
+
+
 def afiliar(
     *,
     usuario_id: int,
@@ -112,6 +117,7 @@ __all__ = [
     "membresia_de",
     "persona_de_la_empresa",
     "empresas_de",
+    "membresias_de_usuario",
     "afiliar",
     "afiliar_al_grupo",
     "desafiliar",

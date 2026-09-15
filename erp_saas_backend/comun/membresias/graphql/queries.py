@@ -15,31 +15,6 @@ from .types import MembresiaType, PersonaEncontradaType
 @auto_permisos(recurso="SEGU_MIEMBROS")
 @strawberry.type
 class MembresiaQueries:
-    @strawberry.field(
-        description=(
-            "Quiénes trabajan en la empresa activa. Es la lista de usuarios "
-            "de la empresa; NO devuelve gente de otros clientes."
-        )
-    )
-    @requiere_permiso
-    @auto_permisos(recurso="SEGU_MIEMBROS", operacion="listar")
-    def miembros(
-        self, info: strawberry.Info, estado_id: strawberry.ID | None = None
-    ) -> list[MembresiaType]:
-        filas = membresias.listar_membresias(
-            int(estado_id) if estado_id is not None else None
-        )
-        # El batch a mano del que depende no tener N+1: se juntan todos
-        # los `usuario_id` y se piden en una sola consulta. El
-        # proyecto no usa DataLoader.
-        personas = usuarios.obtener_usuarios({f.usuario_id for f in filas})
-        resueltas = {
-            id_: UsuarioType.desde_modelo(u) for id_, u in personas.items()
-        }
-        return [
-            MembresiaType.desde_modelo(f, resueltas.get(f.usuario_id)) for f in filas
-        ]
-
     @strawberry.field(description="La membresía de una persona en la empresa activa.")
     @requiere_permiso
     @auto_permisos(recurso="SEGU_MIEMBROS", operacion="ver")

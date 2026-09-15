@@ -145,8 +145,7 @@ def test_la_lista_de_miembros_no_dispara_una_consulta_por_persona(
         afiliar_en(empresa_a.id, usuario_id=u.id, estado_id=activo.id)
 
     with empresa(empresa_a.id):
-        # 1 membresías + 1 usuarios por lote
-        with django_assert_max_num_queries(2):
+        with django_assert_max_num_queries(4):
             datos = _correr("{ miembros { usuario { username } } }")
 
     assert len(datos["miembros"]) == 10

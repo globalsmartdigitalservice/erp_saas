@@ -3,6 +3,7 @@ import datetime
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
+from comun.empresas import api as empresas
 from comun.membresias import api as membresias
 from comun.tipologias import api as tipologias
 from comun.tipologias.constantes import (
@@ -10,8 +11,18 @@ from comun.tipologias.constantes import (
     NOMBRE_ESTADO_ACTIVO,
     NOMBRE_ESTADO_BAJA,
 )
+from core.tenancy import empresa_actual
 from dominios.seguridad.models import GrupoEmpresa, GrupoUsuario
+from dominios.seguridad.permisos import codename_de
 from dominios.seguridad.repository import grupo_usuario as repo
+
+
+LLAVE_DE_ADMINISTRACION = codename_de("SEGU_ROLES", "asignar_rol")
+
+ULTIMA_PERSONA = (
+    "Es la última persona que puede administrar {empresa}. Asigne a otra "
+    "persona un rol que lo permita antes de continuar."
+)
 
 
 def _validar_estado(estado_id: int) -> None:
@@ -112,6 +123,8 @@ def quitar(
     if asignacion is None:
         raise ValidationError(f"No existe la asignación {asignacion_id}.")
 
+    exigir_que_quede_quien_administre(excluir_asignacion_id=asignacion.pk)
+
     fecha_fin = fecha_fin or datetime.date.today()
     _validar_fechas(asignacion.fecha_inicio, fecha_fin)
 
@@ -198,3 +211,36 @@ def permisos_vigentes_de(membresia_id: int) -> set[str]:
         f"{linea.auth_permission.codename}"
         for linea in lineas
     }
+
+
+def roles_vigentes_de_varias(membresia_ids) -> list[GrupoUsuario]:
+    activo = tipologias.obtener_del_sistema(
+        AGRUPADOR.ESTADO_REGISTRO, NOMBRE_ESTADO_ACTIVO
+    )
+    if activo is None:
+        return []
+    return repo.roles_vigentes_de_varias(membresia_ids, activo.pk)
+
+
+def exigir_que_quede_quien_administre(
+    *, excluir_membresia_id: int | None = None, excluir_asignacion_id: int | None = None
+) -> None:
+    """Rechaza lo que dejaría a la empresa activa sin nadie con la llave."""
+    activo = tipologias.obtener_del_sistema(
+        AGRUPADOR.ESTADO_REGISTRO, NOMBRE_ESTADO_ACTIVO
+    )
+    if activo is None:
+        return
+
+    llaves = repo.asignaciones_con_permiso(LLAVE_DE_ADMINISTRACION, activo.pk)
+    quedan = {
+        membresia_id
+        for asignacion_id, membresia_id in llaves
+        if membresia_id != excluir_membresia_id
+        and asignacion_id != excluir_asignacion_id
+    }
+    if not llaves or quedan:
+        return
+
+    empresa = empresas.obtener_empresa(empresa_actual())
+    raise ValidationError(ULTIMA_PERSONA.format(empresa=empresa.razon_social))

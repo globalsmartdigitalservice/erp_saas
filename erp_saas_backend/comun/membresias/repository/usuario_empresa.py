@@ -66,6 +66,14 @@ def listar_de_usuario_en_todas_las_empresas(usuario_id: int) -> list[UsuarioEmpr
         )
 
 
+def listar_de_usuario_con_estado(usuario_id: int, estado_id: int) -> list[UsuarioEmpresa]:
+    """Las membresías de una persona en ese estado, en todas las empresas: cruza a propósito."""
+    with sin_filtro_de_empresa():
+        return list(
+            UsuarioEmpresa.objects.filter(usuario_id=usuario_id, estado_id=estado_id)
+        )
+
+
 def existe_en(usuario_id: int, empresa_id: int) -> bool:
     """
     ¿Esta persona ya está dada de alta en ESA empresa?

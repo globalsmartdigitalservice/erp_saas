@@ -12,7 +12,9 @@ from dominios.seguridad import api as seguridad
 from dominios.seguridad.permisos import content_type_del_ancla
 
 
-def darle_el_permiso(persona, empresa_id: int, estado_id: int, *codenames: str):
+def darle_el_permiso(
+    persona, empresa_id: int, estado_id: int, *codenames: str, nombre_rol: str = "Supervisor"
+):
     """Un rol de esa empresa, con los permisos adentro, en su membresía."""
     permisos = [
         Permission.objects.get_or_create(
@@ -24,7 +26,7 @@ def darle_el_permiso(persona, empresa_id: int, estado_id: int, *codenames: str):
     ]
 
     with empresa(empresa_id):
-        rol = seguridad.crear_rol(nombre="Supervisor", estado_id=estado_id)
+        rol = seguridad.crear_rol(nombre=nombre_rol, estado_id=estado_id)
         for permiso in permisos:
             seguridad.agregar_permiso(grupo_id=rol.id, auth_permission_id=permiso.id)
         seguridad.asignar_rol(
