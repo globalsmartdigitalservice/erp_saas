@@ -53,6 +53,11 @@ def _info_de(args, kwargs):
 
 
 def usuario_de_la_sesion(info):
+    """Quién llama. Ver `usuario_de_la_peticion`."""
+    return usuario_de_la_peticion(getattr(info.context, "request", None))
+
+
+def usuario_de_la_peticion(peticion):
     """Quién llama, y POR QUÉ PUERTA entró.
 
     `request.user` lo puede haber puesto el middleware del ERP desde el token,
@@ -64,7 +69,6 @@ def usuario_de_la_sesion(info):
     de Django se le cree únicamente si `TRUST_DJANGO_SESSION` lo habilita, que
     en producción es `False` y en desarrollo `True` — ahí sirve para probar
     desde GraphiQL sin montar un login."""
-    peticion = getattr(info.context, "request", None)
     if peticion is None:
         return None
 
@@ -213,6 +217,7 @@ def solo_proveedor(func):
 
 __all__ = [
     "usuario_de_la_sesion",
+    "usuario_de_la_peticion",
     "requiere_autenticacion",
     "requiere_permiso",
     "solo_proveedor",

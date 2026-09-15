@@ -11,6 +11,7 @@ from core.tenancy import empresa, sin_filtro_de_empresa
 from core.tests.afiliacion import afiliar_en
 from core.tests.contexto_graphql import Contexto
 from dominios.seguridad.models import SesionAcceso
+from dominios.seguridad.password_pendiente import CODIGO_DEBE_CAMBIAR_PASSWORD
 from dominios.seguridad.services import login
 from procesos import alta_de_sucursal, cambio_de_password, reseteo_de_password
 
@@ -159,3 +160,77 @@ def test_no_se_resetea_a_alguien_de_otra_empresa(farmacia_vida, con_sucursal):
 
         with pytest.raises(ValidationError, match="No existe la membresía"):
             reseteo_de_password.resetear(membresia_id=farmacia_vida.membresia.pk)
+
+
+def _como_carla(farmacia_vida, carla, documento, **variables):
+    with empresa(farmacia_vida.empresa.pk):
+        return schema.execute_sync(
+            documento,
+            variable_values=variables or None,
+            context_value=Contexto(carla),
+        )
+
+
+def _codigos(resultado) -> list[str]:
+    return [error.extensions.get("code") for error in resultado.errors or []]
+
+
+def test_con_la_temporal_el_arranque_de_la_app_pasa_entero(farmacia_vida, carla):
+    resultado = _como_carla(
+        farmacia_vida,
+        carla,
+        "query SesionActual { me { id } miEmpresa { empresaId } misPermisos }",
+    )
+
+    assert resultado.errors is None, resultado.errors
+    assert resultado.data["me"]["id"] == str(carla.pk)
+
+
+def test_con_la_temporal_un_campo_ajeno_rechaza_el_documento_entero(
+    farmacia_vida, carla
+):
+    resultado = _como_carla(
+        farmacia_vida, carla, "{ me { id } empresas { razonSocial } }"
+    )
+
+    assert resultado.data is None
+    assert _codigos(resultado) == [CODIGO_DEBE_CAMBIAR_PASSWORD]
+
+
+def test_con_la_temporal_un_fragmento_no_esconde_un_campo_ajeno(farmacia_vida, carla):
+    resultado = _como_carla(
+        farmacia_vida,
+        carla,
+        """
+        query { me { id } ...Colado }
+        fragment Colado on Query { ... on Query { empresas { razonSocial } } }
+        """,
+    )
+
+    assert resultado.data is None
+    assert _codigos(resultado) == [CODIGO_DEBE_CAMBIAR_PASSWORD]
+
+
+def test_con_la_temporal_una_mutation_ajena_frena_tambien_la_permitida(
+    farmacia_vida, carla
+):
+    resultado = _como_carla(
+        farmacia_vida,
+        carla,
+        """
+        mutation ($datos: CambiarMiPasswordInput!, $reseteo: ResetearPasswordInput!) {
+          cambiarMiPassword(datos: $datos)
+          resetearPassword(datos: $reseteo)
+        }
+        """,
+        datos={
+            "passwordActual": farmacia_vida.password_temporal,
+            "passwordNueva": PASSWORD_NUEVA,
+        },
+        reseteo={"membresiaId": str(farmacia_vida.membresia.pk)},
+    )
+
+    assert _codigos(resultado) == [CODIGO_DEBE_CAMBIAR_PASSWORD]
+    carla.refresh_from_db()
+    assert carla.check_password(farmacia_vida.password_temporal)
+    assert carla.debe_cambiar_password is True

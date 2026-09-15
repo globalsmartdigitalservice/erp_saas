@@ -39,6 +39,7 @@ from dominios.entidades.graphql.queries import EntidadesQuery
 from dominios.seguridad.graphql.login import LoginMutation
 from dominios.seguridad.graphql.mutations import SeguridadMutation
 from dominios.seguridad.graphql.queries import SeguridadQuery
+from dominios.seguridad.password_pendiente import ExigirCambioDePassword
 from procesos.graphql.mutations import ProcesosMutation
 
 
@@ -83,5 +84,5 @@ class Mutation(
 schema = SchemaDelErp(
     query=Query,
     mutation=Mutation,
-    extensions=[EnmascararErrores()],
+    extensions=[EnmascararErrores(), ExigirCambioDePassword()],
 )
