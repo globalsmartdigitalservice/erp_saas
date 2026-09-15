@@ -9,7 +9,7 @@ from dominios.seguridad.permisos_graphql import requiere_permiso
 
 from comun.usuarios import api as usuarios
 
-from .inputs import ActualizarUsuarioInput, CambiarPasswordInput, CrearUsuarioInput
+from .inputs import ActualizarUsuarioInput, CrearUsuarioInput
 from .types import UsuarioType
 
 
@@ -60,27 +60,6 @@ class UsuarioMutations:
                 first_name=datos.first_name,
                 last_name=datos.last_name,
                 seg_apellido=datos.seg_apellido,
-            )
-        except ValidationError as error:
-            raise _traducir(error) from error
-        return UsuarioType.desde_modelo(fila)
-
-    @strawberry.mutation(
-        description=(
-            "La persona cambia SU PROPIA contraseña, sabiendo la anterior. "
-            "Nadie más se la puede cambiar."
-        )
-    )
-    @requiere_permiso
-    def cambiar_password(
-        self,
-        info: strawberry.Info, id: strawberry.ID, datos: CambiarPasswordInput
-    ) -> UsuarioType:
-        try:
-            fila = usuarios.cambiar_password(
-                usuario_id=int(id),
-                password_actual=datos.password_actual,
-                password_nueva=datos.password_nueva,
             )
         except ValidationError as error:
             raise _traducir(error) from error

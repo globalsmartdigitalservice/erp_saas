@@ -197,8 +197,13 @@ def cambiar_password(
 
     Es la regla del análisis funcional: *"lo único que puede cambiar contraseña
     es el mismo usuario"*.
+
+    El `usuario_id` sale de la sesión, nunca de un parámetro de la API: por eso
+    acá no se comprueba de quién es la cuenta.
     """
-    usuario = obtener_del_cliente(usuario_id)
+    usuario = repo.obtener(usuario_id)
+    if usuario is None:
+        raise ValidationError(f"No existe el usuario {usuario_id}.")
 
     if not usuario.check_password(password_actual):
         raise ValidationError("La contraseña actual no es correcta.")
@@ -213,6 +218,26 @@ def cambiar_password(
     usuario.debe_cambiar_password = False
     usuario.save(update_fields=["password", "debe_cambiar_password"])
     return usuario
+
+
+@transaction.atomic
+def resetear_password(usuario_id: int, password: str | None = None) -> tuple:
+    """Le pone una contraseña a alguien SIN saber la anterior, y devuelve
+    la cuenta y la contraseña en claro para dictarla una sola vez.
+
+    Queda obligada a cambiarse en el primer ingreso: quien la resetea la
+    conoce, así que mientras no se cambie no prueba quién entró."""
+    usuario = repo.obtener(usuario_id)
+    if usuario is None:
+        raise ValidationError(f"No existe el usuario {usuario_id}.")
+
+    en_claro = password or generar_password_temporal()
+    _validar_password(en_claro, usuario)
+
+    usuario.set_password(en_claro)
+    usuario.debe_cambiar_password = True
+    usuario.save(update_fields=["password", "debe_cambiar_password"])
+    return usuario, en_claro
 
 
 @transaction.atomic

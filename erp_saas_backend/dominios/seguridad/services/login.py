@@ -289,11 +289,31 @@ def salir(*, sesion_id: int) -> SesionAcceso | None:
     return sesion
 
 
+@transaction.atomic
+def cerrar_sesiones_de(usuario_id: int, *, excepto_id: int | None = None) -> int:
+    """Cierra las sesiones abiertas de una CUENTA y devuelve cuántas eran.
+
+    Cruza empresas a propósito: la contraseña es de la cuenta, no de la
+    membresía, así que un reseteo hecho desde una sucursal tiene que sacar a
+    esa persona de todas las demás."""
+    with sin_filtro_de_empresa():
+        abiertas = SesionAcceso.objects.filter(
+            usuario_empresa__usuario_id=usuario_id, fin__isnull=True
+        )
+        if excepto_id is not None:
+            abiertas = abiertas.exclude(pk=excepto_id)
+
+        return abiertas.update(
+            fin=datetime.datetime.now(datetime.UTC), refresh_jti=""
+        )
+
+
 __all__ = [
     "ingresar",
     "elegir_empresa",
     "renovar",
     "salir",
+    "cerrar_sesiones_de",
     "autenticar",
     "empresas_de",
     "Ingreso",

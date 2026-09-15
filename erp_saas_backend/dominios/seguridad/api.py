@@ -25,6 +25,13 @@ from dominios.seguridad.services import grupo_empresa as _svc
 from dominios.seguridad.services import acceso as _svc_acceso
 from dominios.seguridad.services import dispositivos_y_horarios as _svc_eq
 from dominios.seguridad.services import grupo_usuario as _svc_asig
+from dominios.seguridad.services import login as _svc_login
+
+
+def cerrar_sesiones_de(usuario_id: int, *, excepto_id: int | None = None) -> int:
+    """Saca a una cuenta de todas sus empresas. Con `excepto_id` deja viva
+    una: la de quien está cambiando su propia contraseña."""
+    return _svc_login.cerrar_sesiones_de(usuario_id, excepto_id=excepto_id)
 
 
 def obtener_rol(grupo_id: int) -> GrupoEmpresa | None:
@@ -233,6 +240,7 @@ def quitar_excepcion(**campos) -> HorarioExcepcion:
 
 
 __all__ = [
+    "cerrar_sesiones_de",
     "obtener_rol",
     "obtener_roles",
     "listar_roles",

@@ -82,6 +82,9 @@ class SesionPorTokenMiddleware:
 
         request.user = membresia.usuario
         request.usuario_del_token = membresia.usuario
+        # La sesión ya está resuelta acá. Sin dejarla puesta, quien la
+        # necesite tiene que volver a leer la cookie y decodificar el token.
+        request.sesion_id = datos["ses"]
 
         marca = establecer_empresa(membresia.empresa_id)
         marca_idioma = (

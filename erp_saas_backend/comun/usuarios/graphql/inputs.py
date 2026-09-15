@@ -27,13 +27,3 @@ class ActualizarUsuarioInput:
     last_name: str | None = None
     seg_apellido: str | None = None
 
-
-@strawberry.input(name="CambiarPasswordInput")
-class CambiarPasswordInput:
-    """
-    La actual se pide siempre. Sin eso, cualquiera que agarre una sesión
-    abierta le cambia la contraseña al dueño y lo deja afuera.
-    """
-
-    password_actual: str
-    password_nueva: str

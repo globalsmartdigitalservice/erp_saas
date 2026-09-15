@@ -70,6 +70,12 @@ def cambiar_password(*, usuario_id: int, password_actual: str, password_nueva: s
     )
 
 
+def resetear_password(usuario_id: int, password: str | None = None) -> tuple:
+    """Le pone una contraseña sin saber la anterior. Devuelve la cuenta y la
+    contraseña en claro, para dictarla una sola vez."""
+    return _svc.resetear_password(usuario_id, password)
+
+
 def desactivar_usuario(usuario_id: int):
     """Baja del sistema entero. Para sacarlo de UNA empresa: `membresias`."""
     return _svc.desactivar(usuario_id)
@@ -88,6 +94,7 @@ __all__ = [
     "crear_usuario",
     "actualizar_usuario",
     "cambiar_password",
+    "resetear_password",
     "desactivar_usuario",
     "reactivar_usuario",
 ]
