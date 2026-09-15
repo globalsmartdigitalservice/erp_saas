@@ -6,6 +6,7 @@ import { client } from "@/config/apollo";
 import { EntidadesRoutes } from "@/modules/entidades/routes/EntidadesRoutes";
 import { LoginPage } from "@/modules/seguridad/pages/LoginPage";
 import { NuevaPasswordPage } from "@/modules/seguridad/pages/NuevaPasswordPage";
+import { SeguridadRoutes } from "@/modules/seguridad/routes/SeguridadRoutes";
 import { TipologiasRoutes } from "@/modules/tipologias/routes/TipologiasRoutes";
 import { AppShell } from "@/shared/components/layout/AppShell";
 import { ProtectedRoute } from "@/shared/components/ProtectedRoute";
@@ -32,6 +33,7 @@ function App() {
                 <Route element={<AppShell />}>
                   <Route path="/" element={<Navigate to="/entidades" replace />} />
                   <Route path="/entidades/*" element={<EntidadesRoutes />} />
+                  <Route path="/seguridad/*" element={<SeguridadRoutes />} />
                   <Route path="/configuracion/*" element={<TipologiasRoutes />} />
                 </Route>
               </Route>

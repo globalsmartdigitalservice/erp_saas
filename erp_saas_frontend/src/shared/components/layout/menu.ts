@@ -1,4 +1,4 @@
-import { Settings, Users, type LucideIcon } from "lucide-react";
+import { Settings, UserCog, Users, type LucideIcon } from "lucide-react";
 
 
 
@@ -23,6 +23,12 @@ export const MENU: ModuloDeMenu[] = [
       { ruta: "/entidades", clave: "menu.listaEntidades" },
       { ruta: "/entidades/categorias", clave: "menu.categorias" },
     ],
+  },
+  {
+    id: "seguridad",
+    clave: "menu.seguridad",
+    icono: UserCog,
+    pantallas: [{ ruta: "/seguridad/usuarios", clave: "menu.usuarios" }],
   },
   {
     id: "configuracion",

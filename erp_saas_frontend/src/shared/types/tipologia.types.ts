@@ -23,3 +23,4 @@ export function origenDe(fila: Tipologia): OrigenDeTipologia {
 }
 
 export const ABREV_ACTIVO = "A";
+export const ABREV_BAJA = "B";
