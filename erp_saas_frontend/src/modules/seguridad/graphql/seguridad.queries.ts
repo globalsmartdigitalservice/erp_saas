@@ -6,6 +6,7 @@ export const SESION_ACTUAL = gql`
     me {
       id
       nombreCompleto
+      debeCambiarPassword
     }
     miEmpresa {
       empresaId

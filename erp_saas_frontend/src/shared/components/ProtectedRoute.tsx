@@ -35,5 +35,9 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace state={{ desde: ubicacion.pathname }} />;
   }
 
+  if (usuario.debeCambiarPassword && ubicacion.pathname !== "/cambiar-password") {
+    return <Navigate to="/cambiar-password" replace />;
+  }
+
   return <Outlet />;
 }

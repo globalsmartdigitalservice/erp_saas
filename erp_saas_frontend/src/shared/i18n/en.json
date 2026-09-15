@@ -24,6 +24,18 @@
     "panelTitulo": "Business management in one place",
     "panelTexto": "Each company works with its own information, its own lists and its own documents."
   },
+  "nuevaPassword": {
+    "titulo": "Set a new password",
+    "ayuda": "For security reasons, you must set a new password to continue.",
+    "actual": "Current password",
+    "actualAyuda": "The one you used to sign in.",
+    "nueva": "New password",
+    "confirmacion": "Repeat the new password",
+    "noCoinciden": "The passwords do not match.",
+    "guardar": "Save and continue",
+    "guardando": "Saving…",
+    "salir": "Sign out"
+  },
   "cabecera": {
     "empresa": "Company",
     "idioma": "Language",

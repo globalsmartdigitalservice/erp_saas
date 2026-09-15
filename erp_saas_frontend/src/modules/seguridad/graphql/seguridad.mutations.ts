@@ -41,3 +41,9 @@ export const LOGOUT = gql`
     logout
   }
 `;
+
+export const CAMBIAR_MI_PASSWORD = gql`
+  mutation CambiarMiPassword($datos: CambiarMiPasswordInput!) {
+    cambiarMiPassword(datos: $datos)
+  }
+`;

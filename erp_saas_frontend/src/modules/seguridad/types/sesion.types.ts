@@ -8,6 +8,7 @@ export type EmpresaDelUsuario = {
 export type UsuarioDeLaSesion = {
   id: string;
   nombreCompleto: string;
+  debeCambiarPassword: boolean;
 };
 
 /**
@@ -30,4 +31,14 @@ export type Credenciales = {
 export const CREDENCIALES_VACIAS: Credenciales = {
   identificador: "",
   password: "",
+};
+
+export type CambioDePassword = {
+  passwordActual: string;
+  passwordNueva: string;
+};
+
+export const CAMBIO_DE_PASSWORD_VACIO: CambioDePassword = {
+  passwordActual: "",
+  passwordNueva: "",
 };

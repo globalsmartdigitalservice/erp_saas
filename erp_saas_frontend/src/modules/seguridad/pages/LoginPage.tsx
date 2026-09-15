@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation } from "react-router-dom";
 
+import { AccesoLayout } from "@/modules/seguridad/components/AccesoLayout";
 import { EmpresasDelUsuario } from "@/modules/seguridad/components/EmpresasDelUsuario";
 import { FormularioLogin } from "@/modules/seguridad/components/FormularioLogin";
 import {
@@ -88,73 +89,30 @@ export function LoginPage() {
   }
 
   return (
-    <main className="grid min-h-screen lg:grid-cols-[1fr_1.15fr]">
-      <aside className="relative hidden overflow-hidden bg-sidebar p-12 text-sidebar-foreground lg:flex lg:flex-col lg:justify-between">
+    <AccesoLayout
+      titulo={enSegundoPaso ? t("login.tituloEmpresa") : t("login.titulo")}
+      ayuda={enSegundoPaso ? t("login.ayudaEmpresa") : t("login.ayuda")}
+    >
+      {enSegundoPaso ? (
         <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full opacity-20 blur-3xl"
-          style={{ background: "var(--primary)" }}
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-32 -left-16 size-80 rounded-full opacity-10 blur-3xl"
-          style={{ background: "var(--primary)" }}
-        />
-
-        <p className="font-heading text-2xl font-semibold tracking-tight">ERP</p>
-
-        <div className="relative max-w-sm space-y-3">
-          <p className="font-heading text-3xl font-semibold leading-tight">
-            {t("login.panelTitulo")}
-          </p>
-          <p className="text-sm leading-relaxed text-sidebar-foreground/70">
-            {t("login.panelTexto")}
-          </p>
+          key="empresas"
+          className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-2"
+        >
+          <EmpresasDelUsuario
+            empresas={empresas}
+            eligiendo={eligiendo}
+            error={mensajeDeError(eleccion.error, t)}
+            onElegir={abrirEn}
+            onVolver={volverAlPrimerPaso}
+          />
         </div>
-
-        <div
-          aria-hidden="true"
-          className="h-1 w-16 rounded-full"
-          style={{ background: "var(--primary)" }}
+      ) : (
+        <FormularioLogin
+          enviando={ingreso.loading || entrando}
+          error={mensajeDeError(ingreso.error, t)}
+          onEnviar={entrar}
         />
-      </aside>
-
-      <div className="flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-sm space-y-8">
-          <header className="space-y-2">
-            <p className="font-heading text-xl font-semibold tracking-tight lg:hidden">
-              ERP
-            </p>
-            <h1 className="font-heading text-2xl font-semibold tracking-tight">
-              {enSegundoPaso ? t("login.tituloEmpresa") : t("login.titulo")}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {enSegundoPaso ? t("login.ayudaEmpresa") : t("login.ayuda")}
-            </p>
-          </header>
-
-          {enSegundoPaso ? (
-            <div
-              key="empresas"
-              className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-2"
-            >
-              <EmpresasDelUsuario
-                empresas={empresas}
-                eligiendo={eligiendo}
-                error={mensajeDeError(eleccion.error, t)}
-                onElegir={abrirEn}
-                onVolver={volverAlPrimerPaso}
-              />
-            </div>
-          ) : (
-            <FormularioLogin
-              enviando={ingreso.loading || entrando}
-              error={mensajeDeError(ingreso.error, t)}
-              onEnviar={entrar}
-            />
-          )}
-        </div>
-      </div>
-    </main>
+      )}
+    </AccesoLayout>
   );
 }

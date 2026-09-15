@@ -24,6 +24,18 @@
     "panelTitulo": "Gestión empresarial en un solo lugar",
     "panelTexto": "Cada empresa trabaja con su propia información, sus propias listas y sus propios documentos."
   },
+  "nuevaPassword": {
+    "titulo": "Defina una contraseña nueva",
+    "ayuda": "Por seguridad, debe definir una contraseña nueva para continuar.",
+    "actual": "Contraseña actual",
+    "actualAyuda": "La que utilizó para ingresar.",
+    "nueva": "Contraseña nueva",
+    "confirmacion": "Repita la contraseña nueva",
+    "noCoinciden": "Las contraseñas no coinciden.",
+    "guardar": "Guardar y continuar",
+    "guardando": "Guardando…",
+    "salir": "Cerrar sesión"
+  },
   "cabecera": {
     "empresa": "Empresa",
     "idioma": "Idioma",

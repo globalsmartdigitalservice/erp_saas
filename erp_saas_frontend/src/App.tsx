@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { client } from "@/config/apollo";
 import { EntidadesRoutes } from "@/modules/entidades/routes/EntidadesRoutes";
 import { LoginPage } from "@/modules/seguridad/pages/LoginPage";
+import { NuevaPasswordPage } from "@/modules/seguridad/pages/NuevaPasswordPage";
 import { TipologiasRoutes } from "@/modules/tipologias/routes/TipologiasRoutes";
 import { AppShell } from "@/shared/components/layout/AppShell";
 import { ProtectedRoute } from "@/shared/components/ProtectedRoute";
@@ -26,6 +27,8 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
 
               <Route element={<ProtectedRoute />}>
+                <Route path="/cambiar-password" element={<NuevaPasswordPage />} />
+
                 <Route element={<AppShell />}>
                   <Route path="/" element={<Navigate to="/entidades" replace />} />
                   <Route path="/entidades/*" element={<EntidadesRoutes />} />
