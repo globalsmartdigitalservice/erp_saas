@@ -19,36 +19,36 @@ def _traducir(error: ValidationError) -> GraphQLError:
     return GraphQLError("; ".join(error.messages), extensions=extensions)
 
 
-def _poner_cookies(info, ingreso) -> None:
+def _poner_cookies(info, resultado) -> None:
     """Escribe las dos cookies.
 
      `path` distinto a propósito: el refresh solo se manda a la ruta que lo
     renueva, así el token de 7 días no viaja en cada petición. Hoy los dos
     coinciden porque el endpoint es uno solo."""
-    respuesta = info.context.response
+    response = info.context.response
     comunes = {
         "httponly": settings.COOKIE_HTTPONLY,
         "samesite": settings.COOKIE_SAMESITE,
         "secure": settings.COOKIE_SECURE,
     }
-    respuesta.set_cookie(
+    response.set_cookie(
         settings.COOKIE_ACCESO,
-        ingreso.acceso,
+        resultado.acceso,
         max_age=int(settings.JWT_VIDA_ACCESO.total_seconds()),
         **comunes,
     )
-    respuesta.set_cookie(
+    response.set_cookie(
         settings.COOKIE_REFRESH,
-        ingreso.refresh,
+        resultado.refresh,
         max_age=int(settings.JWT_VIDA_REFRESH.total_seconds()),
         **comunes,
     )
 
 
 def _borrar_cookies(info) -> None:
-    respuesta = info.context.response
-    respuesta.delete_cookie(settings.COOKIE_ACCESO)
-    respuesta.delete_cookie(settings.COOKIE_REFRESH)
+    response = info.context.response
+    response.delete_cookie(settings.COOKIE_ACCESO)
+    response.delete_cookie(settings.COOKIE_REFRESH)
 
 
 @strawberry.type(name="ResultadoLogin")
@@ -64,22 +64,22 @@ class ResultadoLoginType:
     empresas: list[EmpresaDelUsuarioType]
 
     @classmethod
-    def desde_ingreso(cls, ingreso) -> "ResultadoLoginType":
+    def desde_resultado(cls, resultado) -> "ResultadoLoginType":
         return cls(
-            necesita_elegir_empresa=ingreso.necesita_elegir_empresa,
-            usuario=cls._ficha(ingreso),
+            necesita_elegir_empresa=resultado.necesita_elegir_empresa,
+            usuario=cls._ficha(resultado),
             empresas=[
-                EmpresaDelUsuarioType.desde_modelo(m) for m in ingreso.empresas
+                EmpresaDelUsuarioType.desde_modelo(m) for m in resultado.empresas
             ],
         )
 
     @staticmethod
-    def _ficha(ingreso) -> UsuarioType | None:
+    def _ficha(resultado) -> UsuarioType | None:
         """Mientras falte elegir empresa no se devuelve la ficha: con dos
         cuentas del mismo correo, cualquiera de las dos sería arbitraria."""
-        if ingreso.necesita_elegir_empresa:
+        if resultado.necesita_elegir_empresa:
             return None
-        return UsuarioType.desde_modelo(ingreso.usuario)
+        return UsuarioType.desde_modelo(resultado.usuario)
 
 
 @strawberry.input(name="LoginInput")
@@ -106,7 +106,7 @@ class LoginMutations:
         self, info: strawberry.Info, datos: LoginInput
     ) -> ResultadoLoginType:
         try:
-            ingreso = svc.ingresar(
+            resultado = svc.login(
                 identificador=datos.identificador,
                 password=datos.password,
                 empresa_id=(
@@ -118,9 +118,9 @@ class LoginMutations:
         except ValidationError as error:
             raise _traducir(error) from error
 
-        if not ingreso.necesita_elegir_empresa:
-            _poner_cookies(info, ingreso)
-        return ResultadoLoginType.desde_ingreso(ingreso)
+        if not resultado.necesita_elegir_empresa:
+            _poner_cookies(info, resultado)
+        return ResultadoLoginType.desde_resultado(resultado)
 
     @strawberry.mutation(
         description=(
@@ -136,7 +136,7 @@ class LoginMutations:
         empresa_id: strawberry.ID,
     ) -> ResultadoLoginType:
         try:
-            ingreso = svc.elegir_empresa(
+            resultado = svc.elegir_empresa(
                 identificador=datos.identificador,
                 password=datos.password,
                 empresa_id=int(empresa_id),
@@ -146,8 +146,8 @@ class LoginMutations:
         except ValidationError as error:
             raise _traducir(error) from error
 
-        _poner_cookies(info, ingreso)
-        return ResultadoLoginType.desde_ingreso(ingreso)
+        _poner_cookies(info, resultado)
+        return ResultadoLoginType.desde_resultado(resultado)
 
     @strawberry.mutation(
         description=(
@@ -164,15 +164,15 @@ class LoginMutations:
             )
 
         try:
-            ingreso = svc.renovar(refresh=crudo)
+            resultado = svc.refresh(token=crudo)
         except ValidationError as error:
             # Se borran las cookies: si el refresh ya no sirve, dejarlas
             # puestas hace que el frontend reintente en loop.
             _borrar_cookies(info)
             raise _traducir(error) from error
 
-        _poner_cookies(info, ingreso)
-        return ResultadoLoginType.desde_ingreso(ingreso)
+        _poner_cookies(info, resultado)
+        return ResultadoLoginType.desde_resultado(resultado)
 
     @strawberry.mutation(
         description=(
@@ -193,10 +193,10 @@ class LoginMutations:
 
         try:
             datos = tokens.leer(crudo, tipo=tokens.TIPO_ACCESO)
-        except tokens.TokenInvalido:
+        except tokens.InvalidTokenError:
             return True
 
-        svc.salir(sesion_id=datos["ses"])
+        svc.logout(sesion_id=datos["ses"])
         return True
 
 

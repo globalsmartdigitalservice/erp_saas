@@ -29,7 +29,7 @@ TIPO_REFRESH = "refresh"
 ALGORITMO = "HS256"
 
 
-class TokenInvalido(Exception):
+class InvalidTokenError(Exception):
     """Firma que no cierra, vencido, del tipo equivocado o mal formado.
 
      UNA SOLA excepción para todos los casos: distinguir "vencido" de "firma
@@ -92,10 +92,10 @@ def leer(token: str, *, tipo: str) -> dict:
     try:
         datos = jwt.decode(token, _clave(), algorithms=[ALGORITMO])
     except jwt.PyJWTError as error:
-        raise TokenInvalido(str(error)) from error
+        raise InvalidTokenError(str(error)) from error
 
     if datos.get("typ") != tipo:
-        raise TokenInvalido(f"Se esperaba un token de {tipo}.")
+        raise InvalidTokenError(f"Se esperaba un token de {tipo}.")
 
     return datos
 
@@ -104,7 +104,7 @@ __all__ = [
     "emitir_acceso",
     "emitir_refresh",
     "leer",
-    "TokenInvalido",
+    "InvalidTokenError",
     "TIPO_ACCESO",
     "TIPO_REFRESH",
 ]

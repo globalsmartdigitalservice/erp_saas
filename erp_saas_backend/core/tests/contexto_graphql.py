@@ -9,7 +9,7 @@ marca, con `TRUST_DJANGO_SESSION` apagado —que es como corren los tests— tod
 mutation protegida respondería "Debe iniciar sesión"."""
 
 
-class _Peticion:
+class _Request:
     def __init__(self, usuario):
         self.user = usuario
         self.usuario_del_token = usuario
@@ -19,7 +19,7 @@ class _Peticion:
 
 class Contexto:
     def __init__(self, usuario):
-        self.request = _Peticion(usuario)
+        self.request = _Request(usuario)
         self.response = None
 
 

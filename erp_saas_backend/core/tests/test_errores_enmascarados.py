@@ -42,10 +42,10 @@ def log_del_erp(caplog):
     nada y `caplog.text` queda vacío aunque el log funcione perfecto.
     Por eso el handler se cuelga directo del logger.
     """
-    registro = logging.getLogger("erp.graphql")
-    registro.addHandler(caplog.handler)
+    logger = logging.getLogger("erp.graphql")
+    logger.addHandler(caplog.handler)
     yield caplog
-    registro.removeHandler(caplog.handler)
+    logger.removeHandler(caplog.handler)
 
 
 def test_el_mensaje_de_dominio_llega_intacto():

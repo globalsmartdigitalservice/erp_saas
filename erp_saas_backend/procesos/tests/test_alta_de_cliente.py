@@ -28,13 +28,13 @@ def test_el_cliente_nace_con_alguien_que_puede_entrar(farmacia_vida):
 
 def test_la_contrasena_temporal_sirve_para_entrar(farmacia_vida):
     """De punta a punta: lo que imprime el comando abre una sesión de verdad."""
-    ingreso = login.ingresar(
+    resultado = login.login(
         identificador=farmacia_vida.administrador.username,
         password=farmacia_vida.password_temporal,
     )
 
-    assert ingreso.necesita_elegir_empresa is False
-    assert ingreso.sesion.usuario_empresa_id == farmacia_vida.membresia.pk
+    assert resultado.necesita_elegir_empresa is False
+    assert resultado.sesion.usuario_empresa_id == farmacia_vida.membresia.pk
 
 
 def test_entra_obligado_a_cambiar_la_contrasena(farmacia_vida):

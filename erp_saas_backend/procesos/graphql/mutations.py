@@ -39,11 +39,11 @@ class CambioDePasswordMutations:
     def cambiar_mi_password(
         self, info: strawberry.Info, datos: CambiarMiPasswordInput
     ) -> bool:
-        peticion = info.context.request
+        request = info.context.request
         try:
             cambio_de_password.cambiar(
                 usuario_id=usuario_de_la_sesion(info).pk,
-                sesion_id=getattr(peticion, "sesion_id", None),
+                sesion_id=getattr(request, "sesion_id", None),
                 password_actual=datos.password_actual,
                 password_nueva=datos.password_nueva,
             )

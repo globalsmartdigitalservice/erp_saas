@@ -175,13 +175,13 @@ def _pedir(client, consulta, empresa_id=None):
     if empresa_id is not None:
         cabeceras["HTTP_X_EMPRESA_ID"] = str(empresa_id)
 
-    respuesta = client.post(
+    response = client.post(
         "/graphql/",
         data=json.dumps({"query": consulta}),
         content_type="application/json",
         **cabeceras,
     )
-    return respuesta
+    return response
 
 
 def test_la_cabecera_fija_la_empresa(client, empresa_a, empresa_b, rubro_de):
@@ -207,9 +207,9 @@ def test_sin_cabecera_solo_se_ven_las_del_sistema(client, empresa_a, rubro_de):
 
 
 def test_una_cabecera_que_no_es_numero_se_rechaza(client):
-    respuesta = _pedir(client, "{ version }", empresa_id="siete")
+    response = _pedir(client, "{ version }", empresa_id="siete")
 
-    assert respuesta.status_code == 400
+    assert response.status_code == 400
 
 
 def test_la_empresa_no_queda_pegada_entre_peticiones(client, empresa_a, rubro_de):

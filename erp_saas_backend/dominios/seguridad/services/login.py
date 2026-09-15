@@ -27,7 +27,7 @@ SESION_MUERTA = "La sesión venció. Inicie sesión nuevamente."
 CODIGO_SESION_MUERTA = "SESSION_EXPIRED"
 
 
-class Ingreso:
+class ResultadoLogin:
     """Lo que devuelve un login exitoso.
 
     `empresas` viene lleno solo cuando la persona trabaja en más de una y
@@ -90,7 +90,7 @@ def empresas_de(usuario) -> list:
 
 
 
-def ingresar(
+def login(
     *,
     identificador: str,
     password: str,
@@ -98,7 +98,7 @@ def ingresar(
     request=None,
     mac: str | None = None,
     momento: datetime.datetime | None = None,
-) -> Ingreso:
+) -> ResultadoLogin:
     """El login completo.
 
     Sin `empresa_id`: si trabaja en una entra directo, si trabaja en varias
@@ -116,7 +116,7 @@ def ingresar(
 
     if empresa_id is None:
         if len(disponibles) > 1:
-            return Ingreso(usuario=usuario, empresas=disponibles)
+            return ResultadoLogin(usuario=usuario, empresas=disponibles)
         elegida = disponibles[0]
     else:
         elegida = next(
@@ -135,7 +135,7 @@ def ingresar(
     )
 
 
-def _abrir_sesion(*, usuario, membresia, request, mac, momento) -> Ingreso:
+def _abrir_sesion(*, usuario, membresia, request, mac, momento) -> ResultadoLogin:
     """Pasos 3, 4 y 5: verificar el acceso, registrarlo y emitir los tokens."""
     ip = ip_del_cliente(request)
 
@@ -184,7 +184,7 @@ def _abrir_sesion(*, usuario, membresia, request, mac, momento) -> Ingreso:
         sesion.refresh_jti = jti
         sesion.save(update_fields=["refresh_jti"])
 
-    return Ingreso(
+    return ResultadoLogin(
         usuario=usuario, acceso=acceso, refresh=refresh, sesion=sesion
     )
 
@@ -198,13 +198,13 @@ def elegir_empresa(
     request=None,
     mac: str | None = None,
     momento: datetime.datetime | None = None,
-) -> Ingreso:
+) -> ResultadoLogin:
     """El segundo paso del login cuando había varias empresas.
 
      Se piden las credenciales OTRA VEZ: entre la lista y la elección no se
     emitió ningún token, así que no hay nada que demuestre quién es. Un token
     intermedio sería otra credencial más para cuidar."""
-    return ingresar(
+    return login(
         identificador=identificador,
         password=password,
         empresa_id=empresa_id,
@@ -215,14 +215,14 @@ def elegir_empresa(
 
 
 @transaction.atomic
-def renovar(*, refresh: str) -> Ingreso:
+def refresh(*, token: str) -> ResultadoLogin:
     """Cambia un refresh válido por un par nuevo, con rotación.
 
     Compara el `jti`: si no coincide, ese refresh ya fue usado — o se lo
     robaron, o hay dos clientes con el mismo. En los dos casos no se renueva."""
     try:
-        datos = tokens.leer(refresh, tipo=tokens.TIPO_REFRESH)
-    except tokens.TokenInvalido as error:
+        datos = tokens.leer(token, tipo=tokens.TIPO_REFRESH)
+    except tokens.InvalidTokenError as error:
         raise ValidationError(SESION_MUERTA, code=CODIGO_SESION_MUERTA) from error
 
     with sin_filtro_de_empresa():
@@ -262,7 +262,7 @@ def renovar(*, refresh: str) -> Ingreso:
         sesion.ultima_actividad = datetime.datetime.now(datetime.UTC)
         sesion.save(update_fields=["refresh_jti", "ultima_actividad"])
 
-    return Ingreso(
+    return ResultadoLogin(
         usuario=membresia.usuario,
         acceso=acceso,
         refresh=nuevo_refresh,
@@ -271,7 +271,7 @@ def renovar(*, refresh: str) -> Ingreso:
 
 
 @transaction.atomic
-def salir(*, sesion_id: int) -> SesionAcceso | None:
+def logout(*, sesion_id: int) -> SesionAcceso | None:
     """Cierra la sesión: le pone `fin` y borra el `jti`.
 
      El token de ACCESO sigue valiendo hasta 15 minutos: verificarlo contra
@@ -309,14 +309,14 @@ def cerrar_sesiones_de(usuario_id: int, *, excepto_id: int | None = None) -> int
 
 
 __all__ = [
-    "ingresar",
+    "login",
     "elegir_empresa",
-    "renovar",
-    "salir",
+    "refresh",
+    "logout",
     "cerrar_sesiones_de",
     "autenticar",
     "empresas_de",
-    "Ingreso",
+    "ResultadoLogin",
     "CREDENCIALES_INVALIDAS",
     "SESION_MUERTA",
     "CODIGO_SESION_MUERTA",

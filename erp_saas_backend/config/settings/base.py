@@ -58,9 +58,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 
-    "core.tenancy.middleware.EmpresaDesdeCabeceraMiddleware",
+    "core.tenancy.middleware.EmpresaDesdeHeaderMiddleware",
     "dominios.seguridad.middleware.SesionPorTokenMiddleware",
-    "core.idioma.middleware.IdiomaDesdeCabeceraMiddleware",
+    "core.idioma.middleware.IdiomaDesdeHeaderMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -86,7 +86,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 GRAPHQL_HABILITADO = False
 
-TENANCY_POR_CABECERA = False
+TENANCY_POR_HEADER = False
 
 # ¿GraphQL le cree a la cookie de sesión de Django, la del /admin/?
 # En producción NO: esa puerta no registra la sesión, no comprueba horario ni

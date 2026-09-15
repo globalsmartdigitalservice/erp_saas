@@ -11,7 +11,7 @@ from graphql import (
 from graphql.utilities import get_operation_ast
 from strawberry.extensions import SchemaExtension
 
-from dominios.seguridad.permisos_graphql import usuario_de_la_peticion
+from dominios.seguridad.permisos_graphql import usuario_de_request
 
 
 DEBE_CAMBIAR_PASSWORD = (
@@ -57,7 +57,7 @@ class ExigirCambioDePassword(SchemaExtension):
 
 
 def _debe_cambiarla(contexto) -> bool:
-    usuario = usuario_de_la_peticion(getattr(contexto, "request", None))
+    usuario = usuario_de_request(getattr(contexto, "request", None))
     return bool(
         usuario is not None
         and usuario.is_authenticated

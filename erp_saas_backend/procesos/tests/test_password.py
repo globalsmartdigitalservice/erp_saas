@@ -106,12 +106,12 @@ def test_el_cambio_propio_deja_viva_mi_sesion_y_cierra_las_otras(
     """Si la contraseña se filtró, cambiarla sin echar a quien la esté usando
     no sirve de nada. La propia se conserva para no obligar a entrar de nuevo
     justo después de hacer lo que el sistema pidió."""
-    esta = login.ingresar(
+    esta = login.login(
         identificador=carla.username,
         password=farmacia_vida.password_temporal,
         empresa_id=farmacia_vida.empresa.pk,
     )
-    login.ingresar(
+    login.login(
         identificador=carla.username,
         password=farmacia_vida.password_temporal,
         empresa_id=con_sucursal.empresa.pk,
@@ -135,7 +135,7 @@ def test_el_reseteo_la_saca_de_TODAS_sus_empresas(
     desde la matriz tiene que sacarla también de la sucursal: si no, sigue
     trabajando en Norte con una clave que ya no es suya."""
     for donde in (farmacia_vida.empresa.pk, con_sucursal.empresa.pk):
-        login.ingresar(
+        login.login(
             identificador=carla.username,
             password=farmacia_vida.password_temporal,
             empresa_id=donde,

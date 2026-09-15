@@ -68,10 +68,10 @@ def test_un_usuario_que_no_existe_da_el_mismo_mensaje_que_una_clave_mala(
     en_gimnasio,
 ):
     with pytest.raises(ValidationError) as inexistente:
-        login.ingresar(identificador="nadie@acme.com", password="Kx7pLm9Qw2")
+        login.login(identificador="nadie@acme.com", password="Kx7pLm9Qw2")
 
     with pytest.raises(ValidationError) as clave_mala:
-        login.ingresar(identificador="juan@acme.com", password="otra cosa")
+        login.login(identificador="juan@acme.com", password="otra cosa")
 
     assert inexistente.value.messages == clave_mala.value.messages
     assert inexistente.value.messages == [login.CREDENCIALES_INVALIDAS]
@@ -82,7 +82,7 @@ def test_un_usuario_dado_de_baja_da_el_mismo_mensaje(juan, en_gimnasio):
     juan.save(update_fields=["is_active"])
 
     with pytest.raises(ValidationError) as error:
-        login.ingresar(identificador="juan", password="Kx7pLm9Qw2")
+        login.login(identificador="juan", password="Kx7pLm9Qw2")
 
     assert error.value.messages == [login.CREDENCIALES_INVALIDAS]
 
@@ -91,12 +91,12 @@ def test_una_empresa_ajena_da_el_mismo_mensaje_que_una_inexistente(
     en_gimnasio, empresa_b
 ):
     with pytest.raises(ValidationError) as ajena:
-        login.ingresar(
+        login.login(
             identificador="juan", password="Kx7pLm9Qw2", empresa_id=empresa_b.id
         )
 
     with pytest.raises(ValidationError) as inexistente:
-        login.ingresar(
+        login.login(
             identificador="juan", password="Kx7pLm9Qw2", empresa_id=999999
         )
 
@@ -104,15 +104,15 @@ def test_una_empresa_ajena_da_el_mismo_mensaje_que_una_inexistente(
 
 
 def test_con_una_sola_empresa_entra_directo(en_gimnasio, empresa_a):
-    ingreso = login.ingresar(identificador="juan", password="Kx7pLm9Qw2")
+    resultado = login.login(identificador="juan", password="Kx7pLm9Qw2")
 
-    assert not ingreso.necesita_elegir_empresa
-    assert ingreso.acceso and ingreso.refresh
-    assert tokens.leer(ingreso.acceso, tipo=tokens.TIPO_ACCESO)["emp"] == empresa_a.id
+    assert not resultado.necesita_elegir_empresa
+    assert resultado.acceso and resultado.refresh
+    assert tokens.leer(resultado.acceso, tipo=tokens.TIPO_ACCESO)["emp"] == empresa_a.id
 
 
 def test_entra_por_correo(en_gimnasio):
-    assert login.ingresar(
+    assert login.login(
         identificador="juan@acme.com", password="Kx7pLm9Qw2"
     ).acceso
 
@@ -120,30 +120,30 @@ def test_entra_por_correo(en_gimnasio):
 def test_con_varias_empresas_devuelve_la_lista_y_NO_un_token(
     en_dos_empresas, empresa_a, sucursal_a
 ):
-    ingreso = login.ingresar(identificador="juan", password="Kx7pLm9Qw2")
+    resultado = login.login(identificador="juan", password="Kx7pLm9Qw2")
 
-    assert ingreso.necesita_elegir_empresa
-    assert ingreso.acceso == ""
-    assert {m.empresa_id for m in ingreso.empresas} == {empresa_a.id, sucursal_a.id}
+    assert resultado.necesita_elegir_empresa
+    assert resultado.acceso == ""
+    assert {m.empresa_id for m in resultado.empresas} == {empresa_a.id, sucursal_a.id}
 
 
 def test_elegir_empresa_devuelve_el_token_de_esa_empresa(
     en_dos_empresas, sucursal_a
 ):
-    ingreso = login.elegir_empresa(
+    resultado = login.elegir_empresa(
         identificador="juan", password="Kx7pLm9Qw2", empresa_id=sucursal_a.id
     )
 
-    assert tokens.leer(ingreso.acceso, tipo=tokens.TIPO_ACCESO)["emp"] == sucursal_a.id
+    assert tokens.leer(resultado.acceso, tipo=tokens.TIPO_ACCESO)["emp"] == sucursal_a.id
 
 
 def test_sin_ninguna_empresa_no_entra(juan, resultados):
     with pytest.raises(ValidationError, match="no está habilitado"):
-        login.ingresar(identificador="juan", password="Kx7pLm9Qw2")
+        login.login(identificador="juan", password="Kx7pLm9Qw2")
 
 
 def test_el_ingreso_queda_registrado(en_gimnasio, empresa_a, resultados):
-    login.ingresar(identificador="juan", password="Kx7pLm9Qw2")
+    login.login(identificador="juan", password="Kx7pLm9Qw2")
 
     with empresa(empresa_a.id):
         sesion = SesionAcceso.objects.first()
@@ -166,7 +166,7 @@ def test_el_rechazo_por_horario_TAMBIEN_queda_registrado(
         )
 
     with pytest.raises(ValidationError, match="Fuera del horario"):
-        login.ingresar(
+        login.login(
             identificador="juan",
             password="Kx7pLm9Qw2",
             momento=datetime.datetime.combine(LUNES, datetime.time(20, 0)),
@@ -193,43 +193,43 @@ def test_otra_empresa_no_ve_los_accesos(
 
 
 def test_despues_de_salir_el_refresh_ya_no_sirve(en_gimnasio, resultados):
-    ingreso = login.ingresar(identificador="juan", password="Kx7pLm9Qw2")
+    resultado = login.login(identificador="juan", password="Kx7pLm9Qw2")
 
-    login.salir(sesion_id=ingreso.sesion.pk)
+    login.logout(sesion_id=resultado.sesion.pk)
 
     with pytest.raises(ValidationError, match="venció"):
-        login.renovar(refresh=ingreso.refresh)
+        login.refresh(token=resultado.refresh)
 
 
 def test_salir_dos_veces_no_falla(en_gimnasio, resultados):
-    ingreso = login.ingresar(identificador="juan", password="Kx7pLm9Qw2")
+    resultado = login.login(identificador="juan", password="Kx7pLm9Qw2")
 
-    login.salir(sesion_id=ingreso.sesion.pk)
-    assert login.salir(sesion_id=ingreso.sesion.pk) is not None
+    login.logout(sesion_id=resultado.sesion.pk)
+    assert login.logout(sesion_id=resultado.sesion.pk) is not None
 
 
 def test_renovar_devuelve_tokens_nuevos(en_gimnasio, resultados):
-    ingreso = login.ingresar(identificador="juan", password="Kx7pLm9Qw2")
+    resultado = login.login(identificador="juan", password="Kx7pLm9Qw2")
 
-    renovado = login.renovar(refresh=ingreso.refresh)
+    renovado = login.refresh(token=resultado.refresh)
 
     assert renovado.acceso
-    assert renovado.refresh != ingreso.refresh
+    assert renovado.refresh != resultado.refresh
 
 
 def test_el_refresh_viejo_deja_de_servir(en_gimnasio, resultados):
-    ingreso = login.ingresar(identificador="juan", password="Kx7pLm9Qw2")
-    login.renovar(refresh=ingreso.refresh)
+    resultado = login.login(identificador="juan", password="Kx7pLm9Qw2")
+    login.refresh(token=resultado.refresh)
 
     with pytest.raises(ValidationError, match="venció"):
-        login.renovar(refresh=ingreso.refresh)
+        login.refresh(token=resultado.refresh)
 
 
 def test_un_token_de_acceso_no_sirve_para_renovar(en_gimnasio, resultados):
-    ingreso = login.ingresar(identificador="juan", password="Kx7pLm9Qw2")
+    resultado = login.login(identificador="juan", password="Kx7pLm9Qw2")
 
     with pytest.raises(ValidationError, match="venció"):
-        login.renovar(refresh=ingreso.acceso)
+        login.refresh(token=resultado.acceso)
 
 
 def test_un_token_firmado_con_otra_clave_no_sirve(en_gimnasio, resultados):
@@ -242,32 +242,32 @@ def test_un_token_firmado_con_otra_clave_no_sirve(en_gimnasio, resultados):
     )
 
     with pytest.raises(ValidationError, match="venció"):
-        login.renovar(refresh=falso)
+        login.refresh(token=falso)
 
 
 def test_el_usuario_dado_de_baja_no_puede_renovar(juan, en_gimnasio, resultados):
-    ingreso = login.ingresar(identificador="juan", password="Kx7pLm9Qw2")
+    resultado = login.login(identificador="juan", password="Kx7pLm9Qw2")
     juan.is_active = False
     juan.save(update_fields=["is_active"])
 
     with pytest.raises(ValidationError, match="venció"):
-        login.renovar(refresh=ingreso.refresh)
+        login.refresh(token=resultado.refresh)
 
 
 def test_todos_los_fallos_de_renovacion_dicen_lo_mismo(en_gimnasio, resultados):
-    ingreso = login.ingresar(identificador="juan", password="Kx7pLm9Qw2")
-    login.salir(sesion_id=ingreso.sesion.pk)
+    resultado = login.login(identificador="juan", password="Kx7pLm9Qw2")
+    login.logout(sesion_id=resultado.sesion.pk)
 
     mensajes = []
-    for token in (ingreso.refresh, ingreso.acceso, "esto no es un token"):
+    for token in (resultado.refresh, resultado.acceso, "esto no es un token"):
         with pytest.raises(ValidationError) as error:
-            login.renovar(refresh=token)
+            login.refresh(token=token)
         mensajes.append(error.value.messages)
 
     assert len(set(map(tuple, mensajes))) == 1
 
 
-class PeticionFalsa:
+class RequestFalso:
     def __init__(self, **meta):
         self.META = meta
 
@@ -276,48 +276,48 @@ def test_sin_proxy_el_header_se_ignora(settings):
     from core.red import ip_del_cliente
 
     settings.PROXIES_CONFIABLES = 0
-    peticion = PeticionFalsa(
+    request = RequestFalso(
         REMOTE_ADDR="10.0.0.5", HTTP_X_FORWARDED_FOR="1.2.3.4"
     )
 
-    assert ip_del_cliente(peticion) == "10.0.0.5"
+    assert ip_del_cliente(request) == "10.0.0.5"
 
 
 def test_con_un_proxy_se_lee_desde_la_derecha(settings):
     from core.red import ip_del_cliente
 
     settings.PROXIES_CONFIABLES = 1
-    peticion = PeticionFalsa(
+    request = RequestFalso(
         REMOTE_ADDR="10.0.0.5",
         HTTP_X_FORWARDED_FOR="1.2.3.4, 190.104.1.10",
     )
 
-    assert ip_del_cliente(peticion) == "190.104.1.10"
+    assert ip_del_cliente(request) == "190.104.1.10"
 
 
 def test_si_llegan_menos_entradas_de_las_esperadas_no_se_adivina(settings):
     from core.red import ip_del_cliente
 
     settings.PROXIES_CONFIABLES = 3
-    peticion = PeticionFalsa(
+    request = RequestFalso(
         REMOTE_ADDR="10.0.0.5", HTTP_X_FORWARDED_FOR="1.2.3.4"
     )
 
-    assert ip_del_cliente(peticion) == "10.0.0.5"
+    assert ip_del_cliente(request) == "10.0.0.5"
 
 
 def test_la_ip_queda_en_el_registro_del_acceso(
     en_gimnasio, empresa_a, resultados, settings
 ):
     settings.PROXIES_CONFIABLES = 1
-    peticion = PeticionFalsa(
+    request = RequestFalso(
         REMOTE_ADDR="10.0.0.5",
         HTTP_X_FORWARDED_FOR="1.2.3.4, 190.104.1.10",
         HTTP_USER_AGENT="Mozilla/5.0",
     )
 
-    login.ingresar(
-        identificador="juan", password="Kx7pLm9Qw2", request=peticion
+    login.login(
+        identificador="juan", password="Kx7pLm9Qw2", request=request
     )
 
     with empresa(empresa_a.id):

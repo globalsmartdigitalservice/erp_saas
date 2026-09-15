@@ -105,7 +105,7 @@ class SesionPorTokenMiddleware:
             return None
         try:
             return tokens.leer(crudo, tipo=tokens.TIPO_ACCESO)
-        except tokens.TokenInvalido:
+        except tokens.InvalidTokenError:
         
             return None
 

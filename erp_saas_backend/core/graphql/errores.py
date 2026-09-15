@@ -7,7 +7,7 @@ import strawberry
 from graphql import GraphQLError
 from strawberry.extensions import MaskErrors
 
-registro = logging.getLogger("erp.graphql")
+logger = logging.getLogger("erp.graphql")
 
 #: Dónde viaja la referencia, del log a la respuesta.
 CLAVE_REFERENCIA = "referencia"
@@ -38,7 +38,7 @@ class SchemaDelErp(strawberry.Schema):
                 # UNA LÍNEA, SIN TRACEBACK: no es un incidente, es el
                 # sistema funcionando. El traceback de una validación
                 # esperada solo tapa a los errores de verdad.
-                registro.info("Rechazado: %s", error.message)
+                logger.info("Rechazado: %s", error.message)
                 continue
 
             referencia = uuid.uuid4().hex[:12]
@@ -46,7 +46,7 @@ class SchemaDelErp(strawberry.Schema):
 
             # `exc_info` con la excepción ORIGINAL, no con el envoltorio
             # de GraphQL: lo que interesa es dónde se rompió.
-            registro.error(
+            logger.error(
                 "Error inesperado [%s]: %s",
                 referencia,
                 error.message,

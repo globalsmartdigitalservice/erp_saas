@@ -97,38 +97,38 @@ def _pedir(cliente, consulta, *, cabeceras=None, **variables):
 
 
 def test_al_entrar_llegan_las_dos_cookies(client, en_gimnasio):
-    respuesta = _pedir(
+    response = _pedir(
         client,
         LOGIN,
         datos={"identificador": "juan", "password": "Kx7pLm9Qw2"},
     )
 
-    assert respuesta.json().get("errors") is None
-    assert settings.COOKIE_ACCESO in respuesta.cookies
-    assert settings.COOKIE_REFRESH in respuesta.cookies
+    assert response.json().get("errors") is None
+    assert settings.COOKIE_ACCESO in response.cookies
+    assert settings.COOKIE_REFRESH in response.cookies
 
 
 def test_el_token_NO_viaja_en_la_respuesta(client, en_gimnasio):
-    respuesta = _pedir(
+    response = _pedir(
         client,
         LOGIN,
         datos={"identificador": "juan", "password": "Kx7pLm9Qw2"},
     )
 
-    cuerpo = respuesta.content.decode()
-    valor = respuesta.cookies[settings.COOKIE_ACCESO].value
+    cuerpo = response.content.decode()
+    valor = response.cookies[settings.COOKIE_ACCESO].value
 
     assert valor not in cuerpo
 
 
 def test_la_cookie_es_httponly_y_samesite_lax(client, en_gimnasio):
-    respuesta = _pedir(
+    response = _pedir(
         client,
         LOGIN,
         datos={"identificador": "juan", "password": "Kx7pLm9Qw2"},
     )
 
-    cookie = respuesta.cookies[settings.COOKIE_ACCESO]
+    cookie = response.cookies[settings.COOKIE_ACCESO]
 
     assert cookie["httponly"]
     assert cookie["samesite"] == "Lax"
@@ -150,9 +150,9 @@ def test_secure_sigue_a_use_https(client, en_gimnasio, settings):
 
 
 def test_antes_de_entrar_no_hay_nadie(client):
-    respuesta = _pedir(client, "{ me { username } empresaActual }")
+    response = _pedir(client, "{ me { username } empresaActual }")
 
-    datos = respuesta.json()["data"]
+    datos = response.json()["data"]
     assert datos["me"] is None
     assert datos["empresaActual"] is None
 
@@ -188,17 +188,17 @@ def test_con_dos_empresas_no_se_abre_sesion_hasta_elegir(
 ):
     afiliar_en(sucursal_a.id, usuario_id=juan.id, estado_id=activo.id)
 
-    respuesta = _pedir(
+    response = _pedir(
         client, LOGIN, datos={"identificador": "juan", "password": "Kx7pLm9Qw2"}
     )
 
-    datos = respuesta.json()["data"]["login"]
+    datos = response.json()["data"]["login"]
     assert datos["necesitaElegirEmpresa"] is True
     assert len(datos["empresas"]) == 2
     # Con dos cuentas del mismo correo, cualquiera de las dos fichas sería
     # arbitraria: no se manda ninguna hasta que elija.
     assert datos["usuario"] is None
-    assert settings.COOKIE_ACCESO not in respuesta.cookies
+    assert settings.COOKIE_ACCESO not in response.cookies
 
 
 def test_elegir_empresa_abre_la_sesion_en_esa(
@@ -228,16 +228,16 @@ def test_renovar_cambia_las_cookies(client, en_gimnasio):
     _pedir(client, LOGIN, datos={"identificador": "juan", "password": "Kx7pLm9Qw2"})
     anterior = client.cookies[settings.COOKIE_REFRESH].value
 
-    respuesta = _pedir(client, "mutation { refreshSession { usuario { username } } }")
+    response = _pedir(client, "mutation { refreshSession { usuario { username } } }")
 
-    assert respuesta.json().get("errors") is None
-    assert respuesta.cookies[settings.COOKIE_REFRESH].value != anterior
+    assert response.json().get("errors") is None
+    assert response.cookies[settings.COOKIE_REFRESH].value != anterior
 
 
 def test_renovar_sin_haber_entrado_falla(client, en_gimnasio):
-    respuesta = _pedir(client, "mutation { refreshSession { usuario { username } } }")
+    response = _pedir(client, "mutation { refreshSession { usuario { username } } }")
 
-    assert respuesta.json()["errors"]
+    assert response.json()["errors"]
 
 
 def test_al_fallar_la_renovacion_se_borran_las_cookies(client, en_gimnasio):
@@ -245,10 +245,10 @@ def test_al_fallar_la_renovacion_se_borran_las_cookies(client, en_gimnasio):
     _pedir(client, "mutation { logout }")
     client.cookies[settings.COOKIE_REFRESH] = "cualquier cosa"
 
-    respuesta = _pedir(client, "mutation { refreshSession { usuario { username } } }")
+    response = _pedir(client, "mutation { refreshSession { usuario { username } } }")
 
-    assert respuesta.json()["errors"]
-    assert respuesta.cookies[settings.COOKIE_REFRESH].value == ""
+    assert response.json()["errors"]
+    assert response.cookies[settings.COOKIE_REFRESH].value == ""
 
 
 def test_las_consultas_devuelven_solo_lo_de_la_empresa_de_la_sesion(
@@ -284,13 +284,13 @@ def test_la_cabecera_de_empresa_no_le_gana_al_token(
     siquiera para ir a donde la persona sí podría entrar."""
     _pedir(client, LOGIN, datos={"identificador": "juan", "password": "Kx7pLm9Qw2"})
 
-    respuesta = _pedir(
+    response = _pedir(
         client,
         "{ empresaActual }",
         cabeceras={"x-empresa-id": str(empresa_b.id)},
     )
 
-    assert respuesta.json()["data"]["empresaActual"] == str(empresa_a.id)
+    assert response.json()["data"]["empresaActual"] == str(empresa_a.id)
 
 
 def test_al_desafiliar_la_sesion_abierta_muere_EN_EL_ACTO(

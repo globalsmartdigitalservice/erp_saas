@@ -85,8 +85,8 @@ def _entrar(cliente, usuario="juan"):
     )
 
 
-def _error(respuesta) -> str:
-    errores = respuesta.json().get("errors") or []
+def _error(response) -> str:
+    errores = response.json().get("errors") or []
     return errores[0]["message"] if errores else ""
 
 
@@ -103,7 +103,7 @@ class _ContextoDeDjango:
 
     def __init__(self, usuario):
         self.request = type(
-            "_Peticion", (), {"user": usuario, "META": {}, "COOKIES": {}}
+            "_Request", (), {"user": usuario, "META": {}, "COOKIES": {}}
         )()
         self.response = None
 
@@ -139,10 +139,10 @@ def test_con_el_permiso_pasa(client, juan, empresa_a, activo):
     darle_el_permiso(juan, empresa_a.id, activo.id, PERMISO_CREAR_ROL)
     _entrar(client)
 
-    respuesta = _crear_rol(client, activo)
+    response = _crear_rol(client, activo)
 
-    assert respuesta.json().get("errors") is None
-    assert respuesta.json()["data"]["crearRol"]["nombre"] == "Cajero"
+    assert response.json().get("errors") is None
+    assert response.json()["data"]["crearRol"]["nombre"] == "Cajero"
 
 
 def test_el_superusuario_pasa_sin_permisos(db, activo, empresa_a):
@@ -251,7 +251,7 @@ def test_una_mutation_sin_decorador_funciona_con_solo_estar_logueado(
     mientras tanto la mutation funciona."""
     _entrar(client)
 
-    respuesta = _pedir(
+    response = _pedir(
         client,
         """
         mutation ($d: CrearTipologiaInput!) {
@@ -266,4 +266,4 @@ def test_una_mutation_sin_decorador_funciona_con_solo_estar_logueado(
     )
 
     # Puede fallar por reglas de negocio, pero NUNCA por permisos.
-    assert _error(respuesta) not in (SIN_PERMISO, SIN_SESION)
+    assert _error(response) not in (SIN_PERMISO, SIN_SESION)

@@ -172,7 +172,7 @@ def test_afiliar_al_grupo_y_ver_el_selector(cadena, activo):
 
     #  El selector del login ya no sale de una consulta: `empresasDelUsuario`
     # se borró porque decía en qué empresas trabaja alguien sin pedir sesión.
-    # La lista viaja en la respuesta de `ingresar`.
+    # La lista viaja en la respuesta de `login`.
 
 
 def test_los_miembros_son_solo_los_de_la_empresa_activa(cadena, activo):
