@@ -7,8 +7,13 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 
-import type { Miembro, RolDeMiembro } from "@/modules/seguridad/types/miembro.types";
+import {
+  iniciales,
+  type Miembro,
+  type RolDeMiembro,
+} from "@/modules/seguridad/types/miembro.types";
 import {
   EstadoError,
   EstadoVacio,
@@ -131,7 +136,13 @@ function FilaMiembro({
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <p className="truncate font-medium">{nombre}</p>
+            {persona ? (
+              <Link to={persona.id} className="block truncate font-medium hover:underline">
+                {nombre}
+              </Link>
+            ) : (
+              <p className="truncate font-medium">{nombre}</p>
+            )}
             {persona && (
               <p className="truncate text-xs text-muted-foreground">@{persona.username}</p>
             )}
@@ -218,16 +229,5 @@ function Marca({
       <TooltipTrigger asChild>{marca}</TooltipTrigger>
       <TooltipContent>{ayuda}</TooltipContent>
     </Tooltip>
-  );
-}
-
-function iniciales(nombre: string): string {
-  return (
-    nombre
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((parte) => parte[0].toUpperCase())
-      .join("") || "?"
   );
 }

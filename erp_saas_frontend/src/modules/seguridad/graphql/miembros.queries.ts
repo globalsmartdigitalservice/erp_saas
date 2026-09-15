@@ -32,6 +32,45 @@ export const PERSONA_POR_CORREO = gql`
   }
 `;
 
+export const DETALLE_MIEMBRO = gql`
+  query DetalleMiembro($usuarioId: ID!) {
+    usuario(id: $usuarioId) {
+      id
+      username
+      email
+      firstName
+      lastName
+      segApellido
+      nombreCompleto
+      isActive
+      debeCambiarPassword
+    }
+    membresia(usuarioId: $usuarioId) {
+      id
+      fechaAsignacion
+      fechaFinalizacion
+      estadoId
+    }
+  }
+`;
+
+export const ROLES_DE_MIEMBRO = gql`
+  query RolesDeMiembro($membresiaId: ID!) {
+    rolesDe(membresiaId: $membresiaId) {
+      id
+      fechaInicio
+      fechaFin
+      motivo
+      estadoId
+      rol {
+        id
+        nombre
+        esHeredado
+      }
+    }
+  }
+`;
+
 export const ROLES_ASIGNABLES = gql`
   query RolesAsignables($estadoId: ID) {
     roles(estadoId: $estadoId) {
