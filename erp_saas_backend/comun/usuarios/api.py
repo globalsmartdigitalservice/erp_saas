@@ -43,6 +43,11 @@ def obtener_por_email(email: str):
     return _repo.obtener_por_email(email)
 
 
+def buscar_por_email(email: str):
+    """Dentro del cliente de la sesión: el mismo correo puede estar en otro."""
+    return _svc.buscar_por_email(email)
+
+
 def crear_usuario(**campos):
     """Alta en el sistema. Arranca con `debe_cambiar_password = True`."""
     return _svc.crear(**campos)
@@ -91,6 +96,7 @@ __all__ = [
     "obtener_usuarios",
     "obtener_por_username",
     "obtener_por_email",
+    "buscar_por_email",
     "crear_usuario",
     "actualizar_usuario",
     "cambiar_password",

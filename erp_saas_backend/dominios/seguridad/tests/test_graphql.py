@@ -74,86 +74,20 @@ def _correr(consulta, **variables):
     return resultado.data
 
 
-CREAR_USUARIO = """
-mutation ($datos: CrearUsuarioInput!) {
-  crearUsuario(datos: $datos) {
-    id username email nombreCompleto isActive debeCambiarPassword
-  }
-}
-"""
-
-
-def test_crear_usuario(empresa_a):
-    with empresa(empresa_a.id):
-        datos = _correr(
-            CREAR_USUARIO,
-            datos={
-                "username": "jose",
-                "email": "Jose@Acme.com",
-                "password": "Kx7pLm9Qw2",
-                "firstName": "José",
-                "lastName": "Villarroel",
-                "segApellido": "Mamani",
-            },
-        )["crearUsuario"]
-
-    assert datos["nombreCompleto"] == "José Villarroel Mamani"
-    # El correo se normaliza: si no, `Jose@` y `jose@` entrarían como dos
-    # personas distintas.
-    assert datos["email"] == "jose@acme.com"
-    # Arranca obligado a cambiarla: la primera se la puso el admin.
-    assert datos["debeCambiarPassword"] is True
-
-
 def test_el_usuario_no_expone_la_contrasena(db):
     resultado = schema.execute_sync("{ usuario(id: \"1\") { password } }")
 
     assert resultado.errors is not None
 
 
-def test_no_se_puede_crear_un_usuario_con_una_contrasena_debil(db):
-    resultado = schema.execute_sync(
-        CREAR_USUARIO,
-        variable_values={
-            "datos": {
-                "username": "jose",
-                "email": "jose@acme.com",
-                "password": "1234",
-            }
-        },
-    )
-
-    assert resultado.errors is not None
-
-
-def test_la_contrasena_no_puede_ser_el_apellido(db):
-    resultado = schema.execute_sync(
-        CREAR_USUARIO,
-        variable_values={
-            "datos": {
-                "username": "jose",
-                "email": "jose@acme.com",
-                "password": "Villarroel26",
-                "lastName": "Villarroel",
-            }
-        },
-    )
-
-    assert resultado.errors is not None
-
-
 def test_afiliar_al_grupo_y_ver_el_selector(cadena, activo):
     matriz, _, _ = cadena
-    with empresa(matriz.id):
-        jose = _correr(
-            CREAR_USUARIO,
-            datos={
-                "username": "jose",
-                "email": "jose@acme.com",
-                "password": "Kx7pLm9Qw2",
-                "firstName": "José",
-            },
-        )["crearUsuario"]
+    jose = Usuario.objects.create_user(
+        username="jose",
+        email="jose@acme.com",
+        password="Kx7pLm9Qw2",
+        matriz=matriz,
+    )
 
     with empresa(matriz.id):
         creadas = _correr(
@@ -163,7 +97,7 @@ def test_afiliar_al_grupo_y_ver_el_selector(cadena, activo):
             }
             """,
             datos={
-                "usuarioId": jose["id"],
+                "usuarioId": str(jose.id),
                 "estadoId": str(activo.id),
             },
         )["afiliarAlGrupo"]
@@ -222,22 +156,18 @@ def test_el_recorrido_completo(cadena, activo, permiso):
     matriz, norte, _ = cadena
     p = permiso("anular_factura", "Anular factura")
 
-    with empresa(matriz.id):
-        jose = _correr(
-            CREAR_USUARIO,
-            datos={
-                "username": "jose",
-                "email": "jose@acme.com",
-                "password": "Kx7pLm9Qw2",
-                "firstName": "José",
-            },
-    )["crearUsuario"]
+    jose = Usuario.objects.create_user(
+        username="jose",
+        email="jose@acme.com",
+        password="Kx7pLm9Qw2",
+        matriz=matriz,
+    )
 
     with empresa(matriz.id):
         _correr(
             "mutation ($d: AfiliarInput!) { afiliarAlGrupo(datos: $d) { id } }",
             d={
-                "usuarioId": jose["id"],
+                "usuarioId": str(jose.id),
                 "estadoId": str(activo.id),
             },
         )
@@ -291,7 +221,7 @@ def test_el_recorrido_completo(cadena, activo, permiso):
 
         # 5 — y se lo asigna a Don José
         suya = _correr(
-            "query ($u: ID!) { membresia(usuarioId: $u) { id } }", u=jose["id"]
+            "query ($u: ID!) { membresia(usuarioId: $u) { id } }", u=str(jose.id)
         )["membresia"]
 
         _correr(
@@ -313,7 +243,7 @@ def test_el_recorrido_completo(cadena, activo, permiso):
 
     # Y coincide con lo que contesta has_perm(), que es lo que de verdad
     # decide en el backend.
-    persona = Usuario.objects.get(pk=int(jose["id"]))
+    persona = Usuario.objects.get(pk=jose.id)
     with empresa(norte.id):
         assert persona.has_perm(mis[0])
 

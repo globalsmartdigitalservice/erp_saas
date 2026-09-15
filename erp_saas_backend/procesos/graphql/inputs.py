@@ -25,3 +25,24 @@ class ResetearPasswordInput:
 
     membresia_id: strawberry.ID
     password: str | None = None
+
+
+@strawberry.input(name="PersonaNuevaInput")
+class PersonaNuevaInput:
+    """Sin `password` se genera una temporal fácil de dictar."""
+
+    username: str
+    email: str
+    first_name: str = ""
+    last_name: str = ""
+    seg_apellido: str = ""
+    password: str | None = None
+
+
+@strawberry.input(name="DarDeAltaMiembroInput")
+class DarDeAltaMiembroInput:
+    """`usuarioId` si la persona ya es del cliente, `persona` si hay que crearla: una de las dos."""
+
+    usuario_id: strawberry.ID | None = None
+    persona: PersonaNuevaInput | None = None
+    rol_ids: list[strawberry.ID] = strawberry.field(default_factory=list)

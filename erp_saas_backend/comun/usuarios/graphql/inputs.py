@@ -1,16 +1,6 @@
-"""Lo que el frontend manda para crear o editar un usuario."""
+"""Lo que el frontend manda para editar un usuario."""
 
 import strawberry
-
-
-@strawberry.input(name="CrearUsuarioInput")
-class CrearUsuarioInput:
-    username: str
-    email: str
-    password: str
-    first_name: str = ""
-    last_name: str = ""
-    seg_apellido: str = ""
 
 
 @strawberry.input(name="ActualizarUsuarioInput")

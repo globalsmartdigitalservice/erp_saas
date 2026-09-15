@@ -40,6 +40,10 @@ def obtener_por_email(email: str) -> "Usuario | None":
     return Usuario.objects.filter(email__iexact=email).first()
 
 
+def obtener_por_email_en_matriz(email: str, matriz_id: int) -> "Usuario | None":
+    return Usuario.objects.filter(email__iexact=email, matriz_id=matriz_id).first()
+
+
 def existe_username(username: str, excluir_id: int | None = None) -> bool:
     qs = Usuario.objects.filter(username=username)
     if excluir_id is not None:

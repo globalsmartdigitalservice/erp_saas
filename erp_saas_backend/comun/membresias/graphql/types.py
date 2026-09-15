@@ -58,3 +58,20 @@ class MembresiaType:
             fecha_finalizacion=membresia.fecha_finalizacion,
             estado_id=strawberry.ID(str(membresia.estado_id)),
         )
+
+
+@strawberry.type(name="PersonaEncontrada")
+class PersonaEncontradaType:
+    """Lo mínimo para confirmar a alguien que ya se conoce."""
+
+    usuario_id: strawberry.ID
+    nombre_completo: str
+    trabaja_aca: bool
+
+    @classmethod
+    def desde_modelo(cls, usuario, *, trabaja_aca: bool) -> "PersonaEncontradaType":
+        return cls(
+            usuario_id=strawberry.ID(str(usuario.pk)),
+            nombre_completo=usuario.get_full_name(),
+            trabaja_aca=trabaja_aca,
+        )

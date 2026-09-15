@@ -9,7 +9,7 @@ from dominios.seguridad.permisos_graphql import requiere_permiso
 
 from comun.usuarios import api as usuarios
 
-from .inputs import ActualizarUsuarioInput, CrearUsuarioInput
+from .inputs import ActualizarUsuarioInput
 from .types import UsuarioType
 
 
@@ -25,28 +25,6 @@ def _traducir(error: ValidationError) -> GraphQLError:
 @auto_permisos(recurso="SEGU_USUARIOS")
 @strawberry.type
 class UsuarioMutations:
-    @strawberry.mutation(
-        description=(
-            "Da de alta a una persona en el SISTEMA. No la mete en ninguna "
-            "empresa: para eso está `afiliar`. Arranca obligada a cambiar la "
-            "contraseña en el primer ingreso."
-        )
-    )
-    @requiere_permiso
-    def crear_usuario(self, info: strawberry.Info, datos: CrearUsuarioInput) -> UsuarioType:
-        try:
-            fila = usuarios.crear_usuario(
-                username=datos.username,
-                email=datos.email,
-                password=datos.password,
-                first_name=datos.first_name,
-                last_name=datos.last_name,
-                seg_apellido=datos.seg_apellido,
-            )
-        except ValidationError as error:
-            raise _traducir(error) from error
-        return UsuarioType.desde_modelo(fila)
-
     @strawberry.mutation(description="Los datos personales. La contraseña no.")
     @requiere_permiso
     def actualizar_usuario(

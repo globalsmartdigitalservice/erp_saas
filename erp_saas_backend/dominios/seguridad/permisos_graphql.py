@@ -99,6 +99,21 @@ def _exigir_sesion(args, kwargs, func):
     return usuario
 
 
+def exigir_permiso(info, codigo: str) -> None:
+    """Lo que hace `@requiere_permiso`, para cuando el permiso depende de lo que se pidió."""
+    usuario = usuario_de_la_sesion(info)
+    if usuario is None or not usuario.is_authenticated:
+        raise GraphQLError(SIN_SESION, extensions={"code": CODIGO_SIN_SESION})
+    _exigir_codigo(usuario, codigo)
+
+
+def _exigir_codigo(usuario, codigo: str) -> None:
+    if usuario.is_superuser:
+        return
+    if not usuario.has_perm(f"{APP_DE_LOS_PERMISOS}.{codigo}"):
+        raise GraphQLError(SIN_PERMISO, extensions={"code": CODIGO_SIN_PERMISO})
+
+
 def requiere_autenticacion(func):
     """Exige una sesión abierta. Nada más."""
 
@@ -147,9 +162,7 @@ def _armar_guard(func, codigo_fijo):
                 f'código: @requiere_permiso("mi_codigo").'
             )
 
-        if not usuario.has_perm(f"{APP_DE_LOS_PERMISOS}.{codigo}"):
-            raise GraphQLError(SIN_PERMISO, extensions={"code": CODIGO_SIN_PERMISO})
-
+        _exigir_codigo(usuario, codigo)
         return func(*args, **kwargs)
 
     
@@ -218,6 +231,7 @@ def solo_proveedor(func):
 __all__ = [
     "usuario_de_la_sesion",
     "usuario_de_request",
+    "exigir_permiso",
     "requiere_autenticacion",
     "requiere_permiso",
     "solo_proveedor",

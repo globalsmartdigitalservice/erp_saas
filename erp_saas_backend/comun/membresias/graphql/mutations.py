@@ -30,21 +30,6 @@ def _a_membresia(fila) -> MembresiaType:
 @strawberry.type
 class MembresiaMutations:
     @strawberry.mutation(
-        description="Da de alta a una persona en la empresa de la sesión."
-    )
-    @requiere_permiso
-    def afiliar(self, info: strawberry.Info, datos: AfiliarInput) -> MembresiaType:
-        try:
-            fila = membresias.afiliar(
-                usuario_id=int(datos.usuario_id),
-                estado_id=int(datos.estado_id),
-                fecha_asignacion=datos.fecha_asignacion,
-            )
-        except ValidationError as error:
-            raise _traducir(error) from error
-        return _a_membresia(fila)
-
-    @strawberry.mutation(
         description=(
             "Da de alta a una persona en la empresa de la sesión Y EN "
             "TODAS SUS SUCURSALES. Es el 'dar de alta en todo el grupo' "

@@ -9,7 +9,7 @@ from comun.usuarios.graphql.types import UsuarioType
 from dominios.seguridad.permisos import auto_permisos
 from dominios.seguridad.permisos_graphql import requiere_permiso
 
-from .types import MembresiaType
+from .types import MembresiaType, PersonaEncontradaType
 
 
 @auto_permisos(recurso="SEGU_MIEMBROS")
@@ -52,6 +52,25 @@ class MembresiaQueries:
         persona = usuarios.obtener_usuario(fila.usuario_id)
         return MembresiaType.desde_modelo(
             fila, UsuarioType.desde_modelo(persona) if persona else None
+        )
+
+    @strawberry.field(
+        description=(
+            "Una persona del cliente por su correo exacto, para darla de alta "
+            "acá sin crearla de nuevo. Devuelve lo mínimo, y null si no es del "
+            "cliente."
+        )
+    )
+    @requiere_permiso
+    @auto_permisos(recurso="SEGU_MIEMBROS", operacion="buscar_por_correo")
+    def persona_por_correo(
+        self, info: strawberry.Info, email: str
+    ) -> PersonaEncontradaType | None:
+        persona = usuarios.buscar_por_email(email)
+        if persona is None:
+            return None
+        return PersonaEncontradaType.desde_modelo(
+            persona, trabaja_aca=membresias.membresia_de(persona.pk) is not None
         )
 
 

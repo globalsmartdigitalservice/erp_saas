@@ -90,6 +90,14 @@ def obtener_del_cliente(usuario_id: int) -> "Usuario":
     return usuario
 
 
+def buscar_por_email(email: str) -> "Usuario | None":
+    """La cuenta con ese correo exacto, solo dentro del cliente de la sesión."""
+    email = _normalizar_email(email)
+    if not email:
+        return None
+    return repo.obtener_por_email_en_matriz(email, _matriz_del_contexto().pk)
+
+
 def _validar_password(password: str, usuario) -> None:
     """
     Los validadores de `settings.AUTH_PASSWORD_VALIDATORS`.
