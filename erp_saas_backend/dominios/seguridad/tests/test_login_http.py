@@ -14,6 +14,7 @@ from comun.tipologias.constantes import (
 )
 from core.tenancy import empresa
 from core.tests.afiliacion import afiliar_en
+from core.tests.permisos import darle_el_permiso
 from dominios.seguridad.models import SesionAcceso
 
 pytestmark = pytest.mark.django_db
@@ -34,8 +35,10 @@ mutation ($datos: LoginInput!) {
 
 
 # Una consulta cualquiera que necesite la empresa de la sesión: sin ella,
-# el aislamiento levanta y la respuesta viene con errores.
-MIEMBROS = "{ miembros { id } }"
+# el aislamiento levanta y la respuesta viene con errores. Se usa `roles`
+# y no `miembros` porque esta sonda mide la SESIÓN, y `miembros` pasó a
+# pedir permiso: mezclaría las dos cosas.
+SONDA = "{ roles { id } }"
 
 
 @pytest.fixture
@@ -192,6 +195,9 @@ def test_con_dos_empresas_no_se_abre_sesion_hasta_elegir(
     datos = respuesta.json()["data"]["login"]
     assert datos["necesitaElegirEmpresa"] is True
     assert len(datos["empresas"]) == 2
+    # Con dos cuentas del mismo correo, cualquiera de las dos fichas sería
+    # arbitraria: no se manda ninguna hasta que elija.
+    assert datos["usuario"] is None
     assert settings.COOKIE_ACCESO not in respuesta.cookies
 
 
@@ -248,6 +254,7 @@ def test_al_fallar_la_renovacion_se_borran_las_cookies(client, en_gimnasio):
 def test_las_consultas_devuelven_solo_lo_de_la_empresa_de_la_sesion(
     client, juan, en_gimnasio, empresa_a, empresa_b, activo
 ):
+    darle_el_permiso(juan, empresa_a.id, activo.id, "segu_miembros_listar")
     ana = Usuario.objects.create_user(
         username="ana",
         email="ana@otra.com",
@@ -297,14 +304,14 @@ def test_al_desafiliar_la_sesion_abierta_muere_EN_EL_ACTO(
     de 15 minutos: era indefinida.**
     """
     _pedir(client, LOGIN, datos={"identificador": "juan", "password": "Kx7pLm9Qw2"})
-    assert _pedir(client, MIEMBROS).json().get("errors") is None
+    assert _pedir(client, SONDA).json().get("errors") is None
 
     baja = catalogo["tipologia"](AGRUPADOR.ESTADO_REGISTRO, NOMBRE_ESTADO_BAJA)
     with empresa(empresa_a.id):
         membresias.desafiliar(membresia_id=en_gimnasio.id, estado_baja_id=baja.id)
 
     # Sin volver a entrar ni esperar nada: la siguiente petición ya no pasa.
-    assert _pedir(client, MIEMBROS).json().get("errors") is not None
+    assert _pedir(client, SONDA).json().get("errors") is not None
 
 
 def test_la_sesion_olvidada_se_vence_sola(client, en_gimnasio, empresa_a):
@@ -314,7 +321,7 @@ def test_la_sesion_olvidada_se_vence_sola(client, en_gimnasio, empresa_a):
     el `fin` queda vacío para siempre. Lo que la corta es la inactividad.
     """
     _pedir(client, LOGIN, datos={"identificador": "juan", "password": "Kx7pLm9Qw2"})
-    assert _pedir(client, MIEMBROS).json().get("errors") is None
+    assert _pedir(client, SONDA).json().get("errors") is None
 
     with empresa(empresa_a.id):
         sesion = SesionAcceso.objects.first()
@@ -326,4 +333,4 @@ def test_la_sesion_olvidada_se_vence_sola(client, en_gimnasio, empresa_a):
         sesion.save(update_fields=["ultima_actividad"])
 
     assert sesion.fin is None  # nadie la cerró
-    assert _pedir(client, MIEMBROS).json().get("errors") is not None
+    assert _pedir(client, SONDA).json().get("errors") is not None

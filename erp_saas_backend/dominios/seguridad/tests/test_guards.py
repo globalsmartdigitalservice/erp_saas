@@ -2,10 +2,7 @@ import json
 
 import pytest
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
 
-from comun.membresias import api as membresias
 from comun.tipologias.constantes import (
     AGRUPADOR,
     NOMBRE_ACCESO_BLOQUEADO,
@@ -15,8 +12,7 @@ from comun.tipologias.constantes import (
 from config.schema import schema
 from core.tenancy import empresa
 from core.tests.afiliacion import afiliar_en
-from dominios.seguridad import api as seguridad
-from dominios.seguridad.permisos import content_type_del_ancla
+from core.tests.permisos import darle_el_permiso
 from dominios.seguridad.permisos_graphql import SIN_PERMISO, SIN_SESION
 
 pytestmark = pytest.mark.django_db
@@ -31,6 +27,8 @@ mutation ($datos: CrearRolInput!) {
 }
 """
 PERMISO_CREAR_ROL = "segu_roles_crear_rol"
+PERMISO_LISTAR_MIEMBROS = "segu_miembros_listar"
+PERMISO_VER_USUARIO = "segu_usuarios_ver"
 
 
 @pytest.fixture
@@ -116,24 +114,6 @@ def _crear_rol(cliente, activo):
     )
 
 
-def _darle_el_permiso(persona, empresa_a, activo, codename: str):
-    """Por el camino real de un cliente: un rol de su empresa, con el
-    permiso adentro, asignado a su membresía."""
-    permiso, _ = Permission.objects.get_or_create(
-        content_type=content_type_del_ancla(),
-        codename=codename,
-        defaults={"name": codename},
-    )
-    with empresa(empresa_a.id):
-        rol = seguridad.crear_rol(nombre="Supervisor", estado_id=activo.id)
-        seguridad.agregar_permiso(grupo_id=rol.id, auth_permission_id=permiso.id)
-        seguridad.asignar_rol(
-            membresia_id=membresias.membresia_de(persona.id).id,
-            grupo_id=rol.id,
-            estado_id=activo.id,
-        )
-    return permiso
-
 
 def test_sin_sesion_una_mutation_protegida_se_rechaza(client, activo):
     assert _error(_crear_rol(client, activo)) == SIN_SESION
@@ -156,7 +136,7 @@ def test_el_mensaje_no_dice_QUE_permiso_falta(client, juan, activo):
 
 
 def test_con_el_permiso_pasa(client, juan, empresa_a, activo):
-    _darle_el_permiso(juan, empresa_a, activo, PERMISO_CREAR_ROL)
+    darle_el_permiso(juan, empresa_a.id, activo.id, PERMISO_CREAR_ROL)
     _entrar(client)
 
     respuesta = _crear_rol(client, activo)
@@ -224,6 +204,45 @@ def test_la_cookie_del_admin_no_entra_cuando_el_interruptor_esta_cerrado(
     assert abierto.errors is None
     assert abierto.data["crearRol"]["nombre"] == "Cajero"
 
+
+def test_la_lista_de_miembros_exige_permiso(client, juan, empresa_a, activo):
+    """Antes bastaba con estar logueado, y un cajero veía de cada compañero el
+    correo, si estaba de baja y `debeCambiarPassword` — o sea la lista de quién
+    sigue con la contraseña temporal que le dictaron."""
+    _entrar(client)
+    assert _error(_pedir(client, "{ miembros { id } }")) == SIN_PERMISO
+
+    darle_el_permiso(juan, empresa_a.id, activo.id, PERMISO_LISTAR_MIEMBROS)
+    _entrar(client)
+
+    assert _pedir(client, "{ miembros { id } }").json().get("errors") is None
+
+
+def test_la_ficha_de_otra_sucursal_responde_como_si_no_existiera(
+    client, juan, empresa_a, sucursal_a, activo
+):
+    """Leer no puede ser más ancho que escribir: si Juan no puede editar a
+    alguien de otra sucursal, tampoco ve su ficha.
+
+    Y la respuesta tiene que ser LA MISMA que para un id inventado. Si dijera
+    "trabaja en otra sucursal" confirmaría que el id existe, y probando números
+    se arma el padrón del cliente entero."""
+    sofia = Usuario.objects.create_user(
+        username="sofia",
+        email="sofia@acme.com",
+        password="Kx7pLm9Qw2",
+        matriz=empresa_a,
+    )
+    afiliar_en(sucursal_a.id, usuario_id=sofia.id, estado_id=activo.id)
+    darle_el_permiso(juan, empresa_a.id, activo.id, PERMISO_VER_USUARIO)
+    _entrar(client)
+
+    consulta = "query ($id: ID!) { usuario(id: $id) { username } }"
+    otra_sucursal = _error(_pedir(client, consulta, id=str(sofia.id)))
+    inventado = _error(_pedir(client, consulta, id="999999"))
+
+    assert otra_sucursal == f"No existe el usuario {sofia.id}."
+    assert inventado == "No existe el usuario 999999."
 
 def test_una_mutation_sin_decorador_funciona_con_solo_estar_logueado(
     client, juan, catalogo

@@ -56,7 +56,8 @@ class ResultadoLoginType:
     """No trae los tokens: van en cookies `HttpOnly`.
 
     `necesitaElegirEmpresa` en true significa que trabaja en más de una y
-    todavía no eligió: no hay sesión abierta y `empresas` trae las opciones."""
+    todavía no eligió: no hay sesión abierta, `empresas` trae las opciones y
+    `usuario` viene vacío."""
 
     necesita_elegir_empresa: bool
     usuario: UsuarioType | None
@@ -66,11 +67,19 @@ class ResultadoLoginType:
     def desde_ingreso(cls, ingreso) -> "ResultadoLoginType":
         return cls(
             necesita_elegir_empresa=ingreso.necesita_elegir_empresa,
-            usuario=UsuarioType.desde_modelo(ingreso.usuario),
+            usuario=cls._ficha(ingreso),
             empresas=[
                 EmpresaDelUsuarioType.desde_modelo(m) for m in ingreso.empresas
             ],
         )
+
+    @staticmethod
+    def _ficha(ingreso) -> UsuarioType | None:
+        """Mientras falte elegir empresa no se devuelve la ficha: con dos
+        cuentas del mismo correo, cualquiera de las dos sería arbitraria."""
+        if ingreso.necesita_elegir_empresa:
+            return None
+        return UsuarioType.desde_modelo(ingreso.usuario)
 
 
 @strawberry.input(name="LoginInput")

@@ -6,11 +6,13 @@ from comun.membresias import api as membresias
 from comun.usuarios import api as usuarios
 from comun.usuarios.graphql.types import UsuarioType
 
-from dominios.seguridad.permisos_graphql import requiere_autenticacion
+from dominios.seguridad.permisos import auto_permisos
+from dominios.seguridad.permisos_graphql import requiere_permiso
 
 from .types import MembresiaType
 
 
+@auto_permisos(recurso="SEGU_MIEMBROS")
 @strawberry.type
 class MembresiaQueries:
     @strawberry.field(
@@ -19,7 +21,8 @@ class MembresiaQueries:
             "de la empresa; NO devuelve gente de otros clientes."
         )
     )
-    @requiere_autenticacion
+    @requiere_permiso
+    @auto_permisos(recurso="SEGU_MIEMBROS", operacion="listar")
     def miembros(
         self, info: strawberry.Info, estado_id: strawberry.ID | None = None
     ) -> list[MembresiaType]:
@@ -38,7 +41,8 @@ class MembresiaQueries:
         ]
 
     @strawberry.field(description="La membresía de una persona en la empresa activa.")
-    @requiere_autenticacion
+    @requiere_permiso
+    @auto_permisos(recurso="SEGU_MIEMBROS", operacion="ver")
     def membresia(
         self, info: strawberry.Info, usuario_id: strawberry.ID
     ) -> MembresiaType | None:

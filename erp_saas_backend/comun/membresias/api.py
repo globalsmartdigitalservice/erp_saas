@@ -30,6 +30,12 @@ def membresia_de(usuario_id: int) -> UsuarioEmpresa | None:
     return _repo.obtener_de_usuario(usuario_id)
 
 
+def persona_de_la_empresa(usuario_id: int):
+    """La cuenta de alguien que trabaja acá. Levanta si no trabaja acá, con
+    el mismo texto que si no existiera."""
+    return _svc.persona_de_la_empresa(usuario_id)
+
+
 def empresas_de(usuario_id: int) -> list[UsuarioEmpresa]:
     """
     En qué empresas está dada de alta una persona.
@@ -104,6 +110,7 @@ __all__ = [
     "obtener_membresias",
     "listar_membresias",
     "membresia_de",
+    "persona_de_la_empresa",
     "empresas_de",
     "afiliar",
     "afiliar_al_grupo",

@@ -56,6 +56,18 @@ def _empresa_de_la_sesion() -> int:
     return empresa_id
 
 
+def persona_de_la_empresa(usuario_id: int) -> Usuario:
+    """La persona, solo si trabaja en la empresa activa.
+
+    El mismo texto que si no existiera: decir "trabaja en otra sucursal"
+    confirmaría que el id existe, y probando números se arma el padrón del
+    cliente entero."""
+    membresia = repo.obtener_de_usuario(usuario_id)
+    if membresia is None:
+        raise ValidationError(f"No existe el usuario {usuario_id}.")
+    return usuarios.obtener_usuario(membresia.usuario_id)
+
+
 def _validar_fechas(fecha_asignacion, fecha_finalizacion) -> None:
     if fecha_finalizacion is None:
         return
