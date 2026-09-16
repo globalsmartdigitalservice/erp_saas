@@ -42,6 +42,8 @@ def _normalizar_username(username: str) -> str:
 def _validar_username(username: str, excluir_id: int | None = None) -> None:
     if not username:
         raise ValidationError("El nombre de usuario no puede ir vacío.")
+    if "@" in username:
+        raise ValidationError("El nombre de usuario no puede llevar arroba.")
     if repo.existe_username(username, excluir_id):
         raise ValidationError(f"Ya hay un usuario '{username}'.")
 

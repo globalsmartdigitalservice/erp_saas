@@ -1,7 +1,7 @@
 """El backend de autenticación del ERP. Hace dos cosas:
 
     1. que `user.has_perm()` diga la VERDAD en un sistema multiempresa
-    2. dejar entrar por nombre de usuario O por correo
+    2. dejar entrar al `/admin/` por nombre de usuario
 
 `ModelBackend` resuelve los permisos contra `auth_group`, y nosotros los
 guardamos en `Grupo_Empresa_Permiso` porque los de Django no tienen
@@ -99,38 +99,30 @@ class BackendDeEmpresa(ModelBackend):
 
         return seguridad.permisos_de(membresia.pk)
 
-    # ── 3. Entrar por usuario o por correo ─────────────────────────
+    # ── 3. Entrar por nombre de usuario ────────────────────────────
 
     def authenticate(self, request, username=None, password=None, **kwargs):
-        """Se entra por nombre de usuario o por correo: los dos son únicos."""
+        """Solo por nombre de usuario: un correo puede tener una cuenta en
+        cada cliente y esta puerta no sabe elegir entre ellas."""
         if username is None:
-            username = kwargs.get(UserModel.USERNAME_FIELD) or kwargs.get("email")
+            username = kwargs.get(UserModel.USERNAME_FIELD)
         if username is None or password is None:
             return None
 
-        usuario = self._buscar(username)
+        usuario = UserModel._default_manager.filter(username=username).first()
 
         if usuario is None:
-            # NO devolver sin hashear: si el caso "no existe" respondiera
-            # al instante, midiendo el tiempo se averigua qué correos están
-            # registrados.
-            UserModel().set_password(password)
+            self._igualar_el_tiempo(password)
             return None
 
         if usuario.check_password(password) and self.user_can_authenticate(usuario):
             return usuario
         return None
 
-    def _buscar(self, texto: str):
-        """Si el texto coincide con el usuario de UNA persona y el correo de
-        OTRA, no entra nadie: elegir sería dejar entrar a la cuenta equivocada."""
-        por_usuario = UserModel._default_manager.filter(username=texto).first()
-        por_correo = UserModel._default_manager.filter(email__iexact=texto).first()
-
-        if por_usuario and por_correo and por_usuario.pk != por_correo.pk:
-            return None
-
-        return por_usuario or por_correo
+    def _igualar_el_tiempo(self, password: str) -> None:
+        """Hashea de mentira para que un usuario inexistente tarde lo mismo que
+        una contraseña equivocada."""
+        UserModel().set_password(password)
 
 
 __all__ = ["BackendDeEmpresa"]

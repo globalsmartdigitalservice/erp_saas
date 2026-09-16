@@ -84,6 +84,18 @@ def test_el_correo_no_se_repite_cambiando_las_mayusculas(empresa_a):
             )
 
 
+def test_el_nombre_de_usuario_no_puede_llevar_arroba(empresa_a):
+    """Con `@` no se puede distinguir un usuario de un correo, y el login
+    necesita esa diferencia para saber si puede haber varias cuentas."""
+    with empresa(empresa_a.id):
+        with pytest.raises(ValidationError, match="arroba"):
+            usuarios.crear_usuario(
+                username="juan@acme.com",
+                email="juan@acme.com",
+                password="Kx7pLm9Qw2",
+            )
+
+
 def test_el_correo_es_obligatorio():
     usuario = Usuario(username="juan", email="")
 

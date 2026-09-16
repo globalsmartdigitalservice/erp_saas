@@ -1,6 +1,6 @@
 import datetime
 
-from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
@@ -12,12 +12,16 @@ from comun.tipologias.constantes import (
     NOMBRE_ACCESO_EXITO,
     NOMBRE_ESTADO_ACTIVO,
 )
+from comun.usuarios import api as usuarios
 from core.red import ip_del_cliente, user_agent_de
 from core.tenancy import empresa as contexto_empresa
 from core.tenancy import sin_filtro_de_empresa
 from dominios.seguridad import tokens
 from dominios.seguridad.models import SesionAcceso
 from dominios.seguridad.services import acceso as svc_acceso
+
+
+Usuario = get_user_model()
 
 
 CREDENCIALES_INVALIDAS = "Usuario o contraseña incorrectos."
@@ -68,14 +72,34 @@ def _resultado(nombre):
     return valor
 
 
-def autenticar(*, identificador: str, password: str):
-    """Paso 1. Acepta nombre de usuario o correo. El backend iguala el
-    tiempo de respuesta exista o no la persona."""
-    usuario = authenticate(request=None, username=identificador, password=password)
-    if usuario is None:
-       
+def autenticar(*, identificador: str, password: str) -> list:
+    """Paso 1. Las cuentas en las que entra esa contraseña: con el mismo correo
+    en dos clientes puede haber más de una."""
+    candidatas = _candidatas(identificador)
+    if not candidatas:
+        _igualar_el_tiempo(password)
         raise ValidationError(CREDENCIALES_INVALIDAS)
-    return usuario
+
+    coinciden = [c for c in candidatas if c.check_password(password) and c.is_active]
+    if not coinciden:
+        raise ValidationError(CREDENCIALES_INVALIDAS)
+    return coinciden
+
+
+def _candidatas(identificador: str) -> list:
+    """El arroba distingue un correo —que puede tener una cuenta en cada
+    cliente— de un nombre de usuario, que es único en todo el sistema."""
+    identificador = (identificador or "").strip()
+    if "@" in identificador:
+        return usuarios.obtener_todos_por_email(identificador)
+    cuenta = usuarios.obtener_por_username(identificador)
+    return [cuenta] if cuenta else []
+
+
+def _igualar_el_tiempo(password: str) -> None:
+    """Hashea de mentira para que un identificador inexistente tarde lo mismo
+    que una contraseña equivocada."""
+    Usuario().set_password(password)
 
 
 def empresas_de(usuario) -> list:
@@ -104,11 +128,10 @@ def login(
     Sin `empresa_id`: si trabaja en una entra directo, si trabaja en varias
     devuelve la lista sin token. Con `empresa_id` entra a esa, si es suya.
     """
-    usuario = autenticar(identificador=identificador, password=password)
+    cuentas = autenticar(identificador=identificador, password=password)
 
-    disponibles = empresas_de(usuario)
+    disponibles = [m for cuenta in cuentas for m in empresas_de(cuenta)]
     if not disponibles:
-       
         raise ValidationError(
             "Su usuario no está habilitado en ninguna empresa. Consulte con el "
             "administrador."
@@ -116,23 +139,26 @@ def login(
 
     if empresa_id is None:
         if len(disponibles) > 1:
-            return ResultadoLogin(usuario=usuario, empresas=disponibles)
+            return ResultadoLogin(usuario=None, empresas=disponibles)
         elegida = disponibles[0]
     else:
-        elegida = next(
-            (m for m in disponibles if m.empresa_id == empresa_id), None
-        )
+        elegida = next((m for m in disponibles if m.empresa_id == empresa_id), None)
         if elegida is None:
-            
             raise ValidationError("Esa empresa no está disponible para su usuario.")
 
     return _abrir_sesion(
-        usuario=usuario,
+        usuario=_cuenta_de(elegida, cuentas),
         membresia=elegida,
         request=request,
         mac=mac,
         momento=momento,
     )
+
+
+def _cuenta_de(membresia, cuentas: list):
+    """La empresa elegida determina la cuenta: es de un solo cliente, y en ese
+    cliente la persona tiene una sola."""
+    return next(c for c in cuentas if c.pk == membresia.usuario_id)
 
 
 def _abrir_sesion(*, usuario, membresia, request, mac, momento) -> ResultadoLogin:

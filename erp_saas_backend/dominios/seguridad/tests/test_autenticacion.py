@@ -180,12 +180,8 @@ def test_entra_por_nombre_de_usuario(juan):
     assert authenticate(username="juan", password="Kx7pLm9Qw2") == juan
 
 
-def test_entra_por_correo(juan):
-    assert authenticate(username="juan@acme.com", password="Kx7pLm9Qw2") == juan
-
-
-def test_el_correo_no_distingue_mayusculas(juan):
-    assert authenticate(username="JUAN@ACME.COM", password="Kx7pLm9Qw2") == juan
+def test_por_correo_no_entra_a_esta_puerta(juan):
+    assert authenticate(username="juan@acme.com", password="Kx7pLm9Qw2") is None
 
 
 def test_no_entra_con_la_contrasena_equivocada(juan):
@@ -201,15 +197,3 @@ def test_no_entra_un_usuario_dado_de_baja(juan):
 
 def test_un_usuario_que_no_existe_no_entra(db):
     assert authenticate(username="nadie@acme.com", password="Kx7pLm9Qw2") is None
-
-
-def test_si_el_texto_es_de_dos_personas_no_entra_ninguna(juan, empresa_a):
-    Usuario.objects.create_user(
-        username="juan@acme.com",
-        email="otra@acme.com",
-        password="Zq4tRn8Vd3",
-        matriz=empresa_a,
-    )
-
-    assert authenticate(username="juan@acme.com", password="Kx7pLm9Qw2") is None
-    assert authenticate(username="juan@acme.com", password="Zq4tRn8Vd3") is None

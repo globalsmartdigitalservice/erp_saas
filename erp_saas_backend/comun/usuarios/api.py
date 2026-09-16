@@ -43,6 +43,11 @@ def obtener_por_email(email: str):
     return _repo.obtener_por_email(email)
 
 
+def obtener_todos_por_email(email: str):
+    """Todas las cuentas con ese correo, sin limitarse a ningún cliente."""
+    return _repo.obtener_todos_por_email(email)
+
+
 def buscar_por_email(email: str):
     """Dentro del cliente de la sesión: el mismo correo puede estar en otro."""
     return _svc.buscar_por_email(email)
@@ -96,6 +101,7 @@ __all__ = [
     "obtener_usuarios",
     "obtener_por_username",
     "obtener_por_email",
+    "obtener_todos_por_email",
     "buscar_por_email",
     "crear_usuario",
     "actualizar_usuario",

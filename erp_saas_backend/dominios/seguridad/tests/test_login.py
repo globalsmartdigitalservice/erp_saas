@@ -255,6 +255,68 @@ def test_el_usuario_dado_de_baja_no_puede_renovar(juan, en_gimnasio, resultados)
         login.refresh(token=resultado.refresh)
 
 
+@pytest.fixture
+def en_dos_clientes(empresa_a, empresa_b, activo, resultados):
+    """La misma persona, con el MISMO correo, en dos clientes distintos.
+
+    Los nombres de usuario arrancan con `a.` y `z.` a propósito: el modelo
+    ordena por username, así que se sabe cuál devolvería un `.first()`."""
+    del_gimnasio = Usuario.objects.create_user(
+        username="a.marta",
+        email="marta@gmail.com",
+        password="Zq4tRn8Vd3",
+        matriz=empresa_b,
+    )
+    de_la_farmacia = Usuario.objects.create_user(
+        username="z.marta",
+        email="marta@gmail.com",
+        password="Kx7pLm9Qw2",
+        matriz=empresa_a,
+    )
+    afiliar_en(empresa_b.id, usuario_id=del_gimnasio.id, estado_id=activo.id)
+    afiliar_en(empresa_a.id, usuario_id=de_la_farmacia.id, estado_id=activo.id)
+    return de_la_farmacia, del_gimnasio
+
+
+def test_con_el_mismo_correo_y_la_misma_password_el_selector_muestra_los_dos(
+    en_dos_clientes, empresa_a, empresa_b
+):
+    de_la_farmacia, _ = en_dos_clientes
+    de_la_farmacia.set_password("Zq4tRn8Vd3")
+    de_la_farmacia.save(update_fields=["password"])
+
+    resultado = login.login(identificador="marta@gmail.com", password="Zq4tRn8Vd3")
+
+    assert resultado.necesita_elegir_empresa
+    assert {m.empresa_id for m in resultado.empresas} == {empresa_a.id, empresa_b.id}
+
+
+def test_cada_password_entra_a_su_cliente(en_dos_clientes, empresa_a, empresa_b):
+    de_la_farmacia = login.login(
+        identificador="marta@gmail.com", password="Kx7pLm9Qw2"
+    )
+    del_gimnasio = login.login(identificador="marta@gmail.com", password="Zq4tRn8Vd3")
+
+    assert de_la_farmacia.sesion.usuario_empresa.empresa_id == empresa_a.id
+    assert del_gimnasio.sesion.usuario_empresa.empresa_id == empresa_b.id
+
+
+def test_al_elegir_la_empresa_entra_con_la_cuenta_de_ese_cliente(
+    en_dos_clientes, empresa_a
+):
+    de_la_farmacia, _ = en_dos_clientes
+    de_la_farmacia.set_password("Zq4tRn8Vd3")
+    de_la_farmacia.save(update_fields=["password"])
+
+    resultado = login.elegir_empresa(
+        identificador="marta@gmail.com",
+        password="Zq4tRn8Vd3",
+        empresa_id=empresa_a.id,
+    )
+
+    assert resultado.usuario.username == "z.marta"
+
+
 def test_el_dado_de_baja_en_la_empresa_no_puede_renovar(
     en_gimnasio, empresa_a, catalogo, resultados
 ):

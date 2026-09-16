@@ -12,6 +12,7 @@ o tocar a quién lo deciden los services, no esta capa. Y la pantalla
 """
 
 from django.contrib.auth import get_user_model
+from django.db.models.functions import Lower
 
 Usuario = get_user_model()
 
@@ -35,13 +36,26 @@ def obtener_por_username(username: str) -> "Usuario | None":
     return Usuario.objects.filter(username=username).first()
 
 
+def _por_email(email: str):
+    """Las cuentas con ese correo, preguntando por `lower(email)`, que es la
+    expresión con la que está hecho el índice único."""
+    return Usuario.objects.annotate(email_normalizado=Lower("email")).filter(
+        email_normalizado=(email or "").strip().lower()
+    )
+
+
 def obtener_por_email(email: str) -> "Usuario | None":
     """Sin distinguir mayúsculas: nadie escribe su correo igual dos veces."""
-    return Usuario.objects.filter(email__iexact=email).first()
+    return _por_email(email).first()
+
+
+def obtener_todos_por_email(email: str) -> list["Usuario"]:
+    """Todas las cuentas con ese correo: como mucho una por cliente."""
+    return list(_por_email(email))
 
 
 def obtener_por_email_en_matriz(email: str, matriz_id: int) -> "Usuario | None":
-    return Usuario.objects.filter(email__iexact=email, matriz_id=matriz_id).first()
+    return _por_email(email).filter(matriz_id=matriz_id).first()
 
 
 def existe_username(username: str, excluir_id: int | None = None) -> bool:
@@ -55,7 +69,7 @@ def existe_email(
     email: str, matriz_id: int | None, excluir_id: int | None = None
 ) -> bool:
     """Dentro del cliente: el mismo correo puede estar en otro."""
-    qs = Usuario.objects.filter(email__iexact=email, matriz_id=matriz_id)
+    qs = _por_email(email).filter(matriz_id=matriz_id)
     if excluir_id is not None:
         qs = qs.exclude(pk=excluir_id)
     return qs.exists()
