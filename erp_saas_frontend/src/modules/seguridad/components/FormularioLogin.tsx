@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
-  CREDENCIALES_VACIAS,
   type Credenciales,
 } from "@/modules/seguridad/types/sesion.types";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
@@ -19,9 +18,18 @@ type Props = {
 
 const ID_ERROR = "login-error";
 
+const DEV_USUARIO = "dev"
+const DEV_PASSWORD = "Dev2026**"
+
 export function FormularioLogin({ enviando, error, onEnviar }: Props) {
   const { t } = useTranslation();
-  const [datos, setDatos] = useState<Credenciales>(CREDENCIALES_VACIAS);
+  // PROVISIONAL (desarrollo): el formulario arranca precargado
+  // Para volver atrás: descomentar la línea de abajo, borrar el bloque que la
+  // const [datos, setDatos] = useState<Credenciales>(CREDENCIALES_VACIAS);
+  const [datos, setDatos] = useState<Credenciales>({
+    identificador: DEV_USUARIO,
+    password: DEV_PASSWORD,
+  });
 
   const cambiar = (campo: keyof Credenciales, valor: string) =>
     setDatos((actual) => ({ ...actual, [campo]: valor }));
