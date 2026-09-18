@@ -14,6 +14,7 @@ from comun.tipologias.constantes import (
 from core.tenancy import empresa_actual
 from dominios.seguridad.models import GrupoEmpresa, GrupoUsuario
 from dominios.seguridad.permisos import codename_de
+from dominios.seguridad.repository import grupo_empresa as repo_grupo
 from dominios.seguridad.repository import grupo_usuario as repo
 
 
@@ -60,6 +61,26 @@ def _resolver_membresia(membresia_id: int):
     return membresia
 
 
+def _exigir_rol_otorgable(grupo: GrupoEmpresa, otorgables) -> None:
+    """Nadie delega lo que no tiene. `otorgables` en `None` es sin límite.
+
+    Vale también para los roles que bajan de la casa matriz: si la excepción
+    fuera para ellos, bastaría con buscar el más potente y asignárselo.
+    """
+    if otorgables is None:
+        return
+
+    del_rol = {
+        f"{linea.auth_permission.content_type.app_label}.{linea.auth_permission.codename}"
+        for linea in repo_grupo.listar_permisos_de(grupo.pk)
+    }
+    if del_rol - otorgables:
+        raise ValidationError(
+            f"No puede asignar el rol '{grupo.nombre}': incluye permisos que "
+            f"usted no tiene."
+        )
+
+
 def _validar_fechas(fecha_inicio, fecha_fin) -> None:
     if fecha_fin is not None and fecha_fin < fecha_inicio:
         raise ValidationError(
@@ -77,6 +98,7 @@ def asignar(
     fecha_fin: datetime.date | None = None,
     asignado_por_id: int | None = None,
     motivo: str = "",
+    otorgables=None,
 ) -> GrupoUsuario:
     """
     Le da un rol a una persona dentro de esta empresa.
@@ -86,7 +108,7 @@ def asignar(
     """
     _validar_estado(estado_id)
     _resolver_membresia(membresia_id)
-    _resolver_rol_asignable(grupo_id)
+    _exigir_rol_otorgable(_resolver_rol_asignable(grupo_id), otorgables)
 
     fecha_inicio = fecha_inicio or datetime.date.today()
     _validar_fechas(fecha_inicio, fecha_fin)

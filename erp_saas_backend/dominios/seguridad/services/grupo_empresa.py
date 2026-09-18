@@ -51,6 +51,19 @@ def _ids_de_arriba() -> list[int]:
     return empresas.ids_del_ambito(empresa_actual())
 
 
+def _exigir_otorgable(permiso: Permission, otorgables) -> None:
+    """Nadie delega lo que no tiene. `otorgables` en `None` es sin límite."""
+    if otorgables is None:
+        return
+
+    codigo = f"{permiso.content_type.app_label}.{permiso.codename}"
+    if codigo not in otorgables:
+        raise ValidationError(
+            f"No puede otorgar '{permiso.name}': usted no tiene ese permiso. "
+            f"Pídaselo a quien administre la empresa."
+        )
+
+
 def _exigir_que_sea_propio(grupo: GrupoEmpresa) -> None:
     """
     El invariante 4. El mensaje dice qué hacer, no solo que no se puede.
@@ -143,7 +156,7 @@ def desactivar(grupo_id: int) -> GrupoEmpresa:
 
 
 @transaction.atomic
-def agregar_permiso(*, grupo_id: int, auth_permission_id: int):
+def agregar_permiso(*, grupo_id: int, auth_permission_id: int, otorgables=None):
     """
     Le da un permiso a un rol. Idempotente: darlo dos veces no falla ni
     duplica — quien arma un rol marcando casillas no tiene por qué saber
@@ -155,8 +168,15 @@ def agregar_permiso(*, grupo_id: int, auth_permission_id: int):
 
     _exigir_que_sea_propio(grupo)
 
-    if not Permission.objects.filter(pk=auth_permission_id).exists():
+    permiso = (
+        Permission.objects.select_related("content_type")
+        .filter(pk=auth_permission_id)
+        .first()
+    )
+    if permiso is None:
         raise ValidationError(f"No existe el permiso {auth_permission_id}.")
+
+    _exigir_otorgable(permiso, otorgables)
 
     if repo.existe_permiso_en(grupo_id, auth_permission_id):
         return repo.listar_permisos_de(grupo_id)

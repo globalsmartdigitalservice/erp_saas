@@ -14,7 +14,11 @@ from comun.membresias.graphql.types import EmpresaDelUsuarioType
 from comun.usuarios.graphql.types import UsuarioType
 
 from dominios.seguridad.permisos import auto_permisos
-from dominios.seguridad.permisos_graphql import requiere_autenticacion, requiere_permiso
+from dominios.seguridad.permisos_graphql import (
+    permisos_otorgables,
+    requiere_autenticacion,
+    requiere_permiso,
+)
 
 from .tipos_acceso import (
     DispositivoAutorizadoType,
@@ -78,21 +82,24 @@ class SeguridadQueries:
 
     @strawberry.field(
         description=(
-            "Todos los permisos que existen, para armar un rol. `pantalla` y "
-            "`modulo` llegan vacíos mientras el catálogo de módulos no tenga "
-            "ese permiso."
+            "Los permisos que usted puede ponerle a un rol: los suyos, porque "
+            "nadie otorga lo que no tiene. `pantalla` y `modulo` llegan vacíos "
+            "mientras el catálogo de módulos no tenga ese permiso."
         )
     )
     @requiere_permiso("segu_roles_agregar_permiso_al_rol")
     def catalogo_de_permisos(
         self, info: strawberry.Info
     ) -> list[PermisoDeCatalogoType]:
+        otorgables = permisos_otorgables(info)
         funcionalidades = _funcionalidades_por_permiso()
         return [
             PermisoDeCatalogoType.desde_modelo(
                 permiso, funcionalidades.get(permiso.pk)
             )
             for permiso in seguridad.listar_catalogo_de_permisos()
+            if otorgables is None
+            or f"{permiso.content_type.app_label}.{permiso.codename}" in otorgables
         ]
 
     @strawberry.field(

@@ -15,6 +15,7 @@ pytestmark = pytest.mark.django_db
 Usuario = get_user_model()
 
 PERMISO_DE_LA_GUARDA = "segu_roles_agregar_permiso_al_rol"
+PERMISO_PROPIO = "segu_roles_crear_rol"
 
 CONSULTA = """
 {
@@ -54,7 +55,9 @@ def ana(empresa_a, activo):
 
 @pytest.fixture
 def edita_roles(ana, empresa_a, activo):
-    darle_el_permiso(ana, empresa_a.id, activo.id, PERMISO_DE_LA_GUARDA)
+    darle_el_permiso(
+        ana, empresa_a.id, activo.id, PERMISO_DE_LA_GUARDA, PERMISO_PROPIO
+    )
     return ana
 
 
@@ -77,24 +80,29 @@ def test_sin_el_permiso_de_editar_roles_el_catalogo_no_se_ve(ana, empresa_a):
 
 
 def test_el_catalogo_no_trae_los_permisos_internos_de_django(
-    edita_roles, empresa_a, permiso_de_negocio
+    edita_roles, empresa_a
 ):
-    permiso_de_negocio("segu_roles_crear_rol", "Crear rol")
-
     codigos = {linea["codigo"] for linea in _correr(edita_roles, empresa_a.id)}
 
-    assert any(codigo.endswith(".segu_roles_crear_rol") for codigo in codigos)
+    assert any(codigo.endswith("." + PERMISO_PROPIO) for codigo in codigos)
     assert not any("logentry" in codigo or "session" in codigo for codigo in codigos)
 
 
-def test_sin_catalogo_de_modulos_el_permiso_llega_sin_pantalla(
+def test_el_catalogo_no_trae_los_permisos_que_no_se_tienen(
     edita_roles, empresa_a, permiso_de_negocio
 ):
-    permiso_de_negocio("segu_roles_crear_rol", "Crear rol")
+    permiso_de_negocio("vent_facturas_anular", "Anular factura")
 
-    linea = _buscar(_correr(edita_roles, empresa_a.id), "segu_roles_crear_rol")
+    codigos = {linea["codigo"] for linea in _correr(edita_roles, empresa_a.id)}
 
-    assert linea["etiqueta"] == "Crear rol"
+    assert not any(codigo.endswith(".vent_facturas_anular") for codigo in codigos)
+
+
+def test_sin_catalogo_de_modulos_el_permiso_llega_sin_pantalla(
+    edita_roles, empresa_a
+):
+    linea = _buscar(_correr(edita_roles, empresa_a.id), PERMISO_PROPIO)
+
     assert linea["pantalla"] is None
     assert linea["modulo"] is None
 
@@ -102,7 +110,7 @@ def test_sin_catalogo_de_modulos_el_permiso_llega_sin_pantalla(
 def test_con_la_funcionalidad_el_permiso_llega_con_su_pantalla_y_su_modulo(
     edita_roles, empresa_a, permiso_de_negocio, activo
 ):
-    permiso = permiso_de_negocio("segu_roles_crear_rol", "Crear rol")
+    permiso = permiso_de_negocio(PERMISO_PROPIO)
     seguridad = modulos.crear(
         codigo="SEGU", nombre="Seguridad", estado_id=activo.id
     )
@@ -120,7 +128,7 @@ def test_con_la_funcionalidad_el_permiso_llega_con_su_pantalla_y_su_modulo(
         estado_id=activo.id,
     )
 
-    linea = _buscar(_correr(edita_roles, empresa_a.id), "segu_roles_crear_rol")
+    linea = _buscar(_correr(edita_roles, empresa_a.id), PERMISO_PROPIO)
 
     assert linea["etiqueta"] == "Crear un rol nuevo"
     assert linea["pantalla"] == "Roles"

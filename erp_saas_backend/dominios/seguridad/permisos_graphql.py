@@ -107,6 +107,28 @@ def exigir_permiso(info, codigo: str) -> None:
     _exigir_codigo(usuario, codigo)
 
 
+def permisos_otorgables(info) -> set[str] | None:
+    """Los códigos que quien llama puede delegar. `None` es sin límite.
+
+    Nadie otorga lo que no tiene. El proveedor queda sin límite porque no
+    trabaja en la empresa del cliente: con el límite puesto no podría armarle
+    el rol de administrador al darlo de alta.
+    """
+    from comun.membresias import api as membresias
+    from dominios.seguridad import api as seguridad
+
+    usuario = usuario_de_la_sesion(info)
+    if usuario is None or not usuario.is_authenticated:
+        return set()
+    if usuario.is_superuser:
+        return None
+
+    membresia = membresias.membresia_de(usuario.pk)
+    if membresia is None:
+        return set()
+    return seguridad.permisos_de(membresia.pk)
+
+
 def _exigir_codigo(usuario, codigo: str) -> None:
     if usuario.is_superuser:
         return
@@ -232,6 +254,7 @@ __all__ = [
     "usuario_de_la_sesion",
     "usuario_de_request",
     "exigir_permiso",
+    "permisos_otorgables",
     "requiere_autenticacion",
     "requiere_permiso",
     "solo_proveedor",

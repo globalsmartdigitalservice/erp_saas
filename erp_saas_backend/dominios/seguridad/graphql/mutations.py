@@ -6,6 +6,7 @@ from graphql import GraphQLError
 
 from dominios.seguridad.permisos import auto_permisos
 from dominios.seguridad.permisos_graphql import (
+    permisos_otorgables,
     requiere_permiso,
     usuario_de_la_sesion,
 )
@@ -106,7 +107,9 @@ class SeguridadMutations:
     ) -> list[PermisoDelRolType]:
         try:
             lineas = seguridad.agregar_permiso(
-                grupo_id=int(rol_id), auth_permission_id=int(auth_permission_id)
+                grupo_id=int(rol_id),
+                auth_permission_id=int(auth_permission_id),
+                otorgables=permisos_otorgables(info),
             )
         except ValidationError as error:
             raise _traducir(error) from error
@@ -146,6 +149,7 @@ class SeguridadMutations:
                 fecha_fin=datos.fecha_fin,
                 motivo=datos.motivo,
                 asignado_por_id=_autor(info),
+                otorgables=permisos_otorgables(info),
             )
         except ValidationError as error:
             raise _traducir(error) from error

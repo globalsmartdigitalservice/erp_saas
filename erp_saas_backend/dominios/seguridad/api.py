@@ -81,10 +81,15 @@ def listar_catalogo_de_permisos() -> list[Permission]:
     return _repo_permiso.listar_catalogo()
 
 
-def agregar_permiso(*, grupo_id: int, auth_permission_id: int):
-    """Idempotente: marcarlo dos veces no falla ni duplica."""
+def agregar_permiso(*, grupo_id: int, auth_permission_id: int, otorgables=None):
+    """Idempotente: marcarlo dos veces no falla ni duplica.
+
+    `otorgables` son los códigos que puede delegar quien lo pide; en `None`,
+    sin límite."""
     return _svc.agregar_permiso(
-        grupo_id=grupo_id, auth_permission_id=auth_permission_id
+        grupo_id=grupo_id,
+        auth_permission_id=auth_permission_id,
+        otorgables=otorgables,
     )
 
 
@@ -137,9 +142,13 @@ def asignar_rol(
     fecha_fin: datetime.date | None = None,
     asignado_por_id: int | None = None,
     motivo: str = "",
+    otorgables=None,
 ) -> GrupoUsuario:
     """El rol puede ser de la casa matriz: es lo que permite definirlo una
-    sola vez arriba y usarlo en las 20 sucursales."""
+    sola vez arriba y usarlo en las 20 sucursales.
+
+    `otorgables` son los códigos que puede delegar quien lo pide; en `None`,
+    sin límite."""
     return _svc_asig.asignar(
         membresia_id=membresia_id,
         grupo_id=grupo_id,
@@ -148,6 +157,7 @@ def asignar_rol(
         fecha_fin=fecha_fin,
         asignado_por_id=asignado_por_id,
         motivo=motivo,
+        otorgables=otorgables,
     )
 
 
