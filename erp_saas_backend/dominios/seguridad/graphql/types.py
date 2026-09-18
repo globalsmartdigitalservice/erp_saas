@@ -31,6 +31,32 @@ class PermisoDelRolType:
         )
 
 
+@strawberry.type(name="PermisoDeCatalogo")
+class PermisoDeCatalogoType:
+    """Un permiso que existe en el sistema, tildable al armar un rol.
+
+    `pantalla` y `modulo` llegan vacíos si el catálogo de módulos todavía
+    no tiene ese permiso.
+    """
+
+    auth_permission_id: strawberry.ID
+    codigo: str
+    etiqueta: str
+    pantalla: str | None
+    modulo: str | None
+
+    @classmethod
+    def desde_modelo(cls, permiso, funcionalidad=None) -> "PermisoDeCatalogoType":
+        pantalla = funcionalidad.sub_modulo if funcionalidad else None
+        return cls(
+            auth_permission_id=strawberry.ID(str(permiso.pk)),
+            codigo=f"{permiso.content_type.app_label}.{permiso.codename}",
+            etiqueta=funcionalidad.nombre if funcionalidad else permiso.name,
+            pantalla=pantalla.nombre if pantalla else None,
+            modulo=pantalla.modulo_sistema.nombre if pantalla else None,
+        )
+
+
 @strawberry.type(name="Rol")
 class RolType:
     """

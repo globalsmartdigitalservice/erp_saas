@@ -9,6 +9,8 @@ configuración. Los datos no bajan: ésos siguen con filtro exacto."""
 
 import datetime
 
+from django.contrib.auth.models import Permission
+
 from dominios.seguridad.models import (
     Dispositivo,
     DispositivoUsuario,
@@ -21,6 +23,7 @@ from dominios.seguridad.models import (
 from dominios.seguridad.repository import acceso as _repo_acceso
 from dominios.seguridad.repository import grupo_empresa as _repo
 from dominios.seguridad.repository import grupo_usuario as _repo_asig
+from dominios.seguridad.repository import permiso as _repo_permiso
 from dominios.seguridad.services import grupo_empresa as _svc
 from dominios.seguridad.services import acceso as _svc_acceso
 from dominios.seguridad.services import dispositivos_y_horarios as _svc_eq
@@ -71,6 +74,11 @@ def desactivar_rol(grupo_id: int) -> GrupoEmpresa:
 
 def listar_permisos_del_rol(grupo_id: int) -> list[GrupoEmpresaPermiso]:
     return _repo.listar_permisos_de(grupo_id)
+
+
+def listar_catalogo_de_permisos() -> list[Permission]:
+    """Todos los permisos que existen, sin mirar quién los tiene."""
+    return _repo_permiso.listar_catalogo()
 
 
 def agregar_permiso(*, grupo_id: int, auth_permission_id: int):
@@ -264,6 +272,7 @@ __all__ = [
     "actualizar_rol",
     "desactivar_rol",
     "listar_permisos_del_rol",
+    "listar_catalogo_de_permisos",
     "agregar_permiso",
     "quitar_permiso",
     "obtener_asignacion",

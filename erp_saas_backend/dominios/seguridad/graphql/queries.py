@@ -8,6 +8,7 @@ import strawberry
 from core.tenancy import empresa_actual
 from dominios.seguridad import api as seguridad
 
+from comun.catalogo_modulos import api as modulos
 from comun.membresias import api as membresias
 from comun.membresias.graphql.types import EmpresaDelUsuarioType
 from comun.usuarios.graphql.types import UsuarioType
@@ -22,7 +23,20 @@ from .tipos_acceso import (
     HorarioAccesoType,
     VeredictoType,
 )
-from .types import MiembroType, PermisoDelRolType, RolAsignadoType, RolType
+from .types import (
+    MiembroType,
+    PermisoDeCatalogoType,
+    PermisoDelRolType,
+    RolAsignadoType,
+    RolType,
+)
+
+
+def _funcionalidades_por_permiso() -> dict[int, modulos.Funcionalidad]:
+    return {
+        funcionalidad.auth_permission_id: funcionalidad
+        for funcionalidad in modulos.listar_funcionalidades()
+    }
 
 
 @strawberry.type
@@ -60,6 +74,25 @@ class SeguridadQueries:
         return [
             PermisoDelRolType.desde_modelo(linea)
             for linea in seguridad.listar_permisos_del_rol(int(rol_id))
+        ]
+
+    @strawberry.field(
+        description=(
+            "Todos los permisos que existen, para armar un rol. `pantalla` y "
+            "`modulo` llegan vacíos mientras el catálogo de módulos no tenga "
+            "ese permiso."
+        )
+    )
+    @requiere_permiso("segu_roles_agregar_permiso_al_rol")
+    def catalogo_de_permisos(
+        self, info: strawberry.Info
+    ) -> list[PermisoDeCatalogoType]:
+        funcionalidades = _funcionalidades_por_permiso()
+        return [
+            PermisoDeCatalogoType.desde_modelo(
+                permiso, funcionalidades.get(permiso.pk)
+            )
+            for permiso in seguridad.listar_catalogo_de_permisos()
         ]
 
     @strawberry.field(
