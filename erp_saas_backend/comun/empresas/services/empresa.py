@@ -329,3 +329,14 @@ def exigir_del_grupo(empresa_id: int) -> int:
         raise ValidationError(f"No existe la empresa {empresa_id}.")
 
     return empresa_id
+
+
+def ids_de_rama(empresa_id: int) -> list[int]:
+    """Ella, su matriz y sus descendientes. Para validar nombres únicos.
+
+    Las HERMANAS quedan afuera: no se ven entre ellas, así que pueden
+    repetir un nombre sin molestar a nadie.
+    """
+    ids = set(ids_del_ambito(empresa_id))
+    ids.update(e.pk for e in descendientes_de(empresa_id))
+    return sorted(ids)

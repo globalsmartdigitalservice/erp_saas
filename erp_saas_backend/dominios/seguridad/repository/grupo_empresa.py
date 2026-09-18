@@ -47,16 +47,21 @@ def listar_con_cantidad_de_permisos(
     return list(qs)
 
 
-def existe_nombre_en_el_ambito(nombre: str, excluir_id: int | None = None) -> bool:
-    """Va sobre el manager, o sea sobre la empresa Y su matriz.
+def rol_homonimo_en_rama(
+    nombre: str, excluir_id: int | None = None
+) -> GrupoEmpresa | None:
+    """El rol que ya usa ese nombre en la rama, o `None`.
 
     Es lo que el `unique(empresa, nombre)` no puede hacer: para Postgres el
     "Cajero" de la matriz y el de la sucursal son filas de empresas distintas
-    y pasan las dos. Para el usuario es el mismo nombre repetido."""
-    qs = GrupoEmpresa.objects.filter(nombre=nombre)
+    y pasan las dos. Para el usuario es el mismo nombre repetido.
+
+    Devuelve la fila y no un bool porque el mensaje de error cambia según de
+    quién sea: de ella, de su matriz o de una sucursal suya."""
+    qs = GrupoEmpresa.objects.de_rama().filter(nombre=nombre)
     if excluir_id is not None:
         qs = qs.exclude(pk=excluir_id)
-    return qs.exists()
+    return qs.select_related("empresa").first()
 
 
 def crear(**campos) -> GrupoEmpresa:

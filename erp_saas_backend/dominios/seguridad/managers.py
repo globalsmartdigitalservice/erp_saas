@@ -35,6 +35,30 @@ class GrupoEmpresaManager(models.Manager):
         if filtro_desactivado():
             return qs
 
+        # Ella y su matriz: 1-2 búsquedas por clave primaria.
+        ambito = self._empresas().ids_del_ambito(self._exigir_empresa())
+        return qs.filter(empresa_id__in=ambito)
+
+    def de_rama(self):
+        """Ella, su matriz y sus descendientes. Solo para validar nombres.
+
+        El ACOTE vive acá y no en quien consulta: escrito afuera, el día que
+        alguien lo olvide la consulta devuelve los roles de todos los
+        clientes.
+        """
+        ids = self._empresas().ids_de_rama(self._exigir_empresa())
+        return super().get_queryset().filter(empresa_id__in=ids)
+
+    @staticmethod
+    def _empresas():
+        # El import va acá adentro: `models` importa este archivo para
+        # declarar el manager, y al tope se haría circular.
+        from comun.empresas import api as empresas
+
+        return empresas
+
+    @staticmethod
+    def _exigir_empresa() -> int:
         empresa_id = empresa_actual()
         if empresa_id is None:
             # Acá SÍ se levanta, a diferencia de `TipologiaManager`:
@@ -44,14 +68,7 @@ class GrupoEmpresaManager(models.Manager):
                 "Se consultó GrupoEmpresa sin empresa en el contexto. "
                 "Si es a propósito, usá `with sin_filtro_de_empresa():`."
             )
-
-        # El import va acá adentro: `models` importa este archivo para
-        # declarar el manager, y al tope se haría circular.
-        from comun.empresas import api as empresas
-
-        # Ella y su matriz: 1-2 búsquedas por clave primaria.
-        ambito = empresas.ids_del_ambito(empresa_id)
-        return qs.filter(empresa_id__in=ambito)
+        return empresa_id
 
 
 class PermisoDeGrupoManager(models.Manager):

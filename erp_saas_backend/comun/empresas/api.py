@@ -61,6 +61,12 @@ def ids_del_ambito(empresa_id: int) -> list[int]:
     return _svc.ids_del_ambito(empresa_id)
 
 
+def ids_de_rama(empresa_id: int) -> list[int]:
+    """Ella, su matriz y sus descendientes. Para validar nombres únicos en
+    toda la rama; las hermanas quedan afuera."""
+    return _svc.ids_de_rama(empresa_id)
+
+
 def hay_empresas_con_idioma(idioma_id: int) -> bool:
     """Para el invariante de `idiomas`: no desactivar un idioma en uso."""
     return _repo.hay_con_idioma(idioma_id)
@@ -148,6 +154,7 @@ __all__ = [
     "matriz_de",
     "descendientes_de",
     "ids_del_ambito",
+    "ids_de_rama",
     "exigir_del_grupo",
     "hay_empresas_con_idioma",
     "idioma_de",

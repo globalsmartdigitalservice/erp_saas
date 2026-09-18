@@ -162,6 +162,48 @@ def test_la_sucursal_no_repite_un_nombre_que_ya_hereda(cadena, activo):
             seguridad.crear_rol(nombre="Cajero", estado_id=activo.id)
 
 
+def test_la_matriz_no_repite_un_nombre_que_ya_usa_una_sucursal(cadena, activo):
+    matriz, norte, _ = cadena
+    with empresa(norte.id):
+        seguridad.crear_rol(nombre="Limpiador", estado_id=activo.id)
+
+    with empresa(matriz.id):
+        with pytest.raises(ValidationError, match="Sucursal Norte"):
+            seguridad.crear_rol(nombre="Limpiador", estado_id=activo.id)
+
+
+def test_la_matriz_tampoco_puede_renombrar_a_ese_nombre(cadena, activo):
+    matriz, norte, _ = cadena
+    with empresa(norte.id):
+        seguridad.crear_rol(nombre="Limpiador", estado_id=activo.id)
+
+    with empresa(matriz.id):
+        rol = seguridad.crear_rol(nombre="Portero", estado_id=activo.id)
+        with pytest.raises(ValidationError, match="Sucursal Norte"):
+            seguridad.actualizar_rol(rol.id, nombre="Limpiador")
+
+
+def test_el_nombre_de_otro_cliente_no_bloquea(empresa_a, empresa_b, activo):
+    with empresa(empresa_b.id):
+        seguridad.crear_rol(nombre="Cajero", estado_id=activo.id)
+
+    with empresa(empresa_a.id):
+        rol = seguridad.crear_rol(nombre="Cajero", estado_id=activo.id)
+
+    assert rol.empresa_id == empresa_a.id
+
+
+def test_dos_sucursales_hermanas_si_pueden_repetir_el_nombre(cadena, activo):
+    _, norte, sur = cadena
+    with empresa(norte.id):
+        seguridad.crear_rol(nombre="Cajero", estado_id=activo.id)
+
+    with empresa(sur.id):
+        rol = seguridad.crear_rol(nombre="Cajero", estado_id=activo.id)
+
+    assert rol.empresa_id == sur.id
+
+
 def test_agregar_permiso_es_idempotente(empresa_a, activo, permiso):
     p = permiso("anular_factura")
     with empresa(empresa_a.id):

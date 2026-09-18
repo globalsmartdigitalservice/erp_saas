@@ -2,6 +2,7 @@ from django.contrib.auth.models import Permission
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
+from comun.empresas import api as empresas
 from comun.tipologias import api as tipologias
 from comun.tipologias.constantes import AGRUPADOR, NOMBRE_ESTADO_BAJA
 from core.tenancy import empresa_actual
@@ -20,11 +21,34 @@ def _validar_nombre(nombre: str, excluir_id: int | None = None) -> None:
     nombre = (nombre or "").strip()
     if not nombre:
         raise ValidationError("El nombre del rol no puede ir vacío.")
-    if repo.existe_nombre_en_el_ambito(nombre, excluir_id):
-        raise ValidationError(
+
+    homonimo = repo.rol_homonimo_en_rama(nombre, excluir_id)
+    if homonimo is not None:
+        raise ValidationError(_choque(homonimo, nombre))
+
+
+def _choque(homonimo, nombre: str) -> str:
+    """El mensaje dice qué hacer, y eso depende de quién sea el dueño.
+
+    A la matriz se le nombra la sucursal: es su propia organización y sin el
+    nombre no sabe a quién pedirle el cambio."""
+    if homonimo.empresa_id == empresa_actual():
+        return f"Ya tiene un rol llamado '{nombre}'."
+
+    if homonimo.empresa_id in _ids_de_arriba():
+        return (
             f"Ya puede usar un rol llamado '{nombre}'. Si es el de su casa "
             f"matriz, asígnelo directamente en vez de crear otro igual."
         )
+
+    return (
+        f"La sucursal {homonimo.empresa} ya tiene un rol llamado "
+        f"'{nombre}'. Elija otro nombre o pídale que renombre el suyo."
+    )
+
+
+def _ids_de_arriba() -> list[int]:
+    return empresas.ids_del_ambito(empresa_actual())
 
 
 def _exigir_que_sea_propio(grupo: GrupoEmpresa) -> None:
