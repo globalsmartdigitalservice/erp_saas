@@ -9,6 +9,7 @@ from core.tenancy import empresa_actual
 from dominios.seguridad.models import GrupoEmpresa
 from dominios.seguridad.repository import grupo_empresa as repo
 from dominios.seguridad.repository import grupo_usuario as repo_asig
+from dominios.seguridad.services.invariantes import preserva_quien_administra
 
 
 def _validar_estado(estado_id: int) -> None:
@@ -94,6 +95,7 @@ def crear(*, nombre: str, estado_id: int) -> GrupoEmpresa:
 
 
 @transaction.atomic
+@preserva_quien_administra
 def actualizar(
     grupo_id: int, *, nombre: str | None = None, estado_id: int | None = None
 ) -> GrupoEmpresa:
@@ -122,6 +124,7 @@ def actualizar(
 
 
 @transaction.atomic
+@preserva_quien_administra
 def desactivar(grupo_id: int) -> GrupoEmpresa:
     """
     Soft delete, con una condición: **no se da de baja un rol que alguien
@@ -186,6 +189,7 @@ def agregar_permiso(*, grupo_id: int, auth_permission_id: int, otorgables=None):
 
 
 @transaction.atomic
+@preserva_quien_administra
 def quitar_permiso(*, grupo_id: int, auth_permission_id: int):
     """Idempotente también: quitar lo que no estaba no es un error."""
     grupo = repo.obtener(grupo_id)

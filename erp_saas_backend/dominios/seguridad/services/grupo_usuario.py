@@ -13,17 +13,16 @@ from comun.tipologias.constantes import (
 )
 from core.tenancy import empresa_actual
 from dominios.seguridad.models import GrupoEmpresa, GrupoUsuario
-from dominios.seguridad.permisos import codename_de
 from dominios.seguridad.repository import grupo_empresa as repo_grupo
 from dominios.seguridad.repository import grupo_usuario as repo
-
-
-LLAVE_DE_ADMINISTRACION = codename_de("SEGU_ROLES", "asignar_rol")
-
-ULTIMA_PERSONA = (
-    "Es la última persona que puede administrar {empresa}. Asigne a otra "
-    "persona un rol que lo permita antes de continuar."
+from dominios.seguridad.services.invariantes import (
+    LLAVE_DE_ADMINISTRACION,
+    ULTIMA_PERSONA,
+    preserva_quien_administra,
 )
+
+
+SIN_CAMBIO = object()
 
 
 def _validar_estado(estado_id: int) -> None:
@@ -131,6 +130,7 @@ def asignar(
 
 
 @transaction.atomic
+@preserva_quien_administra
 def quitar(
     *, asignacion_id: int, fecha_fin: datetime.date | None = None
 ) -> GrupoUsuario:
@@ -163,10 +163,11 @@ def quitar(
 
 
 @transaction.atomic
+@preserva_quien_administra
 def actualizar(
     asignacion_id: int,
     *,
-    fecha_fin: datetime.date | None = None,
+    fecha_fin: datetime.date | None = SIN_CAMBIO,
     motivo: str | None = None,
     estado_id: int | None = None,
 ) -> GrupoUsuario:
@@ -184,18 +185,16 @@ def actualizar(
     if estado_id is not None:
         _validar_estado(estado_id)
 
-    if fecha_fin is not None:
+    if fecha_fin is not SIN_CAMBIO and fecha_fin is not None:
         _validar_fechas(asignacion.fecha_inicio, fecha_fin)
 
     campos = {
         campo: valor
-        for campo, valor in (
-            ("fecha_fin", fecha_fin),
-            ("motivo", motivo),
-            ("estado_id", estado_id),
-        )
+        for campo, valor in (("motivo", motivo), ("estado_id", estado_id))
         if valor is not None
     }
+    if fecha_fin is not SIN_CAMBIO:
+        campos["fecha_fin"] = fecha_fin
     if not campos:
         return asignacion
 

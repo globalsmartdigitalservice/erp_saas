@@ -14,7 +14,12 @@ from dominios.seguridad.permisos_graphql import (
 from core.tenancy import empresa_actual
 from dominios.seguridad import api as seguridad
 
-from .inputs import ActualizarRolInput, AsignarRolInput, CrearRolInput
+from .inputs import (
+    ActualizarAsignacionInput,
+    ActualizarRolInput,
+    AsignarRolInput,
+    CrearRolInput,
+)
 from .inputs_acceso import (
     AutorizarDispositivoInput,
     CargarExcepcionInput,
@@ -151,6 +156,33 @@ class SeguridadMutations:
                 asignado_por_id=_autor(info),
                 otorgables=permisos_otorgables(info),
             )
+        except ValidationError as error:
+            raise _traducir(error) from error
+        return RolAsignadoType.desde_modelo(fila, _a_rol(fila.grupo_empresa))
+
+    @strawberry.mutation(
+        description=(
+            "Cambia las fechas, el motivo o el estado de una asignación. Ni "
+            "la persona ni el rol se cambian: eso ya es otra asignación."
+        )
+    )
+    @requiere_permiso
+    def actualizar_asignacion(
+        self,
+        info: strawberry.Info,
+        asignacion_id: strawberry.ID,
+        datos: ActualizarAsignacionInput,
+    ) -> RolAsignadoType:
+        campos = {}
+        if datos.fecha_fin is not strawberry.UNSET:
+            campos["fecha_fin"] = datos.fecha_fin
+        if datos.motivo is not None:
+            campos["motivo"] = datos.motivo
+        if datos.estado_id is not None:
+            campos["estado_id"] = int(datos.estado_id)
+
+        try:
+            fila = seguridad.actualizar_asignacion(int(asignacion_id), **campos)
         except ValidationError as error:
             raise _traducir(error) from error
         return RolAsignadoType.desde_modelo(fila, _a_rol(fila.grupo_empresa))

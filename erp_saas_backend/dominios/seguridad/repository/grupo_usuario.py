@@ -47,7 +47,7 @@ def roles_vigentes_de(
 ) -> list[GrupoUsuario]:
     """Los roles que esa persona tiene HOY.
 
-     Las tres condiciones son necesarias. Sin la de `fecha_fin`, un
+     Las cuatro condiciones son necesarias. Sin la de `fecha_fin`, un
     reemplazo "por vacaciones" que venció en marzo seguiría habilitando en
     septiembre."""
     return roles_vigentes_de_varias([membresia_id], estado_id, hoy)
@@ -79,11 +79,30 @@ def asignaciones_con_permiso(
     )
 
 
-def _vigentes(qs, estado_id: int, hoy: datetime.date | None):
-    hoy = hoy or datetime.date.today()
-    return qs.filter(estado_id=estado_id, fecha_inicio__lte=hoy).filter(
-        Q(fecha_fin__isnull=True) | Q(fecha_fin__gte=hoy)
+def hay_permanente_con_permiso(
+    codename: str, estado_id: int, hoy: datetime.date | None = None
+) -> bool:
+    """Permanente es la asignación sin fecha de fin: la que no se vence sola."""
+    return (
+        _vigentes(GrupoUsuario.objects.all(), estado_id, hoy)
+        .filter(
+            fecha_fin__isnull=True,
+            usuario_empresa__estado_id=estado_id,
+            usuario_empresa__usuario__is_active=True,
+            grupo_empresa__permisos__auth_permission__codename=codename,
+        )
+        .exists()
     )
+
+
+def _vigentes(qs, estado_id: int, hoy: datetime.date | None):
+    """Vigente es la asignación y también su rol."""
+    hoy = hoy or datetime.date.today()
+    return qs.filter(
+        estado_id=estado_id,
+        grupo_empresa__estado_id=estado_id,
+        fecha_inicio__lte=hoy,
+    ).filter(Q(fecha_fin__isnull=True) | Q(fecha_fin__gte=hoy))
 
 
 def listar_de_membresias(membresia_ids) -> list[GrupoUsuario]:

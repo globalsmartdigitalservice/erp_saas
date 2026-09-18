@@ -537,3 +537,56 @@ def test_listar_roles_con_su_conteo_no_crece(empresa_a, activo, permiso):
         f"Con 1 rol cuesta {costo_uno} consultas y con 20 cuesta "
         f"{costo_veinte}: volvió el N+1 en listar_con_cantidad_de_permisos."
     )
+
+
+def test_un_rol_dado_de_baja_deja_de_otorgar_sus_permisos(
+    empresa_a, juan, afiliar, activo, de_baja, permiso
+):
+    membresia = afiliar(juan, empresa_a)
+    anular = permiso("anular_factura")
+
+    with empresa(empresa_a.id):
+        rol = seguridad.crear_rol(nombre="Cajero", estado_id=activo.id)
+        seguridad.agregar_permiso(grupo_id=rol.id, auth_permission_id=anular.id)
+        seguridad.asignar_rol(
+            membresia_id=membresia.id, grupo_id=rol.id, estado_id=activo.id
+        )
+        assert seguridad.permisos_de(membresia.id)
+
+        seguridad.actualizar_rol(rol.id, estado_id=de_baja.id)
+
+        assert seguridad.permisos_de(membresia.id) == set()
+
+
+def _asignacion_que_vence(la_empresa, membresia, activo, dias=30):
+    fin = datetime.date.today() + datetime.timedelta(days=dias)
+    rol = seguridad.crear_rol(nombre="Suplente", estado_id=activo.id)
+    asignacion = seguridad.asignar_rol(
+        membresia_id=membresia.id,
+        grupo_id=rol.id,
+        estado_id=activo.id,
+        fecha_fin=fin,
+    )
+    return asignacion, fin
+
+
+def test_la_fecha_de_fin_se_borra_mandandola_en_null(empresa_a, juan, afiliar, activo):
+    membresia = afiliar(juan, empresa_a)
+
+    with empresa(empresa_a.id):
+        asignacion, _ = _asignacion_que_vence(empresa_a, membresia, activo)
+
+        seguridad.actualizar_asignacion(asignacion.id, fecha_fin=None)
+
+        assert seguridad.obtener_asignacion(asignacion.id).fecha_fin is None
+
+
+def test_cambiar_el_motivo_no_toca_la_fecha_de_fin(empresa_a, juan, afiliar, activo):
+    membresia = afiliar(juan, empresa_a)
+
+    with empresa(empresa_a.id):
+        asignacion, fin = _asignacion_que_vence(empresa_a, membresia, activo)
+
+        seguridad.actualizar_asignacion(asignacion.id, motivo="cubre una licencia")
+
+        assert seguridad.obtener_asignacion(asignacion.id).fecha_fin == fin

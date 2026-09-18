@@ -32,3 +32,12 @@ class AsignarRolInput:
     fecha_inicio: datetime.date | None = None
     fecha_fin: datetime.date | None = None
     motivo: str = ""
+
+
+@strawberry.input(name="ActualizarAsignacionInput")
+class ActualizarAsignacionInput:
+    """`fechaFin` en `null` la BORRA; no mandarla la deja como estaba."""
+
+    fecha_fin: datetime.date | None = strawberry.UNSET
+    motivo: str | None = None
+    estado_id: strawberry.ID | None = None
