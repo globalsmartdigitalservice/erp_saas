@@ -28,7 +28,10 @@ export const MENU: ModuloDeMenu[] = [
     id: "seguridad",
     clave: "menu.seguridad",
     icono: UserCog,
-    pantallas: [{ ruta: "/seguridad/usuarios", clave: "menu.usuarios" }],
+    pantallas: [
+      { ruta: "/seguridad/usuarios", clave: "menu.usuarios" },
+      { ruta: "/seguridad/roles", clave: "menu.roles" },
+    ],
   },
   {
     id: "configuracion",
