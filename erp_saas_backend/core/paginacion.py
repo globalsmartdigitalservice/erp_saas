@@ -53,7 +53,7 @@ def validar_ventana(desde: int, limite: int) -> None:
     if desde + limite > VENTANA_MAXIMA:
         raise VentanaDemasiadoProfunda(
             f"No se puede avanzar más allá de {VENTANA_MAXIMA:,} registros. "
-            f"Usá los filtros para acotar la búsqueda en vez de seguir "
+            f"Use los filtros para acotar la búsqueda en vez de seguir "
             f"pasando páginas."
         )
 

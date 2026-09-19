@@ -118,7 +118,7 @@ def desactivar(moneda_id: int) -> Moneda:
     if empresas.hay_empresas_con_moneda(moneda_id):
         raise ValidationError(
             f"'{moneda.codigo}' la está usando alguna empresa: no se puede "
-            f"sacar del catálogo. Quitásela a esas empresas primero."
+            f"sacar del catálogo. Quítesela a esas empresas primero."
         )
 
     inactivo = tipologias.obtener_del_sistema(

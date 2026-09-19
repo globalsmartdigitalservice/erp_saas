@@ -142,8 +142,8 @@ def desactivar(grupo_id: int) -> GrupoEmpresa:
 
     if repo_asig.hay_asignaciones_de_grupo(grupo_id):
         raise ValidationError(
-            f"No se puede dar de baja '{grupo.nombre}': hay gente que lo tiene "
-            f"asignado. Quitáselo primero a esas personas."
+            f"No se puede dar de baja '{grupo.nombre}': hay personas que "
+            f"todavía lo tienen asignado. Quíteselo primero a esas personas."
         )
 
     baja = tipologias.obtener_del_sistema(

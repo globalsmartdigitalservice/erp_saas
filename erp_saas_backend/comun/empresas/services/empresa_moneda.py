@@ -107,7 +107,7 @@ def quitar(empresa_id: int, moneda_id: int) -> int:
     if fila.es_moneda_oficial:
         raise ValidationError(
             f"'{moneda.codigo}' es la moneda oficial de esa empresa y no se "
-            f"puede quitar. Marcá otra como oficial primero."
+            f"puede quitar. Marque otra como oficial primero."
         )
 
     from comun.tipologias.constantes import NOMBRE_ESTADO_BAJA

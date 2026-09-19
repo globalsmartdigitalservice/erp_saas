@@ -94,7 +94,7 @@ def desactivar(modulo_id: int) -> ModuloSistema:
         codigos = sorted(d.modulo.codigo for d in dependientes)
         raise ValidationError(
             f"No se puede dar de baja '{fila.codigo}': lo necesitan "
-            f"{', '.join(codigos)}. Quitá primero esas dependencias."
+            f"{', '.join(codigos)}. Quite primero esas dependencias."
         )
 
     baja = tipologias.obtener_del_sistema(

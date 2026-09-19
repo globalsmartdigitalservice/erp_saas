@@ -368,7 +368,7 @@ def test_no_se_da_de_baja_un_rol_que_alguien_tiene(
             membresia_id=membresia.id, grupo_id=rol.id, estado_id=activo.id
         )
 
-        with pytest.raises(ValidationError, match="hay gente que lo tiene"):
+        with pytest.raises(ValidationError, match="hay personas que todavía lo tienen"):
             seguridad.desactivar_rol(rol.id)
 
 
