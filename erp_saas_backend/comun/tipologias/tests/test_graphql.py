@@ -118,7 +118,9 @@ def test_sin_semilla_no_hay_agrupadores_que_mostrar():
     assert resultado.data["agrupadores"] == []
 
 
-def test_mutation_crear_usa_la_empresa_del_contexto(empresa_a, permitir_ampliar):
+def test_mutation_crear_usa_la_empresa_del_contexto(
+    empresa_a, permitir_ampliar, contexto_superusuario,
+):
     permitir_ampliar(empresa_a, AGRUPADOR.RUBRO)
 
     consulta = """
@@ -130,7 +132,8 @@ def test_mutation_crear_usa_la_empresa_del_contexto(empresa_a, permitir_ampliar)
     """
     with empresa(empresa_a.id):
         resultado = schema.execute_sync(
-            consulta, variable_values={"ag": int(AGRUPADOR.RUBRO)}
+            consulta, variable_values={"ag": int(AGRUPADOR.RUBRO)},
+            context_value=contexto_superusuario,
         )
 
     assert resultado.errors is None
@@ -141,21 +144,24 @@ def test_mutation_crear_usa_la_empresa_del_contexto(empresa_a, permitir_ampliar)
     }
 
 
-def test_mutation_sin_empresa_da_error_legible():
+def test_mutation_sin_empresa_da_error_legible(contexto_superusuario):
     consulta = """
         mutation ($ag: Int!) {
           crearTipologia(datos: { agrupador: $ag, nombre: "Farmacia" }) { id }
         }
     """
     resultado = schema.execute_sync(
-        consulta, variable_values={"ag": int(AGRUPADOR.RUBRO)}
+        consulta, variable_values={"ag": int(AGRUPADOR.RUBRO)},
+        context_value=contexto_superusuario,
     )
 
     assert resultado.errors is not None
     assert "No hay empresa en el contexto" in resultado.errors[0].message
 
 
-def test_mutation_rechaza_editar_una_del_sistema(empresa_a, rubro_del_sistema):
+def test_mutation_rechaza_editar_una_del_sistema(
+    empresa_a, rubro_del_sistema, contexto_superusuario,
+):
     consulta = """
         mutation ($id: ID!) {
           actualizarTipologia(id: $id, datos: { nombre: "Robado" }) { nombre }
@@ -163,7 +169,8 @@ def test_mutation_rechaza_editar_una_del_sistema(empresa_a, rubro_del_sistema):
     """
     with empresa(empresa_a.id):
         resultado = schema.execute_sync(
-            consulta, variable_values={"id": str(rubro_del_sistema.pk)}
+            consulta, variable_values={"id": str(rubro_del_sistema.pk)},
+            context_value=contexto_superusuario,
         )
 
     assert resultado.errors is not None

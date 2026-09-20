@@ -99,7 +99,9 @@ def test_el_indice_sigue_la_numeracion_de_lo_heredado(
     assert propia.indice > de_la_matriz.indice
 
 
-def test_por_graphql_tampoco_hace_falta_mandar_indice(empresa_a, permitir_ampliar):
+def test_por_graphql_tampoco_hace_falta_mandar_indice(
+    empresa_a, permitir_ampliar, contexto_superusuario,
+):
     from config.schema import schema
 
     permitir_ampliar(empresa_a, AGRUPADOR.RUBRO)
@@ -113,7 +115,8 @@ def test_por_graphql_tampoco_hace_falta_mandar_indice(empresa_a, permitir_amplia
     """
     with empresa(empresa_a.id):
         resultado = schema.execute_sync(
-            consulta, variable_values={"ag": int(AGRUPADOR.RUBRO)}
+            consulta, variable_values={"ag": int(AGRUPADOR.RUBRO)},
+            context_value=contexto_superusuario,
         )
 
     assert resultado.errors is None

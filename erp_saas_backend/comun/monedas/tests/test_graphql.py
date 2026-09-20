@@ -129,7 +129,9 @@ def test_mutation_con_estado_invalido_devuelve_error_legible(
     assert "Se esperaba un estado de moneda" in resultado.errors[0].message
 
 
-def test_mutation_registrar_cotizacion(empresa_a, dolar, boliviano):
+def test_mutation_registrar_cotizacion(
+    empresa_a, dolar, boliviano, contexto_superusuario,
+):
     consulta = """
         mutation ($origen: ID!, $destino: ID!, $fecha: Date!) {
           registrarCotizacion(datos: {
@@ -146,6 +148,7 @@ def test_mutation_registrar_cotizacion(empresa_a, dolar, boliviano):
                 "destino": str(boliviano.pk),
                 "fecha": VIERNES.isoformat(),
             },
+            context_value=contexto_superusuario,
         )
 
     assert resultado.errors is None
@@ -153,7 +156,7 @@ def test_mutation_registrar_cotizacion(empresa_a, dolar, boliviano):
 
 
 def test_mutation_cotizar_una_moneda_contra_si_misma_da_error_legible(
-    empresa_a, boliviano
+    empresa_a, boliviano, contexto_superusuario,
 ):
     consulta = """
         mutation ($moneda: ID!, $fecha: Date!) {
@@ -170,13 +173,16 @@ def test_mutation_cotizar_una_moneda_contra_si_misma_da_error_legible(
                 "moneda": str(boliviano.pk),
                 "fecha": VIERNES.isoformat(),
             },
+            context_value=contexto_superusuario,
         )
 
     assert resultado.errors is not None
     assert "contra sí misma" in resultado.errors[0].message
 
 
-def test_mutation_anular_cotizacion(empresa_a, dolar, boliviano, estado_de_baja):
+def test_mutation_anular_cotizacion(
+    empresa_a, dolar, boliviano, estado_de_baja, contexto_superusuario,
+):
     consulta = """
         mutation ($id: ID!) { anularCotizacion(id: $id) { id } }
     """
@@ -188,7 +194,8 @@ def test_mutation_anular_cotizacion(empresa_a, dolar, boliviano, estado_de_baja)
             valor=decimal.Decimal("6.96"),
         )
         resultado = schema.execute_sync(
-            consulta, variable_values={"id": str(fila.pk)}
+            consulta, variable_values={"id": str(fila.pk)},
+            context_value=contexto_superusuario,
         )
 
         assert resultado.errors is None

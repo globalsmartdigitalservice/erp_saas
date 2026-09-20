@@ -132,7 +132,7 @@ def test_listar_entidades_no_crece_con_la_cantidad(
     )
 
 
-def test_mutation_crear_entidad(empresa_a, catalogo_entidades):
+def test_mutation_crear_entidad(empresa_a, catalogo_entidades, contexto_superusuario):
     with empresa(empresa_a.id):
         resultado = schema.execute_sync(
             """
@@ -149,6 +149,7 @@ def test_mutation_crear_entidad(empresa_a, catalogo_entidades):
                     "documento": "  1234567  ",
                 }
             },
+            context_value=contexto_superusuario,
         )
 
     assert resultado.errors is None
@@ -182,7 +183,9 @@ def test_el_input_no_acepta_empresa_id(empresa_a, catalogo_entidades):
     assert "empresaId" in str(resultado.errors[0])
 
 
-def test_el_error_del_service_llega_tal_cual(empresa_a, crear_entidad):
+def test_el_error_del_service_llega_tal_cual(
+    empresa_a, crear_entidad, contexto_superusuario,
+):
     with empresa(empresa_a.id):
         juan = crear_entidad("Juan", documento="1234567")
 
@@ -196,6 +199,7 @@ def test_el_error_del_service_llega_tal_cual(empresa_a, crear_entidad):
                 "id": str(juan.pk),
                 "datos": {"tipoEntidadId": "999999"},
             },
+            context_value=contexto_superusuario,
         )
 
     assert resultado.errors is not None
@@ -203,7 +207,12 @@ def test_el_error_del_service_llega_tal_cual(empresa_a, crear_entidad):
 
 
 def test_el_error_no_delata_la_categoria_de_otra_empresa(
-    empresa_a, empresa_b, crear_entidad, crear_categoria, catalogo_entidades
+    empresa_a,
+    empresa_b,
+    crear_entidad,
+    crear_categoria,
+    catalogo_entidades,
+    contexto_superusuario,
 ):
     with empresa(empresa_b.id):
         categoria_de_b = crear_categoria()
@@ -225,6 +234,7 @@ def test_el_error_no_delata_la_categoria_de_otra_empresa(
                     "categoriaEntidadId": str(categoria_de_b.pk),
                 }
             },
+            context_value=contexto_superusuario,
         )
 
     assert resultado.errors is not None
@@ -235,7 +245,7 @@ def test_el_error_no_delata_la_categoria_de_otra_empresa(
 
 
 def test_mutation_desactivar_contacto_devuelve_el_estado_de_baja(
-    empresa_a, crear_entidad, crear_contacto, catalogo_entidades
+    empresa_a, crear_entidad, crear_contacto, catalogo_entidades, contexto_superusuario,
 ):
     catalogo_entidades["tipologia"](AGRUPADOR.ESTADO_REGISTRO, NOMBRE_ESTADO_BAJA)
 
@@ -247,6 +257,7 @@ def test_mutation_desactivar_contacto_devuelve_el_estado_de_baja(
             "mutation ($id: ID!) { desactivarContactoEntidad(id: $id) "
             "{ id estado { nombre } } }",
             variable_values={"id": str(contacto.pk)},
+            context_value=contexto_superusuario,
         )
 
     assert resultado.errors is None

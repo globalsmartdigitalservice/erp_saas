@@ -5,6 +5,10 @@ from django.core.exceptions import ValidationError
 from graphql import GraphQLError
 
 from dominios.seguridad.permisos import auto_permisos
+from dominios.seguridad.permisos_graphql import (
+    requiere_autenticacion,
+    requiere_permiso,
+)
 
 from comun.tipologias import api as tipologias
 
@@ -23,7 +27,11 @@ class TipologiaMutations:
         description="Agrega un valor propio a una lista. La empresa sale del "
         "contexto, no del input."
     )
-    def crear_tipologia(self, datos: CrearTipologiaInput) -> TipologiaType:
+    @requiere_autenticacion
+    @requiere_permiso("conf_tipologias_crear_tipologia")
+    def crear_tipologia(
+        self, info: strawberry.Info, datos: CrearTipologiaInput
+    ) -> TipologiaType:
         try:
             fila = tipologias.crear(
                 agrupador=datos.agrupador,
@@ -38,8 +46,10 @@ class TipologiaMutations:
     @strawberry.mutation(
         description="Modifica una tipología propia. Rechaza las del sistema."
     )
+    @requiere_autenticacion
+    @requiere_permiso("conf_tipologias_actualizar_tipologia")
     def actualizar_tipologia(
-        self, id: strawberry.ID, datos: ActualizarTipologiaInput
+        self, info: strawberry.Info, id: strawberry.ID, datos: ActualizarTipologiaInput
     ) -> TipologiaType:
         campos = {
             "nombre": datos.nombre,
@@ -60,7 +70,11 @@ class TipologiaMutations:
         "empresa tiene sucursales, ellas también dejan de verla. Rechaza las "
         "de fábrica y las heredadas de la matriz — para ésas va ocultar."
     )
-    def desactivar_tipologia(self, id: strawberry.ID) -> TipologiaType:
+    @requiere_autenticacion
+    @requiere_permiso("conf_tipologias_desactivar_tipologia")
+    def desactivar_tipologia(
+        self, info: strawberry.Info, id: strawberry.ID
+    ) -> TipologiaType:
         try:
             fila = tipologias.desactivar(int(id))
         except ValidationError as e:
@@ -72,7 +86,9 @@ class TipologiaMutations:
         "matriz y las demás sucursales lo siguen viendo. Sirve para lo "
         "heredado y para lo propio. Idempotente."
     )
-    def ocultar_tipologia(self, id: strawberry.ID) -> bool:
+    @requiere_autenticacion
+    @requiere_permiso("conf_tipologias_ocultar_tipologia")
+    def ocultar_tipologia(self, info: strawberry.Info, id: strawberry.ID) -> bool:
         try:
             tipologias.ocultar(int(id))
         except ValidationError as e:
@@ -83,7 +99,9 @@ class TipologiaMutations:
         description="Vuelve a mostrar un valor oculto. Devuelve False si no "
         "estaba oculto — no es un error, ya se veía."
     )
-    def mostrar_tipologia(self, id: strawberry.ID) -> bool:
+    @requiere_autenticacion
+    @requiere_permiso("conf_tipologias_mostrar_tipologia")
+    def mostrar_tipologia(self, info: strawberry.Info, id: strawberry.ID) -> bool:
         try:
             borradas = tipologias.mostrar(int(id))
         except ValidationError as e:

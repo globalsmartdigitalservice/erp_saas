@@ -156,6 +156,24 @@ def contexto_proveedor(usuario_proveedor):
 
 
 @pytest.fixture
+def contexto_superusuario(db):
+    """Una sesión que pasa cualquier guard: el superusuario corta antes del permiso.
+
+    Es para los tests que prueban el RESOLVER y no la autorización. Esa tiene
+    sus propios tests en `dominios/seguridad`, y armar acá un rol con permisos
+    haría que cada test de otra cosa dependa del módulo 12.
+    """
+    from comun.usuarios.models import Usuario
+    from core.tests.contexto_graphql import Contexto
+
+    return Contexto(
+        Usuario.objects.create(
+            username="superusuario", email="super@erp.test", is_superuser=True
+        )
+    )
+
+
+@pytest.fixture
 def contexto_con_sesion(contexto_proveedor):
     """Cualquier sesión abierta, para los guards que solo piden estar dentro.
 

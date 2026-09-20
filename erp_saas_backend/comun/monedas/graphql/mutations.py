@@ -7,7 +7,11 @@ from django.core.exceptions import ValidationError
 from graphql import GraphQLError
 
 from dominios.seguridad.permisos import auto_permisos
-from dominios.seguridad.permisos_graphql import solo_proveedor
+from dominios.seguridad.permisos_graphql import (
+    requiere_autenticacion,
+    requiere_permiso,
+    solo_proveedor,
+)
 
 from comun.monedas import api as monedas
 from comun.tipologias import api as tipologias
@@ -100,7 +104,11 @@ class CotizacionMutations:
         "fecha, en la empresa activa. Una moneda no se cotiza contra sí "
         "misma: vale 1."
     )
-    def registrar_cotizacion(self, datos: RegistrarCotizacionInput) -> TipoCambioType:
+    @requiere_autenticacion
+    @requiere_permiso("core_cotizaciones_registrar_cotizacion")
+    def registrar_cotizacion(
+        self, info: strawberry.Info, datos: RegistrarCotizacionInput
+    ) -> TipoCambioType:
         try:
             fila = monedas.registrar_cotizacion(
                 moneda_origen_id=int(datos.moneda_origen_id),
@@ -117,8 +125,10 @@ class CotizacionMutations:
         "dedazo: 69.6 por 6.96). No reescribe documentos: cada uno guarda "
         "su tasa congelada."
     )
+    @requiere_autenticacion
+    @requiere_permiso("core_cotizaciones_corregir_cotizacion")
     def corregir_cotizacion(
-        self, id: strawberry.ID, valor: decimal.Decimal
+        self, info: strawberry.Info, id: strawberry.ID, valor: decimal.Decimal
     ) -> TipoCambioType:
         try:
             fila = monedas.corregir_cotizacion(int(id), valor)
@@ -131,7 +141,11 @@ class CotizacionMutations:
         "equivocada, cargada dos veces). Soft delete: deja de sugerirse pero "
         "la fila queda, así los documentos que la usaron siguen auditables."
     )
-    def anular_cotizacion(self, id: strawberry.ID) -> TipoCambioType:
+    @requiere_autenticacion
+    @requiere_permiso("core_cotizaciones_anular_cotizacion")
+    def anular_cotizacion(
+        self, info: strawberry.Info, id: strawberry.ID
+    ) -> TipoCambioType:
         try:
             fila = monedas.anular_cotizacion(int(id))
         except ValidationError as error:

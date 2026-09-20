@@ -5,6 +5,10 @@ from django.core.exceptions import ValidationError
 from graphql import GraphQLError
 
 from dominios.seguridad.permisos import auto_permisos
+from dominios.seguridad.permisos_graphql import (
+    requiere_autenticacion,
+    requiere_permiso,
+)
 
 from dominios.entidades import api as entidades
 
@@ -74,7 +78,11 @@ def _campos(datos, *nombres) -> dict:
 @strawberry.type
 class EntidadMutations:
     @strawberry.mutation(description="Crea una entidad en la empresa activa.")
-    def crear_entidad(self, datos: CrearEntidadInput) -> EntidadType:
+    @requiere_autenticacion
+    @requiere_permiso("ent_entidades_crear_entidad")
+    def crear_entidad(
+        self, info: strawberry.Info, datos: CrearEntidadInput
+    ) -> EntidadType:
         try:
             fila = entidades.crear_entidad(
                 tipo_entidad_id=int(datos.tipo_entidad_id),
@@ -92,8 +100,10 @@ class EntidadMutations:
         return _armar_entidades([fila])[0]
 
     @strawberry.mutation(description="Actualiza una entidad. Solo lo que mandes.")
+    @requiere_autenticacion
+    @requiere_permiso("ent_entidades_actualizar_entidad")
     def actualizar_entidad(
-        self, id: strawberry.ID, datos: ActualizarEntidadInput
+        self, info: strawberry.Info, id: strawberry.ID, datos: ActualizarEntidadInput
     ) -> EntidadType:
         try:
             fila = entidades.actualizar_entidad(
@@ -119,7 +129,11 @@ class EntidadMutations:
         description="Da de baja una entidad. Soft delete: no se borra, y "
         "sus roles y direcciones quedan intactos."
     )
-    def desactivar_entidad(self, id: strawberry.ID) -> EntidadType:
+    @requiere_autenticacion
+    @requiere_permiso("ent_entidades_desactivar_entidad")
+    def desactivar_entidad(
+        self, info: strawberry.Info, id: strawberry.ID
+    ) -> EntidadType:
         try:
             fila = entidades.desactivar_entidad(int(id))
         except ValidationError as error:
@@ -132,8 +146,10 @@ class EntidadMutations:
 @strawberry.type
 class CategoriaEntidadMutations:
     @strawberry.mutation(description="Crea una categoría de entidad.")
+    @requiere_autenticacion
+    @requiere_permiso("ent_categorias_crear_categoria_entidad")
     def crear_categoria_entidad(
-        self, datos: CrearCategoriaEntidadInput
+        self, info: strawberry.Info, datos: CrearCategoriaEntidadInput
     ) -> CategoriaEntidadType:
         try:
             fila = entidades.crear_categoria(
@@ -149,8 +165,13 @@ class CategoriaEntidadMutations:
         return _armar_categoria(fila)
 
     @strawberry.mutation(description="Actualiza una categoría de entidad.")
+    @requiere_autenticacion
+    @requiere_permiso("ent_categorias_actualizar_categoria_entidad")
     def actualizar_categoria_entidad(
-        self, id: strawberry.ID, datos: ActualizarCategoriaEntidadInput
+        self,
+        info: strawberry.Info,
+        id: strawberry.ID,
+        datos: ActualizarCategoriaEntidadInput,
     ) -> CategoriaEntidadType:
         try:
             fila = entidades.actualizar_categoria(
@@ -173,8 +194,10 @@ class CategoriaEntidadMutations:
         description="Da de baja una categoría. Soft delete: los roles que "
         "ya la tienen asignada no se tocan."
     )
+    @requiere_autenticacion
+    @requiere_permiso("ent_categorias_desactivar_categoria_entidad")
     def desactivar_categoria_entidad(
-        self, id: strawberry.ID
+        self, info: strawberry.Info, id: strawberry.ID
     ) -> CategoriaEntidadType:
         try:
             fila = entidades.desactivar_categoria(int(id))
@@ -190,7 +213,11 @@ class RolEntidadMutations:
     @strawberry.mutation(
         description="Le da un rol a una entidad: cliente, proveedor, etc."
     )
-    def crear_rol_entidad(self, datos: CrearRolEntidadInput) -> RolEntidadType:
+    @requiere_autenticacion
+    @requiere_permiso("ent_roles_crear_rol_entidad")
+    def crear_rol_entidad(
+        self, info: strawberry.Info, datos: CrearRolEntidadInput
+    ) -> RolEntidadType:
         try:
             fila = entidades.crear_rol(
                 entidad_id=int(datos.entidad_id),
@@ -209,8 +236,10 @@ class RolEntidadMutations:
         description="Actualiza un rol. La entidad y el tipo NO se cambian: "
         "son lo que ese rol es."
     )
+    @requiere_autenticacion
+    @requiere_permiso("ent_roles_actualizar_rol_entidad")
     def actualizar_rol_entidad(
-        self, id: strawberry.ID, datos: ActualizarRolEntidadInput
+        self, info: strawberry.Info, id: strawberry.ID, datos: ActualizarRolEntidadInput
     ) -> RolEntidadType:
         try:
             fila = entidades.actualizar_rol(
@@ -232,7 +261,11 @@ class RolEntidadMutations:
         description="Da de baja un rol. La entidad sigue existiendo; deja "
         "de actuar en ese papel."
     )
-    def desactivar_rol_entidad(self, id: strawberry.ID) -> RolEntidadType:
+    @requiere_autenticacion
+    @requiere_permiso("ent_roles_desactivar_rol_entidad")
+    def desactivar_rol_entidad(
+        self, info: strawberry.Info, id: strawberry.ID
+    ) -> RolEntidadType:
         try:
             fila = entidades.desactivar_rol(int(id))
         except ValidationError as error:
@@ -245,7 +278,11 @@ class RolEntidadMutations:
 @strawberry.type
 class DetalleDeEntidadMutations:
     @strawberry.mutation(description="Le agrega una dirección a una entidad.")
-    def crear_direccion(self, datos: CrearDireccionInput) -> DireccionType:
+    @requiere_autenticacion
+    @requiere_permiso("ent_detalles_crear_direccion")
+    def crear_direccion(
+        self, info: strawberry.Info, datos: CrearDireccionInput
+    ) -> DireccionType:
         try:
             fila = entidades.crear_direccion(
                 entidad_id=int(datos.entidad_id),
@@ -265,8 +302,10 @@ class DetalleDeEntidadMutations:
         return _armar_direcciones([fila])[0]
 
     @strawberry.mutation(description="Actualiza una dirección.")
+    @requiere_autenticacion
+    @requiere_permiso("ent_detalles_actualizar_direccion")
     def actualizar_direccion(
-        self, id: strawberry.ID, datos: ActualizarDireccionInput
+        self, info: strawberry.Info, id: strawberry.ID, datos: ActualizarDireccionInput
     ) -> DireccionType:
         try:
             fila = entidades.actualizar_direccion(
@@ -290,7 +329,11 @@ class DetalleDeEntidadMutations:
         return _armar_direcciones([fila])[0]
 
     @strawberry.mutation(description="Da de baja una dirección. Soft delete.")
-    def desactivar_direccion(self, id: strawberry.ID) -> DireccionType:
+    @requiere_autenticacion
+    @requiere_permiso("ent_detalles_desactivar_direccion")
+    def desactivar_direccion(
+        self, info: strawberry.Info, id: strawberry.ID
+    ) -> DireccionType:
         try:
             fila = entidades.desactivar_direccion(int(id))
         except ValidationError as error:
@@ -299,8 +342,10 @@ class DetalleDeEntidadMutations:
         return _armar_direcciones([fila])[0]
 
     @strawberry.mutation(description="Le agrega un contacto a una entidad.")
+    @requiere_autenticacion
+    @requiere_permiso("ent_detalles_crear_contacto_entidad")
     def crear_contacto_entidad(
-        self, datos: CrearContactoEntidadInput
+        self, info: strawberry.Info, datos: CrearContactoEntidadInput
     ) -> ContactoEntidadType:
         try:
             fila = entidades.crear_contacto(
@@ -317,8 +362,13 @@ class DetalleDeEntidadMutations:
         return _armar_contactos([fila])[0]
 
     @strawberry.mutation(description="Actualiza un contacto.")
+    @requiere_autenticacion
+    @requiere_permiso("ent_detalles_actualizar_contacto_entidad")
     def actualizar_contacto_entidad(
-        self, id: strawberry.ID, datos: ActualizarContactoEntidadInput
+        self,
+        info: strawberry.Info,
+        id: strawberry.ID,
+        datos: ActualizarContactoEntidadInput,
     ) -> ContactoEntidadType:
         try:
             fila = entidades.actualizar_contacto(
@@ -333,8 +383,10 @@ class DetalleDeEntidadMutations:
         return _armar_contactos([fila])[0]
 
     @strawberry.mutation(description="Da de baja un contacto. Soft delete.")
+    @requiere_autenticacion
+    @requiere_permiso("ent_detalles_desactivar_contacto_entidad")
     def desactivar_contacto_entidad(
-        self, id: strawberry.ID
+        self, info: strawberry.Info, id: strawberry.ID
     ) -> ContactoEntidadType:
         try:
             fila = entidades.desactivar_contacto(int(id))
@@ -347,8 +399,10 @@ class DetalleDeEntidadMutations:
         description="Registra una encuesta de satisfacción. No se edita ni "
         "se da de baja: es un hecho ocurrido en una fecha."
     )
+    @requiere_autenticacion
+    @requiere_permiso("ent_detalles_registrar_encuesta")
     def registrar_encuesta(
-        self, datos: RegistrarEncuestaInput
+        self, info: strawberry.Info, datos: RegistrarEncuestaInput
     ) -> EncuestaSatisfaccionType:
         try:
             fila = entidades.registrar_encuesta(

@@ -257,13 +257,16 @@ def test_el_schema_dice_cual_es_editable(empresa_a, sucursal_a, rubro_de):
     ]
 
 
-def test_las_mutations_de_ocultar_y_mostrar(empresa_a, sucursal_a, rubro_de):
+def test_las_mutations_de_ocultar_y_mostrar(
+    empresa_a, sucursal_a, rubro_de, contexto_superusuario,
+):
     de_la_matriz = rubro_de(empresa_a, "Farmacia")
 
     with empresa(sucursal_a.id):
         ocultar = schema.execute_sync(
             "mutation ($id: ID!) { ocultarTipologia(id: $id) }",
             variable_values={"id": str(de_la_matriz.pk)},
+            context_value=contexto_superusuario,
         )
         assert ocultar.errors is None
         assert ocultar.data["ocultarTipologia"] is True
@@ -274,6 +277,7 @@ def test_las_mutations_de_ocultar_y_mostrar(empresa_a, sucursal_a, rubro_de):
         mostrar = schema.execute_sync(
             "mutation ($id: ID!) { mostrarTipologia(id: $id) }",
             variable_values={"id": str(de_la_matriz.pk)},
+            context_value=contexto_superusuario,
         )
         assert mostrar.data["mostrarTipologia"] is True
 
