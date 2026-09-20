@@ -104,7 +104,7 @@ def test_al_entrar_llegan_las_dos_cookies(client, en_gimnasio):
     )
 
     assert response.json().get("errors") is None
-    assert settings.COOKIE_ACCESO in response.cookies
+    assert settings.COOKIE_ACCESS in response.cookies
     assert settings.COOKIE_REFRESH in response.cookies
 
 
@@ -116,7 +116,7 @@ def test_el_token_NO_viaja_en_la_respuesta(client, en_gimnasio):
     )
 
     cuerpo = response.content.decode()
-    valor = response.cookies[settings.COOKIE_ACCESO].value
+    valor = response.cookies[settings.COOKIE_ACCESS].value
 
     assert valor not in cuerpo
 
@@ -128,7 +128,7 @@ def test_la_cookie_es_httponly_y_samesite_lax(client, en_gimnasio):
         datos={"identificador": "juan", "password": "Kx7pLm9Qw2"},
     )
 
-    cookie = response.cookies[settings.COOKIE_ACCESO]
+    cookie = response.cookies[settings.COOKIE_ACCESS]
 
     assert cookie["httponly"]
     assert cookie["samesite"] == "Lax"
@@ -138,12 +138,12 @@ def test_secure_sigue_a_use_https(client, en_gimnasio, settings):
     settings.COOKIE_SECURE = False
     sin_https = _pedir(
         client, LOGIN, datos={"identificador": "juan", "password": "Kx7pLm9Qw2"}
-    ).cookies[settings.COOKIE_ACCESO]
+    ).cookies[settings.COOKIE_ACCESS]
 
     settings.COOKIE_SECURE = True
     con_https = _pedir(
         client, LOGIN, datos={"identificador": "juan", "password": "Kx7pLm9Qw2"}
-    ).cookies[settings.COOKIE_ACCESO]
+    ).cookies[settings.COOKIE_ACCESS]
 
     assert not sin_https["secure"]
     assert con_https["secure"]
@@ -178,7 +178,7 @@ def test_al_salir_la_sesion_se_termina(client, en_gimnasio):
 
 def test_un_token_manoseado_no_abre_sesion(client, en_gimnasio):
     _pedir(client, LOGIN, datos={"identificador": "juan", "password": "Kx7pLm9Qw2"})
-    client.cookies[settings.COOKIE_ACCESO] = "no.soy.un.token"
+    client.cookies[settings.COOKIE_ACCESS] = "no.soy.un.token"
 
     assert _pedir(client, "{ me { username } }").json()["data"]["me"] is None
 
@@ -198,7 +198,7 @@ def test_con_dos_empresas_no_se_abre_sesion_hasta_elegir(
     # Con dos cuentas del mismo correo, cualquiera de las dos fichas sería
     # arbitraria: no se manda ninguna hasta que elija.
     assert datos["usuario"] is None
-    assert settings.COOKIE_ACCESO not in response.cookies
+    assert settings.COOKIE_ACCESS not in response.cookies
 
 
 def test_elegir_empresa_abre_la_sesion_en_esa(

@@ -95,7 +95,7 @@ class SesionPorTokenMiddleware:
             restaurar_empresa(marca)
 
     def _leer_token(self, request) -> dict | None:
-        crudo = request.COOKIES.get(settings.COOKIE_ACCESO)
+        crudo = request.COOKIES.get(settings.COOKIE_ACCESS)
         if not crudo:
             return None
         try:

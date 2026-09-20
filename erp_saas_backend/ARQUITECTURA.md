@@ -325,13 +325,26 @@ python manage.py generar_permisos
 identificador estable: el nombre y la ruta cambian, y los permisos ya emitidos
 no se pueden mover con ellos.
 
-Proteger es otra cosa y va aparte:
+Proteger es otra cosa y va aparte. **Los dos decoradores, siempre, y el código
+del permiso escrito**:
 
 ```python
 @strawberry.mutation(description="...")
-@requiere_permiso
+@requiere_autenticacion
+@requiere_permiso("ventas_facturas_emitir_factura")
 def emitir_factura(self, info: strawberry.Info, ...): ...
 ```
+
+El código se lee arriba de la función, sin ir a buscar de dónde sale. Escribirlo
+es la convención aunque `@requiere_permiso` a secas también funcione: lo deduce
+del `recurso` de la clase más el nombre del método, que da lo mismo.
+
+⚠️ **La firma necesita `info: strawberry.Info`**, y no es opcional: de ahí sale
+quién está llamando. Sin él, el guard corta con un error que lo dice.
+
+⚠️ **El permiso tiene que existir en la base**, o la operación le da `FORBIDDEN`
+a todo el mundo, incluido el administrador. Lo crea `generar_permisos`, así que
+después de agregar una operación hay que volver a correrlo.
 
 ⚠️ **El orden importa:** `@strawberry.mutation` va siempre arriba de todo. Si
 quedara debajo, Strawberry registraría la función sin envolver y los guards no

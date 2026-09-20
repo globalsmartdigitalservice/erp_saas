@@ -32,22 +32,22 @@ def _poner_cookies(info, resultado) -> None:
         "secure": settings.COOKIE_SECURE,
     }
     response.set_cookie(
-        settings.COOKIE_ACCESO,
+        settings.COOKIE_ACCESS,
         resultado.acceso,
-        max_age=int(settings.JWT_VIDA_ACCESO.total_seconds()),
+        max_age=int(settings.JWT_ACCESS_TTL.total_seconds()),
         **comunes,
     )
     response.set_cookie(
         settings.COOKIE_REFRESH,
         resultado.refresh,
-        max_age=int(settings.JWT_VIDA_REFRESH.total_seconds()),
+        max_age=int(settings.JWT_REFRESH_TTL.total_seconds()),
         **comunes,
     )
 
 
 def _borrar_cookies(info) -> None:
     response = info.context.response
-    response.delete_cookie(settings.COOKIE_ACCESO)
+    response.delete_cookie(settings.COOKIE_ACCESS)
     response.delete_cookie(settings.COOKIE_REFRESH)
 
 
@@ -181,7 +181,7 @@ class LoginMutations:
         )
     )
     def logout(self, info: strawberry.Info) -> bool:
-        crudo = info.context.request.COOKIES.get(settings.COOKIE_ACCESO)
+        crudo = info.context.request.COOKIES.get(settings.COOKIE_ACCESS)
         _borrar_cookies(info)
 
         if not crudo:
