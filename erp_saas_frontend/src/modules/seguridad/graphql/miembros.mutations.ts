@@ -77,3 +77,14 @@ export const QUITAR_ROL = gql`
     }
   }
 `;
+
+export const ACTUALIZAR_ASIGNACION = gql`
+  mutation ActualizarAsignacion($asignacionId: ID!, $datos: ActualizarAsignacionInput!) {
+    actualizarAsignacion(asignacionId: $asignacionId, datos: $datos) {
+      id
+      fechaFin
+      motivo
+      estadoId
+    }
+  }
+`;

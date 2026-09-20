@@ -66,6 +66,7 @@ export const ROLES_DE_MIEMBRO = gql`
         id
         nombre
         esHeredado
+        estadoId
       }
     }
   }

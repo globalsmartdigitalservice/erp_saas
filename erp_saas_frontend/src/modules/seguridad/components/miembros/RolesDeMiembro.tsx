@@ -1,9 +1,10 @@
 import { useMutation, useQuery } from "@apollo/client";
-import { CircleAlert, Plus, ShieldCheck, X } from "lucide-react";
+import { CircleAlert, History, Pencil, Plus, ShieldCheck, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
+import { DialogoEditarAsignacion } from "@/modules/seguridad/components/miembros/DialogoEditarAsignacion";
 import { ASIGNAR_ROL, QUITAR_ROL } from "@/modules/seguridad/graphql/miembros.mutations";
 import {
   MIEMBROS,
@@ -11,8 +12,10 @@ import {
   ROLES_DE_MIEMBRO,
 } from "@/modules/seguridad/graphql/miembros.queries";
 import {
-  esVigente,
+  estadoDeAsignacion,
   fechaLegible,
+  ocupaElRol,
+  type EstadoDeAsignacion,
   type RolAsignable,
   type RolAsignadoDeMiembro,
 } from "@/modules/seguridad/types/miembro.types";
@@ -47,6 +50,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useTipologias } from "@/shared/hooks/useTipologias";
 import { mensajeDeError } from "@/shared/lib/errores";
+import { cn } from "@/shared/lib/utils";
 import { ABREV_ACTIVO } from "@/shared/types/tipologia.types";
 
 const RECARGAR = { refetchQueries: [ROLES_DE_MIEMBRO, MIEMBROS] };
@@ -58,7 +62,8 @@ type Props = {
 };
 
 export function RolesDeMiembro({ membresiaId, nombre }: Props) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const [verTerminadas, setVerTerminadas] = useState(false);
   const estados = useTipologias("ESTADO_REGISTRO");
   const activoId = estados.opciones.find((e) => e.abreviatura === ABREV_ACTIVO)?.id ?? null;
 
@@ -67,8 +72,17 @@ export function RolesDeMiembro({ membresiaId, nombre }: Props) {
     { variables: { membresiaId } },
   );
 
-  const vigentes = (data?.rolesDe ?? []).filter((asignacion) => esVigente(asignacion, activoId));
-  const asignados = vigentes.flatMap((asignacion) => (asignacion.rol ? [asignacion.rol.id] : []));
+  const asignaciones = (data?.rolesDe ?? []).map((asignacion) => ({
+    asignacion,
+    estado: estadoDeAsignacion(asignacion, activoId),
+  }));
+  const enCurso = asignaciones.filter((fila) => fila.estado !== "terminada");
+  const terminadas = asignaciones.filter((fila) => fila.estado === "terminada");
+  const visibles = verTerminadas ? [...enCurso, ...terminadas] : enCurso;
+
+  const ocupados = (data?.rolesDe ?? [])
+    .filter(ocupaElRol)
+    .flatMap((asignacion) => (asignacion.rol ? [asignacion.rol.id] : []));
 
   return (
     <Card>
@@ -77,55 +91,138 @@ export function RolesDeMiembro({ membresiaId, nombre }: Props) {
           <CardTitle className="text-base">{t("miembros.roles")}</CardTitle>
           <CardDescription>{t("miembros.rolesFichaAyuda")}</CardDescription>
         </div>
-        <DialogoAsignarRol membresiaId={membresiaId} asignados={asignados} activoId={activoId} />
+        <div className="flex shrink-0 items-center gap-2">
+          {terminadas.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-muted-foreground"
+              onClick={() => setVerTerminadas(!verTerminadas)}
+            >
+              <History size={14} aria-hidden="true" />
+              {verTerminadas
+                ? t("miembros.ocultarTerminadas")
+                : t("miembros.verTerminadas", { count: terminadas.length })}
+            </Button>
+          )}
+          <DialogoAsignarRol membresiaId={membresiaId} ocupados={ocupados} activoId={activoId} />
+        </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="space-y-4">
         {loading || estados.cargando ? (
           <Skeleton className="h-20 w-full" />
         ) : error ? (
           <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
             {mensajeDeError(error, t)}
           </p>
-        ) : vigentes.length === 0 ? (
-          <div className="flex items-start gap-3 rounded-md border border-dashed p-4">
-            <CircleAlert className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-            <div>
-              <p className="text-sm font-medium">{t("miembros.sinRol")}</p>
-              <p className="text-sm text-muted-foreground">{t("miembros.sinRolAyuda")}</p>
-            </div>
-          </div>
         ) : (
-          <ul className="divide-y">
-            {vigentes.map((asignacion) => (
-              <li
-                key={asignacion.id}
-                className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-              >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                  <ShieldCheck size={16} aria-hidden="true" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{asignacion.rol?.nombre}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {t("miembros.desdeFecha", {
-                      fecha: fechaLegible(asignacion.fechaInicio, i18n.language),
-                    })}
-                    {asignacion.motivo && ` · ${asignacion.motivo}`}
-                  </p>
+          <>
+            {enCurso.length === 0 && (
+              <div className="flex items-start gap-3 rounded-md border border-dashed p-4">
+                <CircleAlert
+                  className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <div>
+                  <p className="text-sm font-medium">{t("miembros.sinRol")}</p>
+                  <p className="text-sm text-muted-foreground">{t("miembros.sinRolAyuda")}</p>
                 </div>
-                {asignacion.rol?.esHeredado && (
-                  <Badge variant="outline" className="hidden font-normal sm:inline-flex">
-                    {t("miembros.rolHeredado")}
-                  </Badge>
-                )}
-                <QuitarRol asignacion={asignacion} nombre={nombre} />
-              </li>
-            ))}
-          </ul>
+              </div>
+            )}
+
+            {visibles.length > 0 && (
+              <ul className="divide-y">
+                {visibles.map((fila) => (
+                  <FilaDeAsignacion
+                    key={fila.asignacion.id}
+                    asignacion={fila.asignacion}
+                    estado={fila.estado}
+                    nombre={nombre}
+                  />
+                ))}
+              </ul>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function FilaDeAsignacion({
+  asignacion,
+  estado,
+  nombre,
+}: {
+  asignacion: RolAsignadoDeMiembro;
+  estado: EstadoDeAsignacion;
+  nombre: string;
+}) {
+  const { t, i18n } = useTranslation();
+  const [editando, setEditando] = useState(false);
+
+  return (
+    <li
+      className={cn(
+        "flex items-center gap-3 py-3 first:pt-0 last:pb-0",
+        (estado === "terminada" || estado === "rolDeBaja") && "opacity-60",
+      )}
+    >
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+        <ShieldCheck size={16} aria-hidden="true" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-medium">{asignacion.rol?.nombre}</p>
+        <p className="truncate text-xs text-muted-foreground">
+          {t("miembros.desdeFecha", {
+            fecha: fechaLegible(asignacion.fechaInicio, i18n.language),
+          })}
+          {asignacion.fechaFin &&
+            ` · ${t("miembros.hastaFecha", {
+              fecha: fechaLegible(asignacion.fechaFin, i18n.language),
+            })}`}
+          {asignacion.motivo && ` · ${asignacion.motivo}`}
+        </p>
+      </div>
+
+      {estado === "programada" && (
+        <Badge variant="outline" className="hidden font-normal sm:inline-flex">
+          {t("miembros.asignacionProgramada")}
+        </Badge>
+      )}
+      {estado === "rolDeBaja" && (
+        <Badge variant="outline" className="hidden font-normal text-destructive sm:inline-flex">
+          {t("miembros.asignacionRolDeBaja")}
+        </Badge>
+      )}
+      {estado === "terminada" && (
+        <Badge variant="outline" className="hidden font-normal sm:inline-flex">
+          {t("miembros.asignacionTerminada")}
+        </Badge>
+      )}
+      {asignacion.rol?.esHeredado && (
+        <Badge variant="outline" className="hidden font-normal sm:inline-flex">
+          {t("miembros.rolHeredado")}
+        </Badge>
+      )}
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-8 shrink-0 text-muted-foreground"
+        title={t("miembros.editarAsignacion")}
+        onClick={() => setEditando(true)}
+      >
+        <Pencil size={15} aria-hidden="true" />
+        <span className="sr-only">{t("miembros.editarAsignacion")}</span>
+      </Button>
+      {ocupaElRol(asignacion) && <QuitarRol asignacion={asignacion} nombre={nombre} />}
+
+      {editando && (
+        <DialogoEditarAsignacion asignacion={asignacion} onCerrar={() => setEditando(false)} />
+      )}
+    </li>
   );
 }
 
@@ -169,11 +266,11 @@ function QuitarRol({
 
 function DialogoAsignarRol({
   membresiaId,
-  asignados,
+  ocupados,
   activoId,
 }: {
   membresiaId: string;
-  asignados: string[];
+  ocupados: string[];
   activoId: string | null;
 }) {
   const { t } = useTranslation();
@@ -197,7 +294,7 @@ function DialogoAsignarRol({
         {activoId && (
           <FormularioAsignarRol
             membresiaId={membresiaId}
-            asignados={asignados}
+            ocupados={ocupados}
             activoId={activoId}
             onCerrar={() => setAbierto(false)}
           />
@@ -209,12 +306,12 @@ function DialogoAsignarRol({
 
 function FormularioAsignarRol({
   membresiaId,
-  asignados,
+  ocupados,
   activoId,
   onCerrar,
 }: {
   membresiaId: string;
-  asignados: string[];
+  ocupados: string[];
   activoId: string;
   onCerrar: () => void;
 }) {
@@ -225,7 +322,7 @@ function FormularioAsignarRol({
   const roles = useQuery<{ roles: RolAsignable[] }>(ROLES_ASIGNABLES, {
     variables: { estadoId: activoId },
   });
-  const disponibles = (roles.data?.roles ?? []).filter((rol) => !asignados.includes(rol.id));
+  const disponibles = (roles.data?.roles ?? []).filter((rol) => !ocupados.includes(rol.id));
 
   const [asignar, { loading, error }] = useMutation(ASIGNAR_ROL, RECARGAR);
 

@@ -151,7 +151,19 @@
     "quitarRol": "Quitar rol",
     "quitarRolTitulo": "¿Quitarle el rol {{rol}} a {{nombre}}?",
     "quitarRolAyuda": "La asignación no se borra: queda en el historial con su fecha de fin.",
-    "rolQuitado": "Rol quitado"
+    "rolQuitado": "Rol quitado",
+    "editarAsignacion": "Editar la asignación",
+    "editarAsignacionAyuda": "El rol y la persona no se cambian.",
+    "fechaFin": "Fecha de fin",
+    "fechaFinAyuda": "Déjela vacía para que el rol no venza.",
+    "asignacionGuardada": "Asignación actualizada",
+    "guardando": "Guardando…",
+    "asignacionProgramada": "Programada",
+    "asignacionRolDeBaja": "Rol dado de baja: no otorga permisos",
+    "asignacionTerminada": "Terminada",
+    "verTerminadas_one": "Ver {{count}} terminada",
+    "verTerminadas_other": "Ver {{count}} terminadas",
+    "ocultarTerminadas": "Ocultar terminadas"
   },
   "paginacion": {
     "mostrando": "Mostrando {{inicio}} a {{fin}} de {{total}}",

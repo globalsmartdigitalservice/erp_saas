@@ -151,7 +151,19 @@
     "quitarRol": "Remove role",
     "quitarRolTitulo": "Remove the {{rol}} role from {{nombre}}?",
     "quitarRolAyuda": "The assignment is not deleted: it stays in the history with its end date.",
-    "rolQuitado": "Role removed"
+    "rolQuitado": "Role removed",
+    "editarAsignacion": "Edit assignment",
+    "editarAsignacionAyuda": "The role and the person cannot be changed.",
+    "fechaFin": "End date",
+    "fechaFinAyuda": "Leave it empty for the role not to expire.",
+    "asignacionGuardada": "Assignment updated",
+    "guardando": "Saving…",
+    "asignacionProgramada": "Scheduled",
+    "asignacionRolDeBaja": "Deactivated role: it grants no permissions",
+    "asignacionTerminada": "Ended",
+    "verTerminadas_one": "View {{count}} ended",
+    "verTerminadas_other": "View {{count}} ended",
+    "ocultarTerminadas": "Hide ended"
   },
   "paginacion": {
     "mostrando": "Showing {{inicio}} to {{fin}} of {{total}}",

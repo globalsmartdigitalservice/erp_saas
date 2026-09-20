@@ -64,25 +64,53 @@ export type MembresiaDeMiembro = {
   estadoId: string;
 };
 
+export type RolDeAsignacion = RolAsignable & {
+  estadoId: string;
+};
+
 export type RolAsignadoDeMiembro = {
   id: string;
   fechaInicio: string;
   fechaFin: string | null;
   motivo: string;
   estadoId: string;
-  rol: RolAsignable | null;
+  rol: RolDeAsignacion | null;
 };
 
-export function esVigente(
+export type CambiosDeAsignacion = {
+  fechaFin?: string | null;
+  motivo?: string;
+  estadoId?: string;
+};
+
+export type EstadoDeAsignacion = "vigente" | "programada" | "rolDeBaja" | "terminada";
+
+/**
+ * Las cuatro condiciones son las mismas que exige el backend en
+ * `_vigentes`: sin la del ROL, una asignación viva de un rol dado de baja
+ * se vería igual que una que otorga, y no otorga nada.
+ */
+export function estadoDeAsignacion(
   asignacion: RolAsignadoDeMiembro,
   activoId: string | null,
   hoy: string = new Date().toLocaleDateString("sv-SE"),
-): boolean {
-  return (
-    asignacion.estadoId === activoId &&
-    asignacion.fechaInicio <= hoy &&
-    (asignacion.fechaFin === null || asignacion.fechaFin >= hoy)
-  );
+): EstadoDeAsignacion {
+  if (asignacion.estadoId !== activoId) return "terminada";
+  if (asignacion.fechaFin !== null && asignacion.fechaFin < hoy) return "terminada";
+  if (asignacion.rol !== null && asignacion.rol.estadoId !== activoId) return "rolDeBaja";
+  if (asignacion.fechaInicio > hoy) return "programada";
+  return "vigente";
+}
+
+/**
+ * Si ocupa el rol, asignarlo de nuevo lo rechaza el backend.
+ *
+ * Mira SOLO la fecha de fin, igual que `hay_asignacion_vigente`: una
+ * asignación dada de baja pero sin fecha de fin sigue ocupando el lugar,
+ * aunque no esté vigente.
+ */
+export function ocupaElRol(asignacion: RolAsignadoDeMiembro): boolean {
+  return asignacion.fechaFin === null;
 }
 
 export function fechaLegible(fecha: string, idioma: string): string {
