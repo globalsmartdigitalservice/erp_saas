@@ -7,6 +7,7 @@ from graphql import GraphQLError
 from dominios.seguridad.permisos import auto_permisos
 from dominios.seguridad.permisos_graphql import (
     permisos_otorgables,
+    requiere_autenticacion,
     requiere_permiso,
     usuario_de_la_sesion,
 )
@@ -55,7 +56,8 @@ class SeguridadMutations:
     @strawberry.mutation(
         description="Crea un rol EN LA EMPRESA ACTIVA. La empresa no se manda."
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_roles_crear_rol")
     def crear_rol(self, info: strawberry.Info, datos: CrearRolInput) -> RolType:
         try:
             fila = seguridad.crear_rol(
@@ -72,7 +74,8 @@ class SeguridadMutations:
             "sucursales."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_roles_actualizar_rol")
     def actualizar_rol(
         self,
         info: strawberry.Info, id: strawberry.ID, datos: ActualizarRolInput
@@ -86,7 +89,8 @@ class SeguridadMutations:
     @strawberry.mutation(
         description="Da de baja un rol. Falla si alguien todavía lo tiene."
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_roles_desactivar_rol")
     def desactivar_rol(self, info: strawberry.Info, id: strawberry.ID) -> RolType:
         try:
             fila = seguridad.desactivar_rol(int(id))
@@ -97,7 +101,8 @@ class SeguridadMutations:
     @strawberry.mutation(
         description="Vuelve a poner en servicio un rol dado de baja."
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_roles_reactivar_rol")
     def reactivar_rol(self, info: strawberry.Info, id: strawberry.ID) -> RolType:
         try:
             fila = seguridad.reactivar_rol(int(id))
@@ -111,7 +116,8 @@ class SeguridadMutations:
             "Marcarlo dos veces no falla ni duplica."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_roles_agregar_permiso_al_rol")
     def agregar_permiso_al_rol(
         self,
         info: strawberry.Info, rol_id: strawberry.ID, auth_permission_id: strawberry.ID
@@ -129,7 +135,8 @@ class SeguridadMutations:
     @strawberry.mutation(
         description="Le quita un permiso al rol. Quitar lo que no estaba no falla."
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_roles_quitar_permiso_del_rol")
     def quitar_permiso_del_rol(
         self,
         info: strawberry.Info, rol_id: strawberry.ID, auth_permission_id: strawberry.ID
@@ -149,7 +156,8 @@ class SeguridadMutations:
             "todas las sucursales."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_roles_asignar_rol")
     def asignar_rol(self, info: strawberry.Info, datos: AsignarRolInput) -> RolAsignadoType:
         try:
             fila = seguridad.asignar_rol(
@@ -172,7 +180,8 @@ class SeguridadMutations:
             "la persona ni el rol se cambian: eso ya es otra asignación."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_roles_actualizar_asignacion")
     def actualizar_asignacion(
         self,
         info: strawberry.Info,
@@ -199,7 +208,8 @@ class SeguridadMutations:
             "fila, porque es el historial de quién pudo qué."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_roles_quitar_rol")
     def quitar_rol(self, info: strawberry.Info, asignacion_id: strawberry.ID) -> RolAsignadoType:
         try:
             fila = seguridad.quitar_rol(asignacion_id=int(asignacion_id))
@@ -221,7 +231,8 @@ class AccesoMutations:
     """
 
     @strawberry.mutation(description="Da de alta un equipo en la empresa activa.")
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_equipos_registrar_dispositivo")
     def registrar_dispositivo(
         self,
         info: strawberry.Info, datos: RegistrarDispositivoInput
@@ -245,7 +256,8 @@ class AccesoMutations:
             "también tiene que ser de esta empresa."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_equipos_autorizar_dispositivo")
     def autorizar_dispositivo(
         self,
         info: strawberry.Info, datos: AutorizarDispositivoInput
@@ -266,7 +278,8 @@ class AccesoMutations:
     @strawberry.mutation(
         description="Le quita el equipo. NO borra la fila: es historial."
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_equipos_desautorizar_dispositivo")
     def desautorizar_dispositivo(
         self,
         info: strawberry.Info, autorizacion_id: strawberry.ID
@@ -285,7 +298,8 @@ class AccesoMutations:
             "VÁLIDO: es el turno que cruza la medianoche."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_equipos_cargar_horario")
     def cargar_horario(self, info: strawberry.Info, datos: CargarHorarioInput) -> HorarioAccesoType:
         try:
             fila = seguridad.cargar_horario(
@@ -302,7 +316,8 @@ class AccesoMutations:
         return HorarioAccesoType.desde_modelo(fila)
 
     @strawberry.mutation(description="Da de baja un tramo horario.")
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_equipos_quitar_horario")
     def quitar_horario(self, info: strawberry.Info, horario_id: strawberry.ID) -> HorarioAccesoType:
         try:
             fila = seguridad.quitar_horario(horario_id=int(horario_id))
@@ -313,7 +328,8 @@ class AccesoMutations:
     @strawberry.mutation(
         description="Un día suelto: PERMISO deja entrar, BLOQUEO lo impide."
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_equipos_cargar_excepcion")
     def cargar_excepcion(self, info: strawberry.Info, datos: CargarExcepcionInput) -> ExcepcionHorarioType:
         try:
             fila = seguridad.cargar_excepcion(
@@ -331,7 +347,8 @@ class AccesoMutations:
         return ExcepcionHorarioType.desde_modelo(fila)
 
     @strawberry.mutation(description="Da de baja una excepción.")
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_equipos_quitar_excepcion")
     def quitar_excepcion(self, info: strawberry.Info, excepcion_id: strawberry.ID) -> ExcepcionHorarioType:
         try:
             fila = seguridad.quitar_excepcion(excepcion_id=int(excepcion_id))

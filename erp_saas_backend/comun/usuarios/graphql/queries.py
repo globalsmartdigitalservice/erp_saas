@@ -6,12 +6,14 @@ from graphql import GraphQLError
 
 from comun.membresias import api as membresias
 from dominios.seguridad.permisos import auto_permisos
-from dominios.seguridad.permisos_graphql import requiere_permiso
+from dominios.seguridad.permisos_graphql import (
+    requiere_autenticacion,
+    requiere_permiso,
+)
 
 from .types import UsuarioType
 
 
-@auto_permisos(recurso="SEGU_USUARIOS")
 @strawberry.type
 class UsuarioQueries:
     @strawberry.field(
@@ -20,7 +22,8 @@ class UsuarioQueries:
             "lista completa use `miembros`."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_usuarios_ver")
     @auto_permisos(recurso="SEGU_USUARIOS", operacion="ver")
     def usuario(self, info: strawberry.Info, id: strawberry.ID) -> UsuarioType | None:
         try:

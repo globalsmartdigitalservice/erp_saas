@@ -7,16 +7,19 @@ from comun.usuarios import api as usuarios
 from comun.usuarios.graphql.types import UsuarioType
 
 from dominios.seguridad.permisos import auto_permisos
-from dominios.seguridad.permisos_graphql import requiere_permiso
+from dominios.seguridad.permisos_graphql import (
+    requiere_autenticacion,
+    requiere_permiso,
+)
 
 from .types import MembresiaType, PersonaEncontradaType
 
 
-@auto_permisos(recurso="SEGU_MIEMBROS")
 @strawberry.type
 class MembresiaQueries:
     @strawberry.field(description="La membresía de una persona en la empresa activa.")
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_miembros_ver")
     @auto_permisos(recurso="SEGU_MIEMBROS", operacion="ver")
     def membresia(
         self, info: strawberry.Info, usuario_id: strawberry.ID
@@ -36,7 +39,8 @@ class MembresiaQueries:
             "cliente."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_miembros_buscar_por_correo")
     @auto_permisos(recurso="SEGU_MIEMBROS", operacion="buscar_por_correo")
     def persona_por_correo(
         self, info: strawberry.Info, email: str

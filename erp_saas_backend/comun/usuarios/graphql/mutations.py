@@ -5,7 +5,10 @@ from django.core.exceptions import ValidationError
 from graphql import GraphQLError
 
 from dominios.seguridad.permisos import auto_permisos
-from dominios.seguridad.permisos_graphql import requiere_permiso
+from dominios.seguridad.permisos_graphql import (
+    requiere_autenticacion,
+    requiere_permiso,
+)
 
 from comun.membresias import api as membresias
 from comun.usuarios import api as usuarios
@@ -27,7 +30,8 @@ def _traducir(error: ValidationError) -> GraphQLError:
 @strawberry.type
 class UsuarioMutations:
     @strawberry.mutation(description="Los datos personales. La contraseña no.")
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_usuarios_actualizar_usuario")
     def actualizar_usuario(
         self,
         info: strawberry.Info, id: strawberry.ID, datos: ActualizarUsuarioInput

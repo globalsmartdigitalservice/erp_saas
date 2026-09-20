@@ -151,7 +151,7 @@ class EmpresaPaisMutations:
         "cambia; para eso se borra la ficha y se crea la del país nuevo."
     )
     @requiere_autenticacion
-    @requiere_permiso
+    @requiere_permiso("core_empresas_actualizar_pais_de_empresa")
     def actualizar_pais_de_empresa(
         self,
         info: strawberry.Info,
@@ -187,7 +187,7 @@ class EmpresaMonedaMutations:
         "queda como su moneda oficial: sin base de conversión no hay montoBase."
     )
     @requiere_autenticacion
-    @requiere_permiso
+    @requiere_permiso("core_empresas_agregar_moneda_a_empresa")
     def agregar_moneda_a_empresa(
         self,
         info: strawberry.Info,
@@ -210,7 +210,7 @@ class EmpresaMonedaMutations:
         "emitidos: cada uno guarda su montoBase."
     )
     @requiere_autenticacion
-    @requiere_permiso
+    @requiere_permiso("core_empresas_marcar_moneda_oficial")
     def marcar_moneda_oficial(
         self, info: strawberry.Info, moneda_id: strawberry.ID
     ) -> EmpresaMonedaType:
@@ -227,7 +227,7 @@ class EmpresaMonedaMutations:
         "delete. Rechaza la oficial: quedaría sin base de conversión."
     )
     @requiere_autenticacion
-    @requiere_permiso
+    @requiere_permiso("core_empresas_quitar_moneda_de_empresa")
     def quitar_moneda_de_empresa(
         self, info: strawberry.Info, moneda_id: strawberry.ID
     ) -> bool:

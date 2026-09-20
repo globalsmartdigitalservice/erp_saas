@@ -89,7 +89,8 @@ class ReseteoDePasswordMutations:
             "Cierra todas las sesiones de esa cuenta."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_miembros_resetear_password")
     def resetear_password(
         self, info: strawberry.Info, datos: ResetearPasswordInput
     ) -> str:
@@ -112,7 +113,8 @@ class AltaDeMiembroMutations:
             "exige además el permiso de asignarlos."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_miembros_dar_de_alta_miembro")
     def dar_de_alta_miembro(
         self, info: strawberry.Info, datos: DarDeAltaMiembroInput
     ) -> AltaDeMiembroType:
@@ -158,7 +160,8 @@ class CuentaMutations:
             "sin quien la administre. Para sacarla de una sola, use `desafiliar`."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_usuarios_desactivar_usuario")
     def desactivar_usuario(self, info: strawberry.Info, id: strawberry.ID) -> UsuarioType:
         try:
             persona = membresias.persona_de_la_empresa(int(id))
@@ -174,7 +177,8 @@ class CuentaMutations:
             "donde la persona trabaja."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_usuarios_reactivar_usuario")
     def reactivar_usuario(self, info: strawberry.Info, id: strawberry.ID) -> UsuarioType:
         try:
             persona = membresias.persona_de_la_empresa(int(id))
@@ -194,7 +198,8 @@ class BajaDeMiembroMutations:
             "otras empresas. Rechaza si es la última que puede administrarla."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_miembros_desafiliar")
     def desafiliar(self, info: strawberry.Info, datos: DesafiliarInput) -> MembresiaType:
         try:
             fila = administrar_miembros.desafiliar(

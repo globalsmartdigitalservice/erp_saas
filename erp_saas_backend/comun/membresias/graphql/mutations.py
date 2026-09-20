@@ -5,7 +5,10 @@ from django.core.exceptions import ValidationError
 from graphql import GraphQLError
 
 from dominios.seguridad.permisos import auto_permisos
-from dominios.seguridad.permisos_graphql import requiere_permiso
+from dominios.seguridad.permisos_graphql import (
+    requiere_autenticacion,
+    requiere_permiso,
+)
 
 from comun.membresias import api as membresias
 from comun.usuarios import api as usuarios
@@ -37,7 +40,8 @@ class MembresiaMutations:
             "estaba, se saltea sin dar error."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_miembros_afiliar_al_grupo")
     def afiliar_al_grupo(self, info: strawberry.Info, datos: AfiliarInput) -> list[MembresiaType]:
         try:
             filas = membresias.afiliar_al_grupo(
@@ -58,7 +62,8 @@ class MembresiaMutations:
             "así el historial queda en un solo lugar."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_miembros_reactivar_membresia")
     def reactivar_membresia(
         self,
         info: strawberry.Info, membresia_id: strawberry.ID, estado_activo_id: strawberry.ID

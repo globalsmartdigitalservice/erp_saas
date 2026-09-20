@@ -87,6 +87,7 @@ class SeguridadQueries:
             "mientras el catálogo de módulos no tenga ese permiso."
         )
     )
+    @requiere_autenticacion
     @requiere_permiso("segu_roles_agregar_permiso_al_rol")
     def catalogo_de_permisos(
         self, info: strawberry.Info
@@ -134,7 +135,6 @@ class SeguridadQueries:
         return sorted(seguridad.permisos_de(int(membresia_id)))
 
 
-@auto_permisos(recurso="SEGU_MIEMBROS")
 @strawberry.type
 class MiembroQueries:
     @strawberry.field(
@@ -143,7 +143,8 @@ class MiembroQueries:
             "vigentes. NO devuelve gente de otros clientes."
         )
     )
-    @requiere_permiso
+    @requiere_autenticacion
+    @requiere_permiso("segu_miembros_listar")
     @auto_permisos(recurso="SEGU_MIEMBROS", operacion="listar")
     def miembros(
         self, info: strawberry.Info, estado_id: strawberry.ID | None = None
