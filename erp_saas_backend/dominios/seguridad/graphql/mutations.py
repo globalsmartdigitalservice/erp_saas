@@ -77,13 +77,8 @@ class SeguridadMutations:
         self,
         info: strawberry.Info, id: strawberry.ID, datos: ActualizarRolInput
     ) -> RolType:
-        campos = {}
-        if datos.nombre is not None:
-            campos["nombre"] = datos.nombre
-        if datos.estado_id is not None:
-            campos["estado_id"] = int(datos.estado_id)
         try:
-            fila = seguridad.actualizar_rol(int(id), **campos)
+            fila = seguridad.actualizar_rol(int(id), nombre=datos.nombre)
         except ValidationError as error:
             raise _traducir(error) from error
         return _a_rol(fila)
@@ -95,6 +90,17 @@ class SeguridadMutations:
     def desactivar_rol(self, info: strawberry.Info, id: strawberry.ID) -> RolType:
         try:
             fila = seguridad.desactivar_rol(int(id))
+        except ValidationError as error:
+            raise _traducir(error) from error
+        return _a_rol(fila)
+
+    @strawberry.mutation(
+        description="Vuelve a poner en servicio un rol dado de baja."
+    )
+    @requiere_permiso
+    def reactivar_rol(self, info: strawberry.Info, id: strawberry.ID) -> RolType:
+        try:
+            fila = seguridad.reactivar_rol(int(id))
         except ValidationError as error:
             raise _traducir(error) from error
         return _a_rol(fila)

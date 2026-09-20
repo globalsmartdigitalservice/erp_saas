@@ -72,6 +72,11 @@ def desactivar_rol(grupo_id: int) -> GrupoEmpresa:
     return _svc.desactivar(grupo_id)
 
 
+def reactivar_rol(grupo_id: int) -> GrupoEmpresa:
+    """Vuelve a poner en servicio un rol dado de baja."""
+    return _svc.reactivar(grupo_id)
+
+
 def listar_permisos_del_rol(grupo_id: int) -> list[GrupoEmpresaPermiso]:
     return _repo.listar_permisos_de(grupo_id)
 
@@ -281,6 +286,7 @@ __all__ = [
     "crear_rol",
     "actualizar_rol",
     "desactivar_rol",
+    "reactivar_rol",
     "listar_permisos_del_rol",
     "listar_catalogo_de_permisos",
     "agregar_permiso",

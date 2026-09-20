@@ -553,9 +553,26 @@ def test_un_rol_dado_de_baja_deja_de_otorgar_sus_permisos(
         )
         assert seguridad.permisos_de(membresia.id)
 
-        seguridad.actualizar_rol(rol.id, estado_id=de_baja.id)
+        rol.estado = de_baja
+        rol.save()
 
         assert seguridad.permisos_de(membresia.id) == set()
+
+
+def test_no_se_asigna_un_rol_dado_de_baja(empresa_a, juan, afiliar, activo, de_baja):
+    membresia = afiliar(juan, empresa_a)
+
+    with empresa(empresa_a.id):
+        rol = seguridad.crear_rol(nombre="Cajero", estado_id=activo.id)
+        rol.estado = de_baja
+        rol.save()
+
+        with pytest.raises(ValidationError):
+            seguridad.asignar_rol(
+                membresia_id=membresia.id, grupo_id=rol.id, estado_id=activo.id
+            )
+
+        assert seguridad.historial_de(membresia.id) == []
 
 
 def _asignacion_que_vence(la_empresa, membresia, activo, dias=30):

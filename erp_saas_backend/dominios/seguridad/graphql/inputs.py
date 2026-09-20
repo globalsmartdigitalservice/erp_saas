@@ -20,8 +20,9 @@ class CrearRolInput:
 
 @strawberry.input(name="ActualizarRolInput")
 class ActualizarRolInput:
+    """Solo el nombre: el estado se cambia con `desactivarRol` y `reactivarRol`."""
+
     nombre: str | None = None
-    estado_id: strawberry.ID | None = None
 
 
 @strawberry.input(name="AsignarRolInput")

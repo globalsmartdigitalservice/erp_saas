@@ -4,7 +4,11 @@ from django.db import transaction
 
 from comun.empresas import api as empresas
 from comun.tipologias import api as tipologias
-from comun.tipologias.constantes import AGRUPADOR, NOMBRE_ESTADO_BAJA
+from comun.tipologias.constantes import (
+    AGRUPADOR,
+    NOMBRE_ESTADO_ACTIVO,
+    NOMBRE_ESTADO_BAJA,
+)
 from core.tenancy import empresa_actual
 from dominios.seguridad.models import GrupoEmpresa
 from dominios.seguridad.repository import grupo_empresa as repo
@@ -16,6 +20,16 @@ def _validar_estado(estado_id: int) -> None:
     tipologias.exigir_del_agrupador(
         estado_id, AGRUPADOR.ESTADO_REGISTRO, "estado del registro"
     )
+
+
+def _estado_del_sistema(nombre: str):
+    fila = tipologias.obtener_del_sistema(AGRUPADOR.ESTADO_REGISTRO, nombre)
+    if fila is None:
+        raise ValidationError(
+            f"Falta la tipología '{nombre}' del agrupador ESTADO_REGISTRO. "
+            f"Ejecute: python manage.py cargar_semillas"
+        )
+    return fila
 
 
 def _validar_nombre(nombre: str, excluir_id: int | None = None) -> None:
@@ -95,32 +109,21 @@ def crear(*, nombre: str, estado_id: int) -> GrupoEmpresa:
 
 
 @transaction.atomic
-@preserva_quien_administra
-def actualizar(
-    grupo_id: int, *, nombre: str | None = None, estado_id: int | None = None
-) -> GrupoEmpresa:
+def actualizar(grupo_id: int, *, nombre: str | None = None) -> GrupoEmpresa:
+    """Renombra el rol: el estado se cambia con `desactivar` y `reactivar`."""
     grupo = repo.obtener(grupo_id)
     if grupo is None:
         raise ValidationError(f"No existe el rol {grupo_id}.")
 
     _exigir_que_sea_propio(grupo)
 
-    if estado_id is not None:
-        _validar_estado(estado_id)
-
-    if nombre is not None:
-        nombre = nombre.strip()
-        _validar_nombre(nombre, excluir_id=grupo_id)
-
-    campos = {
-        campo: valor
-        for campo, valor in (("nombre", nombre), ("estado_id", estado_id))
-        if valor is not None
-    }
-    if not campos:
+    if nombre is None:
         return grupo
 
-    return repo.actualizar(grupo, **campos)
+    nombre = nombre.strip()
+    _validar_nombre(nombre, excluir_id=grupo_id)
+
+    return repo.actualizar(grupo, nombre=nombre)
 
 
 @transaction.atomic
@@ -146,16 +149,19 @@ def desactivar(grupo_id: int) -> GrupoEmpresa:
             f"todavía lo tienen asignado. Quíteselo primero a esas personas."
         )
 
-    baja = tipologias.obtener_del_sistema(
-        AGRUPADOR.ESTADO_REGISTRO, NOMBRE_ESTADO_BAJA
-    )
-    if baja is None:
-        raise ValidationError(
-            f"Falta la tipología '{NOMBRE_ESTADO_BAJA}' del agrupador "
-            f"ESTADO_REGISTRO. Ejecute: python manage.py cargar_semillas"
-        )
+    return repo.actualizar(grupo, estado_id=_estado_del_sistema(NOMBRE_ESTADO_BAJA).pk)
 
-    return repo.actualizar(grupo, estado_id=baja.pk)
+
+@transaction.atomic
+def reactivar(grupo_id: int) -> GrupoEmpresa:
+    """Vuelve a poner en servicio un rol dado de baja."""
+    grupo = repo.obtener(grupo_id)
+    if grupo is None:
+        raise ValidationError(f"No existe el rol {grupo_id}.")
+
+    _exigir_que_sea_propio(grupo)
+
+    return repo.actualizar(grupo, estado_id=_estado_del_sistema(NOMBRE_ESTADO_ACTIVO).pk)
 
 
 @transaction.atomic

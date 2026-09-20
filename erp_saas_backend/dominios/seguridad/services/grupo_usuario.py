@@ -47,6 +47,17 @@ def _resolver_rol_asignable(grupo_id: int) -> GrupoEmpresa:
     return grupo
 
 
+def _exigir_rol_activo(rol: GrupoEmpresa) -> None:
+    activo = tipologias.obtener_del_sistema(
+        AGRUPADOR.ESTADO_REGISTRO, NOMBRE_ESTADO_ACTIVO
+    )
+    if activo is None or rol.estado_id != activo.pk:
+        raise ValidationError(
+            f"El rol '{rol.nombre}' está dado de baja. Reactívelo antes de "
+            f"asignarlo."
+        )
+
+
 def _resolver_membresia(membresia_id: int):
     """
     Va por el api de `membresias`, que filtra por la empresa del contexto:
@@ -107,7 +118,9 @@ def asignar(
     """
     _validar_estado(estado_id)
     _resolver_membresia(membresia_id)
-    _exigir_rol_otorgable(_resolver_rol_asignable(grupo_id), otorgables)
+    rol = _resolver_rol_asignable(grupo_id)
+    _exigir_rol_activo(rol)
+    _exigir_rol_otorgable(rol, otorgables)
 
     fecha_inicio = fecha_inicio or datetime.date.today()
     _validar_fechas(fecha_inicio, fecha_fin)

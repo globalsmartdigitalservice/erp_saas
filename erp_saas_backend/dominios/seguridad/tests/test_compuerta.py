@@ -36,6 +36,13 @@ SIN_COMPUERTA = {
         "Solo agrega un permiso a un rol: otorga más, nunca menos. Lo que "
         "limita cuánto se puede otorgar es la atenuación, no esta compuerta."
     ),
+    "grupo_empresa.actualizar": (
+        "Solo renombra: el estado ya no se cambia por acá. Un rol que cambia "
+        "de nombre otorga exactamente lo mismo que antes."
+    ),
+    "grupo_empresa.reactivar": (
+        "Vuelve a poner un rol en servicio: otorga más, nunca menos."
+    ),
 }
 
 
@@ -198,7 +205,7 @@ def test_no_se_le_pone_fecha_de_fin_al_unico_administrador(empresa_a, llave):
 def test_no_se_da_de_baja_el_rol_del_unico_administrador(empresa_a, llave, de_baja):
     with empresa(empresa_a.id):
         with pytest.raises(ValidationError):
-            seguridad.actualizar_rol(llave.grupo_empresa_id, estado_id=de_baja.id)
+            seguridad.desactivar_rol(llave.grupo_empresa_id)
 
         assert LLAVE in " ".join(seguridad.permisos_de(llave.usuario_empresa_id))
 

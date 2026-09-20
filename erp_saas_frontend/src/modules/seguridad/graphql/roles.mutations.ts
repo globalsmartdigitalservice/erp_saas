@@ -33,6 +33,15 @@ export const DESACTIVAR_ROL = gql`
   }
 `;
 
+export const REACTIVAR_ROL = gql`
+  mutation ReactivarRol($id: ID!) {
+    reactivarRol(id: $id) {
+      id
+      estadoId
+    }
+  }
+`;
+
 export const AGREGAR_PERMISO_AL_ROL = gql`
   mutation AgregarPermisoAlRol($rolId: ID!, $authPermissionId: ID!) {
     agregarPermisoAlRol(rolId: $rolId, authPermissionId: $authPermissionId) {

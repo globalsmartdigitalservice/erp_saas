@@ -1,5 +1,13 @@
 import { useMutation, useQuery } from "@apollo/client";
-import { AlertTriangle, ArrowLeft, Building2, Pencil, ShieldCheck, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Building2,
+  Pencil,
+  RotateCcw,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -7,7 +15,10 @@ import { toast } from "sonner";
 
 import { DialogoRol } from "@/modules/seguridad/components/roles/DialogoRol";
 import { PermisosDelRol } from "@/modules/seguridad/components/roles/PermisosDelRol";
-import { DESACTIVAR_ROL } from "@/modules/seguridad/graphql/roles.mutations";
+import {
+  DESACTIVAR_ROL,
+  REACTIVAR_ROL,
+} from "@/modules/seguridad/graphql/roles.mutations";
 import { DETALLE_ROL } from "@/modules/seguridad/graphql/roles.queries";
 import type { RolSinConteo } from "@/modules/seguridad/types/rol.types";
 import { DialogoConfirmar } from "@/shared/components/DialogoConfirmar";
@@ -107,7 +118,7 @@ function Cabecera({ rol }: { rol: RolSinConteo }) {
               {t("roles.editar")}
             </Button>
 
-            {!estaDeBaja && <DarDeBaja rol={rol} />}
+            {estaDeBaja ? <Reactivar rol={rol} /> : <DarDeBaja rol={rol} />}
           </div>
         )}
 
@@ -155,6 +166,40 @@ function DarDeBaja({ rol }: { rol: RolSinConteo }) {
       <Button type="button" variant="outline" size="sm" className="gap-2">
         <Trash2 className="size-3.5" aria-hidden="true" />
         {t("roles.darDeBaja")}
+      </Button>
+    </DialogoConfirmar>
+  );
+}
+
+function Reactivar({ rol }: { rol: RolSinConteo }) {
+  const { t } = useTranslation();
+
+  const [reactivar, { loading, error, reset }] = useMutation(REACTIVAR_ROL, {
+    onError: () => {},
+    update: (cache) => {
+      cache.evict({ id: "ROOT_QUERY", fieldName: "roles" });
+      cache.gc();
+    },
+  });
+
+  return (
+    <DialogoConfirmar
+      titulo={t("roles.reactivarTitulo", { nombre: rol.nombre })}
+      descripcion={t("roles.reactivarAyuda")}
+      etiquetaConfirmar={t("roles.reactivar")}
+      cargando={loading}
+      error={mensajeDeError(error, t)}
+      alCerrar={reset}
+      onConfirmar={async () => {
+        const resultado = await reactivar({ variables: { id: rol.id } });
+        if (!resultado.data?.reactivarRol) return false;
+
+        toast.success(t("roles.reactivado", { nombre: rol.nombre }));
+      }}
+    >
+      <Button type="button" variant="outline" size="sm" className="gap-2">
+        <RotateCcw className="size-3.5" aria-hidden="true" />
+        {t("roles.reactivar")}
       </Button>
     </DialogoConfirmar>
   );
