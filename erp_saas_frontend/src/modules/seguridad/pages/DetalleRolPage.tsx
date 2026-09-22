@@ -1,34 +1,29 @@
 import { useMutation, useQuery } from "@apollo/client";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Building2,
-  Pencil,
-  RotateCcw,
-  ShieldCheck,
-  Trash2,
-} from "lucide-react";
+import { Ban, Building2, Pencil, RotateCcw, ShieldCheck, ShieldOff } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { toast } from "sonner";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { DialogoRol } from "@/modules/seguridad/components/roles/DialogoRol";
-import { PermisosDelRol } from "@/modules/seguridad/components/roles/PermisosDelRol";
+import { PermisosDeRol } from "@/modules/seguridad/components/roles/PermisosDeRol";
 import {
   DESACTIVAR_ROL,
   REACTIVAR_ROL,
 } from "@/modules/seguridad/graphql/roles.mutations";
 import { DETALLE_ROL } from "@/modules/seguridad/graphql/roles.queries";
 import type { RolSinConteo } from "@/modules/seguridad/types/rol.types";
-import { DialogoConfirmar } from "@/shared/components/DialogoConfirmar";
-import { EstadoError } from "@/shared/components/EstadosTabla";
+import { BackButton } from "@/shared/components/BackButton";
+import { BadgeDeEstado } from "@/shared/components/BadgeDeEstado";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
+import { PageTitle } from "@/shared/components/PageTitle";
+import { ErrorState, EmptyState } from "@/shared/components/TableStates";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { useEstadoActivoId } from "@/shared/hooks/useEstadoActivoId";
+import { useEstadoId } from "@/shared/hooks/useEstadoId";
 import { useTipologias } from "@/shared/hooks/useTipologias";
-import { mensajeDeError } from "@/shared/lib/errores";
 import { ABREV_BAJA } from "@/shared/types/tipologia.types";
 
 export function DetalleRolPage() {
@@ -44,29 +39,25 @@ export function DetalleRolPage() {
 
   return (
     <section className="space-y-4">
-      <Button asChild variant="ghost" size="sm" className="-ml-2 gap-2">
-        <Link to="..">
-          <ArrowLeft size={16} aria-hidden="true" />
-          {t("roles.volver")}
-        </Link>
-      </Button>
+      <BackButton>{t("roles.volver")}</BackButton>
 
       {loading ? (
         <div className="space-y-4">
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-72 w-full" />
         </div>
+      ) : error && !rol ? (
+        <ErrorState error={error} onRetry={() => refetch()} />
       ) : !rol ? (
-        <EstadoError
-          icono={AlertTriangle}
-          titulo={t("roles.noExiste")}
-          mensaje={mensajeDeError(error, t)}
-          onReintentar={() => refetch()}
+        <EmptyState
+          icon={ShieldOff}
+          title={t("roles.noEsDeEstaEmpresa")}
+          description={t("roles.noEsDeEstaEmpresaAyuda")}
         />
       ) : (
         <div className="space-y-4 motion-safe:animate-in motion-safe:fade-in">
           <Cabecera rol={rol} />
-          <PermisosDelRol rolId={rol.id} esHeredado={rol.esHeredado} />
+          <PermisosDeRol rolId={rol.id} esHeredado={rol.esHeredado} />
         </div>
       )}
     </section>
@@ -77,9 +68,11 @@ function Cabecera({ rol }: { rol: RolSinConteo }) {
   const { t } = useTranslation();
   const [dialogoAbierto, setDialogoAbierto] = useState(false);
   const estados = useTipologias("ESTADO_REGISTRO");
+  const activoId = useEstadoActivoId();
+  const bajaId = useEstadoId(ABREV_BAJA).id;
 
-  const estado = estados.opciones.find((opcion) => opcion.id === rol.estadoId);
-  const estaDeBaja = estado?.abreviatura === ABREV_BAJA;
+  const nombreDeEstado = estados.opciones.find((opcion) => opcion.id === rol.estadoId)?.nombre;
+  const estaDeBaja = rol.estadoId === bajaId;
 
   return (
     <Card>
@@ -89,9 +82,14 @@ function Cabecera({ rol }: { rol: RolSinConteo }) {
             <ShieldCheck className="size-5" aria-hidden="true" />
           </span>
           <div className="min-w-0 space-y-1">
-            <h1 className="truncate font-heading text-xl font-semibold">{rol.nombre}</h1>
+            <PageTitle className="truncate">{rol.nombre}</PageTitle>
             <div className="flex flex-wrap items-center gap-2">
-              {estado && <Badge variant="secondary">{estado.nombre}</Badge>}
+              {nombreDeEstado && (
+                <BadgeDeEstado
+                  estado={{ id: rol.estadoId, nombre: nombreDeEstado }}
+                  activoId={activoId}
+                />
+              )}
               {rol.esHeredado && (
                 <Badge variant="outline" className="gap-1 font-normal">
                   <Building2 className="size-3" aria-hidden="true" />
@@ -134,7 +132,7 @@ function DarDeBaja({ rol }: { rol: RolSinConteo }) {
   const { t } = useTranslation();
   const navegar = useNavigate();
 
-  const [desactivar, { loading, error, reset }] = useMutation(DESACTIVAR_ROL, {
+  const [desactivar, mutacion] = useMutation(DESACTIVAR_ROL, {
     // Con un manejador puesto, la mutation devuelve el error en vez de
     // lanzarlo: el cartel del diálogo es el que lo muestra.
     onError: () => {},
@@ -147,34 +145,32 @@ function DarDeBaja({ rol }: { rol: RolSinConteo }) {
   });
 
   return (
-    <DialogoConfirmar
-      destructivo
-      titulo={t("roles.darDeBajaTitulo", { nombre: rol.nombre })}
-      descripcion={t("roles.darDeBajaAyuda")}
-      etiquetaConfirmar={t("roles.darDeBaja")}
-      cargando={loading}
-      error={mensajeDeError(error, t)}
-      alCerrar={reset}
-      onConfirmar={async () => {
+    <ConfirmDialog
+      isDestructive
+      title={t("roles.darDeBajaTitulo", { nombre: rol.nombre })}
+      description={t("roles.darDeBajaAyuda")}
+      confirmLabel={t("roles.darDeBaja")}
+      mutation={mutacion}
+      successMessage={t("roles.dadoDeBaja", { nombre: rol.nombre })}
+      onConfirm={async () => {
         const resultado = await desactivar({ variables: { id: rol.id } });
         if (!resultado.data?.desactivarRol) return false;
 
-        toast.success(t("roles.dadoDeBaja", { nombre: rol.nombre }));
         navegar("..");
       }}
     >
       <Button type="button" variant="outline" size="sm" className="gap-2">
-        <Trash2 className="size-3.5" aria-hidden="true" />
+        <Ban className="size-3.5" aria-hidden="true" />
         {t("roles.darDeBaja")}
       </Button>
-    </DialogoConfirmar>
+    </ConfirmDialog>
   );
 }
 
 function Reactivar({ rol }: { rol: RolSinConteo }) {
   const { t } = useTranslation();
 
-  const [reactivar, { loading, error, reset }] = useMutation(REACTIVAR_ROL, {
+  const [reactivar, mutacion] = useMutation(REACTIVAR_ROL, {
     onError: () => {},
     update: (cache) => {
       cache.evict({ id: "ROOT_QUERY", fieldName: "roles" });
@@ -183,24 +179,21 @@ function Reactivar({ rol }: { rol: RolSinConteo }) {
   });
 
   return (
-    <DialogoConfirmar
-      titulo={t("roles.reactivarTitulo", { nombre: rol.nombre })}
-      descripcion={t("roles.reactivarAyuda")}
-      etiquetaConfirmar={t("roles.reactivar")}
-      cargando={loading}
-      error={mensajeDeError(error, t)}
-      alCerrar={reset}
-      onConfirmar={async () => {
+    <ConfirmDialog
+      title={t("roles.reactivarTitulo", { nombre: rol.nombre })}
+      description={t("roles.reactivarAyuda")}
+      confirmLabel={t("roles.reactivar")}
+      mutation={mutacion}
+      successMessage={t("roles.reactivado", { nombre: rol.nombre })}
+      onConfirm={async () => {
         const resultado = await reactivar({ variables: { id: rol.id } });
         if (!resultado.data?.reactivarRol) return false;
-
-        toast.success(t("roles.reactivado", { nombre: rol.nombre }));
       }}
     >
       <Button type="button" variant="outline" size="sm" className="gap-2">
         <RotateCcw className="size-3.5" aria-hidden="true" />
         {t("roles.reactivar")}
       </Button>
-    </DialogoConfirmar>
+    </ConfirmDialog>
   );
 }

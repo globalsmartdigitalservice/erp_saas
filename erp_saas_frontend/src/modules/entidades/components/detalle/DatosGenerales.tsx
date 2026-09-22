@@ -1,45 +1,43 @@
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
   nombreCompleto,
   type Entidad,
 } from "@/modules/entidades/types/entidad.types";
-import { Badge } from "@/shared/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/shared/components/ui/card";
-
+import { BadgeDeEstado } from "@/shared/components/BadgeDeEstado";
+import { PageTitle } from "@/shared/components/PageTitle";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { useEstadoActivoId } from "@/shared/hooks/useEstadoActivoId";
 
 export function Dato({
   etiqueta,
   children,
 }: {
   etiqueta: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
-    <div className="space-y-0.5">
+    <div className="min-w-0 space-y-0.5">
       <p className="text-xs uppercase tracking-wide text-muted-foreground">
         {etiqueta}
       </p>
-      <p className="text-sm">{children || "—"}</p>
+      <div className="break-words text-sm">{children || "—"}</div>
     </div>
   );
 }
 
 export function DatosGenerales({ entidad }: { entidad: Entidad }) {
   const { t } = useTranslation();
+  const activoId = useEstadoActivoId();
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between">
-        <CardTitle>{nombreCompleto(entidad)}</CardTitle>
-        {entidad.estado && (
-          <Badge variant="secondary">{entidad.estado.nombre}</Badge>
-        )}
+      <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 space-y-0">
+        <PageTitle>
+          {nombreCompleto(entidad)}
+        </PageTitle>
+        <BadgeDeEstado estado={entidad.estado} activoId={activoId} />
       </CardHeader>
 
       <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

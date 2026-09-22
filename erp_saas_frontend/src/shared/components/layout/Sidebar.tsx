@@ -1,6 +1,7 @@
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { Button } from "@/shared/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -9,9 +10,8 @@ import {
 import { cn } from "@/shared/lib/utils";
 
 import { Brand } from "./Brand";
+import { SIDEBAR_FOCUS_RING } from "./styles";
 import { SidebarNav } from "./SidebarNav";
-
-
 
 type Props = {
   colapsado: boolean;
@@ -39,18 +39,18 @@ export function Sidebar({ colapsado, alternarColapsado }: Props) {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={alternarColapsado}
               aria-label={etiqueta}
-              className="rounded-lg p-2 text-sidebar-foreground/70 transition-colors hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground"
-            >
-              {colapsado ? (
-                <PanelLeftOpen size={20} />
-              ) : (
-                <PanelLeftClose size={20} />
+              className={cn(
+                "size-9 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground [&_svg]:size-5",
+                SIDEBAR_FOCUS_RING,
               )}
-            </button>
+            >
+              {colapsado ? <PanelLeftOpen /> : <PanelLeftClose />}
+            </Button>
           </TooltipTrigger>
           <TooltipContent side="right">{etiqueta}</TooltipContent>
         </Tooltip>

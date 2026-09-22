@@ -9,19 +9,19 @@ export type Rol = {
 /** Lo que se sabe del rol fuera de la lista: el conteo solo lo trae ella. */
 export type RolSinConteo = Omit<Rol, "cantidadPermisos">;
 
-export type PermisoDelRol = {
+export type PermisoDeRol = {
   authPermissionId: string;
   codigo: string;
   etiqueta: string;
 };
 
-export type PermisoDeCatalogo = PermisoDelRol & {
+export type PermisoDeCatalogo = PermisoDeRol & {
   pantalla: string | null;
   modulo: string | null;
 };
 
 /** El código sin la app de Django, que es la misma para todos. */
-export function codenameDe(permiso: PermisoDelRol): string {
+export function codenameDe(permiso: PermisoDeRol): string {
   const partes = permiso.codigo.split(".");
   return partes[partes.length - 1];
 }

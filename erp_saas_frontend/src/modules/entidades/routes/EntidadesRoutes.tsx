@@ -6,7 +6,6 @@ import { DetalleEntidadPage } from "@/modules/entidades/pages/DetalleEntidadPage
 import { EdicionEntidadPage } from "@/modules/entidades/pages/EdicionEntidadPage";
 import { ListaEntidadesPage } from "@/modules/entidades/pages/ListaEntidadesPage";
 
-
 export function EntidadesRoutes() {
   return (
     <Routes>

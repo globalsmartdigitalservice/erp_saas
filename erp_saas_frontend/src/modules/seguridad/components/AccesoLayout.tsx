@@ -15,13 +15,11 @@ export function AccesoLayout({ titulo, ayuda, children }: Props) {
       <aside className="relative hidden overflow-hidden bg-sidebar p-12 text-sidebar-foreground lg:flex lg:flex-col lg:justify-between">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full opacity-20 blur-3xl"
-          style={{ background: "var(--primary)" }}
+          className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full bg-primary opacity-20 blur-3xl"
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -bottom-32 -left-16 size-80 rounded-full opacity-10 blur-3xl"
-          style={{ background: "var(--primary)" }}
+          className="pointer-events-none absolute -bottom-32 -left-16 size-80 rounded-full bg-primary opacity-10 blur-3xl"
         />
 
         <p className="font-heading text-2xl font-semibold tracking-tight">ERP</p>
@@ -37,8 +35,7 @@ export function AccesoLayout({ titulo, ayuda, children }: Props) {
 
         <div
           aria-hidden="true"
-          className="h-1 w-16 rounded-full"
-          style={{ background: "var(--primary)" }}
+          className="h-1 w-16 rounded-full bg-primary"
         />
       </aside>
 

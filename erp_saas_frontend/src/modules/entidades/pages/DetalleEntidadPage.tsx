@@ -1,8 +1,7 @@
 import { useMutation, useQuery } from "@apollo/client";
-import { AlertTriangle, ArrowLeft, Ban, Pencil } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { AlertTriangle, Ban, Pencil } from "lucide-react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 
 import { ContactosDeEntidad } from "@/modules/entidades/components/detalle/ContactosDeEntidad";
 import { DatosGenerales } from "@/modules/entidades/components/detalle/DatosGenerales";
@@ -14,11 +13,11 @@ import {
   nombreCompleto,
   type Entidad,
 } from "@/modules/entidades/types/entidad.types";
-import { DialogoConfirmar } from "@/shared/components/DialogoConfirmar";
-import { EstadoError, EstadoVacio } from "@/shared/components/EstadosTabla";
+import { BackButton } from "@/shared/components/BackButton";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
+import { ErrorState, EmptyState } from "@/shared/components/TableStates";
 import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { mensajeDeError } from "@/shared/lib/errores";
 import {
   Tabs,
   TabsContent,
@@ -26,10 +25,20 @@ import {
   TabsTrigger,
 } from "@/shared/components/ui/tabs";
 
+const PESTANAS = ["roles", "direcciones", "contactos"] as const;
+type Pestana = (typeof PESTANAS)[number];
+
+function esPestana(valor: string | null): valor is Pestana {
+  return PESTANAS.some((pestana) => pestana === valor);
+}
 
 export function DetalleEntidadPage() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
+
+  const [parametros, setParametros] = useSearchParams();
+  const elegida = parametros.get("pestana");
+  const pestana: Pestana = esPestana(elegida) ? elegida : "roles";
 
   const { data, loading, error, refetch } = useQuery<{
     entidad: Entidad | null;
@@ -42,13 +51,8 @@ export function DetalleEntidadPage() {
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Button asChild variant="ghost" size="sm" className="-ml-2 gap-2">
-          <Link to="..">
-            <ArrowLeft size={16} />
-            {t("entidades.volver")}
-          </Link>
-        </Button>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <BackButton>{t("entidades.volver")}</BackButton>
 
         {entidad && (
           <div className="flex items-center gap-2">
@@ -56,7 +60,7 @@ export function DetalleEntidadPage() {
 
             <Button asChild variant="outline" size="sm" className="gap-2">
               <Link to="editar">
-                <Pencil size={14} />
+                <Pencil aria-hidden="true" />
                 {t("entidades.editar")}
               </Link>
             </Button>
@@ -69,20 +73,25 @@ export function DetalleEntidadPage() {
           <Skeleton className="h-28 w-full" />
           <Skeleton className="h-40 w-full" />
         </div>
-      ) : error ? (
-        <EstadoError icono={AlertTriangle} onReintentar={() => refetch()} />
+      ) : error && entidad === null ? (
+        <ErrorState error={error} onRetry={() => refetch()} />
       ) : entidad === null ? (
-        <EstadoVacio
-          icono={AlertTriangle}
-          titulo={t("entidades.noExiste")}
-          descripcion={t("entidades.noExisteAyuda")}
+        <EmptyState
+          icon={AlertTriangle}
+          title={t("entidades.noExiste")}
+          description={t("entidades.noExisteAyuda")}
         />
       ) : (
         <div className="space-y-4">
           <DatosGenerales entidad={entidad} />
 
-
-          <Tabs defaultValue="roles" className="space-y-4">
+          <Tabs
+            value={pestana}
+            onValueChange={(valor) =>
+              setParametros({ pestana: valor }, { replace: true })
+            }
+            className="space-y-4"
+          >
             <TabsList>
               <Pestania
                 valor="roles"
@@ -99,7 +108,6 @@ export function DetalleEntidadPage() {
                 etiqueta={t("entidades.contactos")}
                 cuantos={entidad.contactos?.length ?? 0}
               />
-
             </TabsList>
 
             <TabsContent value="roles">
@@ -122,7 +130,6 @@ export function DetalleEntidadPage() {
                 contactos={entidad.contactos ?? []}
               />
             </TabsContent>
-
           </Tabs>
         </div>
       )}
@@ -135,7 +142,7 @@ function Pestania({
   etiqueta,
   cuantos,
 }: {
-  valor: string;
+  valor: Pestana;
   etiqueta: string;
   cuantos: number;
 }) {
@@ -149,31 +156,27 @@ function Pestania({
   );
 }
 
-
 function BajaDeEntidad({ entidad }: { entidad: Entidad }) {
   const { t } = useTranslation();
 
-  const [desactivar, { loading, error, reset }] = useMutation(
+  const [desactivar, mutacion] = useMutation(
     DESACTIVAR_ENTIDAD,
     { refetchQueries: [ENTIDAD] },
   );
 
   return (
-    <DialogoConfirmar
-      titulo={t("entidades.bajaEntidadTitulo", {
+    <ConfirmDialog
+      title={t("entidades.bajaEntidadTitulo", {
         nombre: nombreCompleto(entidad),
       })}
-      descripcion={t("entidades.bajaEntidadAyuda")}
-      etiquetaConfirmar={t("entidades.darDeBaja")}
-      cargando={loading}
-      error={mensajeDeError(error, t)}
-      alCerrar={reset}
-      onConfirmar={async () => {
+      description={t("entidades.bajaEntidadAyuda")}
+      confirmLabel={t("entidades.darDeBaja")}
+      mutation={mutacion}
+      successMessage={t("entidades.entidadDadaDeBaja")}
+      onConfirm={async () => {
         const resultado = await desactivar({ variables: { id: entidad.id } });
 
         if (!resultado.data?.desactivarEntidad) return false;
-
-        toast.success(t("entidades.entidadDadaDeBaja"));
       }}
     >
       <Button
@@ -181,9 +184,9 @@ function BajaDeEntidad({ entidad }: { entidad: Entidad }) {
         size="sm"
         className="gap-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
       >
-        <Ban size={14} />
+        <Ban aria-hidden="true" />
         {t("entidades.darDeBaja")}
       </Button>
-    </DialogoConfirmar>
+    </ConfirmDialog>
   );
 }

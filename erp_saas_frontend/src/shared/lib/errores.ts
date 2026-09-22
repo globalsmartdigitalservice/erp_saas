@@ -30,3 +30,14 @@ export function mensajeDeError(
 
   return t("comun.sinRespuesta");
 }
+
+const NOT_FOUND = "NOT_FOUND";
+
+/** Si el backend respondió que lo pedido no existe, y reintentar no va a cambiar nada. */
+export function isNotFound(error: ApolloError | undefined): boolean {
+  return (
+    error?.graphQLErrors.some(
+      (falla) => falla.extensions?.code === NOT_FOUND,
+    ) ?? false
+  );
+}

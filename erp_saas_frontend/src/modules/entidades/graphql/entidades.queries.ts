@@ -1,6 +1,5 @@
 import { gql } from "@apollo/client";
 
-
 export const ENTIDADES = gql`
   query Entidades($limite: Int, $desde: Int!) {
     entidades(limite: $limite, desde: $desde) {
@@ -17,6 +16,7 @@ export const ENTIDADES = gql`
           nombre
         }
         estado {
+          id
           nombre
         }
       }
@@ -29,7 +29,6 @@ export const ENTIDADES = gql`
     }
   }
 `;
-
 
 export const ENTIDAD = gql`
   query Entidad($id: ID!) {
@@ -101,7 +100,6 @@ export const ENTIDAD = gql`
   }
 `;
 
-
 export const ENTIDAD_POR_DOCUMENTO = gql`
   query EntidadPorDocumento($documento: String!) {
     entidadPorDocumento(documento: $documento) {
@@ -110,10 +108,19 @@ export const ENTIDAD_POR_DOCUMENTO = gql`
       priApellido
       segApellido
       documento
+      tipoEntidad {
+        nombre
+      }
+      tipoDocumento {
+        nombre
+      }
+      estado {
+        id
+        nombre
+      }
     }
   }
 `;
-
 
 export const CATEGORIAS_ENTIDAD = gql`
   query CategoriasEntidad {

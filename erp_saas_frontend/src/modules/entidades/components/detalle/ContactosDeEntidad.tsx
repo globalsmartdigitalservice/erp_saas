@@ -1,22 +1,20 @@
 import { useMutation } from "@apollo/client";
-import { Ban } from "lucide-react";
+import { Ban, Contact } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 
 import { Dato } from "@/modules/entidades/components/detalle/DatosGenerales";
 import { DialogoContacto } from "@/modules/entidades/components/detalle/DialogoContacto";
 import { DESACTIVAR_CONTACTO } from "@/modules/entidades/graphql/entidades.mutations";
 import { ENTIDAD } from "@/modules/entidades/graphql/entidades.queries";
 import type { ContactoEntidad } from "@/modules/entidades/types/entidad.types";
-import { DialogoConfirmar } from "@/shared/components/DialogoConfirmar";
-import { mensajeDeError } from "@/shared/lib/errores";
+import { BadgeDeEstado } from "@/shared/components/BadgeDeEstado";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
+import { EmptyState } from "@/shared/components/TableStates";
 import { Button } from "@/shared/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { useEstadoActivoId } from "@/shared/hooks/useEstadoActivoId";
 
+const ENLACE = "text-primary underline-offset-4 hover:underline";
 
 export function ContactosDeEntidad({
   entidadId,
@@ -26,18 +24,17 @@ export function ContactosDeEntidad({
   contactos: ContactoEntidad[];
 }) {
   const { t } = useTranslation();
+  const activoId = useEstadoActivoId();
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-end">
+      <CardHeader className="flex-row items-center justify-end space-y-0">
         <DialogoContacto entidadId={entidadId} />
       </CardHeader>
 
       <CardContent>
         {contactos.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("entidades.sinContactos")}
-          </p>
+          <EmptyState icon={Contact} title={t("entidades.sinContactos")} />
         ) : (
           <ul className="divide-y">
             {contactos.map((contacto) => (
@@ -45,17 +42,27 @@ export function ContactosDeEntidad({
                 key={contacto.id}
                 className="flex items-start gap-2 py-3 first:pt-0 last:pb-0"
               >
-                <div className="grid flex-1 gap-4 sm:grid-cols-5">
+                <div className="grid min-w-0 flex-1 gap-4 sm:grid-cols-5">
                   <Dato etiqueta={t("entidades.nombre")}>
                     {contacto.nombre}
                   </Dato>
                   <Dato etiqueta={t("entidades.cargo")}>{contacto.cargo}</Dato>
-                  <Dato etiqueta={t("entidades.email")}>{contacto.email}</Dato>
+                  <Dato etiqueta={t("entidades.email")}>
+                    {contacto.email && (
+                      <a href={`mailto:${contacto.email}`} className={ENLACE}>
+                        {contacto.email}
+                      </a>
+                    )}
+                  </Dato>
                   <Dato etiqueta={t("entidades.telefono")}>
-                    {contacto.telefono}
+                    {contacto.telefono && (
+                      <a href={`tel:${contacto.telefono}`} className={ENLACE}>
+                        {contacto.telefono}
+                      </a>
+                    )}
                   </Dato>
                   <Dato etiqueta={t("entidades.estado")}>
-                    {contacto.estado?.nombre}
+                    <BadgeDeEstado estado={contacto.estado} activoId={activoId} />
                   </Dato>
                 </div>
 
@@ -72,42 +79,38 @@ export function ContactosDeEntidad({
   );
 }
 
-
 function BajaDeContacto({ contacto }: { contacto: ContactoEntidad }) {
   const { t } = useTranslation();
 
-  const [desactivar, { loading, error, reset }] = useMutation(
+  const [desactivar, mutacion] = useMutation(
     DESACTIVAR_CONTACTO,
     { refetchQueries: [ENTIDAD] },
   );
 
   return (
-    <DialogoConfirmar
-      titulo={t("entidades.bajaContactoTitulo", {
+    <ConfirmDialog
+      title={t("entidades.bajaContactoTitulo", {
         nombre: contacto.nombre,
       })}
-      descripcion={t("entidades.bajaContactoAyuda")}
-      etiquetaConfirmar={t("entidades.darDeBaja")}
-      cargando={loading}
-      error={mensajeDeError(error, t)}
-      alCerrar={reset}
-      onConfirmar={async () => {
+      description={t("entidades.bajaContactoAyuda")}
+      confirmLabel={t("entidades.darDeBaja")}
+      mutation={mutacion}
+      successMessage={t("entidades.contactoDadoDeBaja")}
+      onConfirm={async () => {
         const resultado = await desactivar({ variables: { id: contacto.id } });
 
         if (!resultado.data?.desactivarContactoEntidad) return false;
-
-        toast.success(t("entidades.contactoDadoDeBaja"));
       }}
     >
       <Button
         variant="ghost"
         size="icon"
         className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+        aria-label={t("entidades.darDeBaja")}
         title={t("entidades.darDeBaja")}
       >
-        <Ban size={15} />
-        <span className="sr-only">{t("entidades.darDeBaja")}</span>
+        <Ban aria-hidden="true" />
       </Button>
-    </DialogoConfirmar>
+    </ConfirmDialog>
   );
 }

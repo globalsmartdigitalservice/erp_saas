@@ -18,45 +18,24 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { cn } from "@/shared/lib/utils";
 
-import { MENU, type ModuloDeMenu } from "./menu";
-
-
+import { SIDEBAR_FOCUS_RING } from "./styles";
+import { MENU, findMenuLocation, type ModuloDeMenu } from "./menu";
 
 type Props = {
   colapsado: boolean;
-
   alNavegar?: () => void;
 };
-
-
-const RUTAS = MENU.flatMap((modulo) => modulo.pantallas.map((p) => p.ruta));
-
-
-function pantallaActiva(pathname: string): string | null {
-  const candidatas = RUTAS.filter(
-    (ruta) => pathname === ruta || pathname.startsWith(ruta + "/"),
-  );
-
-  return candidatas.sort((a, b) => b.length - a.length)[0] ?? null;
-}
-
-function moduloDe(ruta: string | null): string | null {
-  if (ruta === null) return null;
-
-  return MENU.find((m) => m.pantallas.some((p) => p.ruta === ruta))?.id ?? null;
-}
 
 export function SidebarNav({ colapsado, alNavegar }: Props) {
   const { pathname } = useLocation();
 
-  const activa = pantallaActiva(pathname);
-  const moduloActivo = moduloDe(activa);
+  const ubicacion = findMenuLocation(pathname);
+  const activa = ubicacion?.pantalla.ruta ?? null;
+  const moduloActivo = ubicacion?.modulo.id ?? null;
 
- 
   const [abiertos, setAbiertos] = useState<string[]>(
     moduloActivo ? [moduloActivo] : [],
   );
-
 
   useEffect(() => {
     if (moduloActivo === null) return;
@@ -111,7 +90,6 @@ type PropsDeModulo = {
   alNavegar?: () => void;
 };
 
-
 function ModuloAbierto({
   modulo,
   activa,
@@ -127,7 +105,7 @@ function ModuloAbierto({
         className={cn(
           "gap-3 rounded-xl px-3 py-2.5 text-sm font-medium no-underline hover:no-underline",
           "text-sidebar-foreground/70 hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground",
-  
+          SIDEBAR_FOCUS_RING,
           esElActivo && "text-sidebar-foreground",
         )}
       >
@@ -136,7 +114,6 @@ function ModuloAbierto({
           <span className="truncate">{t(modulo.clave)}</span>
         </span>
       </AccordionTrigger>
-
 
       <AccordionContent className="pb-0 pt-1">
         <div className="flex flex-col gap-1">
@@ -147,8 +124,8 @@ function ModuloAbierto({
               onClick={alNavegar}
               className={cn(
                 "relative ml-4 flex items-center rounded-xl py-2 pl-6 pr-3 text-sm transition-colors",
-
                 "before:absolute before:left-0 before:top-0 before:h-full before:w-px before:bg-sidebar-foreground/15",
+                SIDEBAR_FOCUS_RING,
                 pantalla.ruta === activa
                   ? "bg-sidebar-active font-semibold text-sidebar-active-foreground shadow-sm"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground",
@@ -178,6 +155,7 @@ function ModuloColapsado({
         aria-label={t(modulo.clave)}
         className={cn(
           "flex h-11 w-11 items-center justify-center rounded-xl transition-colors",
+          SIDEBAR_FOCUS_RING,
           esElActivo
             ? "bg-sidebar-active text-sidebar-active-foreground shadow-sm"
             : "text-sidebar-foreground/70 hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground",

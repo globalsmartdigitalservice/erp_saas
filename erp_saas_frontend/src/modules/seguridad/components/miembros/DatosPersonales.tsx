@@ -6,10 +6,10 @@ import { toast } from "sonner";
 
 import { ACTUALIZAR_USUARIO } from "@/modules/seguridad/graphql/miembros.mutations";
 import { DETALLE_MIEMBRO, MIEMBROS } from "@/modules/seguridad/graphql/miembros.queries";
-import {
-  iniciales,
-  type CuentaDeMiembro,
-} from "@/modules/seguridad/types/miembro.types";
+import type { CuentaDeMiembro } from "@/modules/seguridad/types/miembro.types";
+import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { PageTitle } from "@/shared/components/PageTitle";
+import { SaveButton } from "@/shared/components/SaveButton";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
@@ -26,6 +26,7 @@ import {
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { mensajeDeError } from "@/shared/lib/errores";
+import { iniciales } from "@/shared/lib/iniciales";
 
 export function DatosPersonales({ cuenta }: { cuenta: CuentaDeMiembro }) {
   const { t } = useTranslation();
@@ -41,7 +42,7 @@ export function DatosPersonales({ cuenta }: { cuenta: CuentaDeMiembro }) {
         </Avatar>
 
         <div className="min-w-0 flex-1 space-y-1">
-          <h1 className="truncate font-heading text-xl font-semibold">{nombre}</h1>
+          <PageTitle className="truncate">{nombre}</PageTitle>
           <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <AtSign size={14} aria-hidden="true" />
@@ -136,8 +137,16 @@ function FormularioDatosPersonales({
     onCerrar();
   }
 
+  const estaCompleto = email.trim() !== "";
+
   return (
-    <>
+    <form
+      className="grid gap-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (estaCompleto && !loading) void guardar();
+      }}
+    >
       <div className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="email-ficha" obligatorio>
@@ -179,21 +188,17 @@ function FormularioDatosPersonales({
           </div>
         </div>
 
-        {error && (
-          <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-            {mensajeDeError(error, t)}
-          </p>
-        )}
+        <ErrorAlert message={mensajeDeError(error, t)} />
       </div>
 
       <DialogFooter>
-        <Button variant="ghost" onClick={onCerrar} disabled={loading}>
+        <Button type="button" variant="ghost" onClick={onCerrar} disabled={loading}>
           {t("comun.cancelar")}
         </Button>
-        <Button onClick={guardar} disabled={loading || email.trim() === ""}>
-          {loading ? t("comun.cargando") : t("miembros.guardar")}
-        </Button>
+        <SaveButton isSaving={loading} disabled={!estaCompleto}>
+          {t("miembros.guardar")}
+        </SaveButton>
       </DialogFooter>
-    </>
+    </form>
   );
 }

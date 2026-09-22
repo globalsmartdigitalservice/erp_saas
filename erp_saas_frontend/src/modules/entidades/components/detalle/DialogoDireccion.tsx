@@ -10,8 +10,9 @@ import {
 } from "@/modules/entidades/graphql/entidades.mutations";
 import { ENTIDAD } from "@/modules/entidades/graphql/entidades.queries";
 import type { Direccion } from "@/modules/entidades/types/entidad.types";
+import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { SaveButton } from "@/shared/components/SaveButton";
 import { SelectorDeTipologia } from "@/shared/components/SelectorDeTipologia";
-import { ABREV_ACTIVO } from "@/shared/types/tipologia.types";
 import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
@@ -22,9 +23,9 @@ import {
   DialogTrigger,
 } from "@/shared/components/ui/dialog";
 import { Input } from "@/shared/components/ui/input";
-import { mensajeDeError } from "@/shared/lib/errores";
 import { Label } from "@/shared/components/ui/label";
-
+import { mensajeDeError } from "@/shared/lib/errores";
+import { ABREV_ACTIVO } from "@/shared/types/tipologia.types";
 
 export function DialogoDireccion({
   entidadId,
@@ -45,14 +46,14 @@ export function DialogoDireccion({
             variant="ghost"
             size="icon"
             className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+            aria-label={t("entidades.editarDireccion")}
             title={t("entidades.editarDireccion")}
           >
-            <Pencil size={15} />
-            <span className="sr-only">{t("entidades.editarDireccion")}</span>
+            <Pencil aria-hidden="true" />
           </Button>
         ) : (
           <Button variant="outline" size="sm" className="gap-2">
-            <Plus size={14} />
+            <Plus aria-hidden="true" />
             {t("entidades.agregarDireccion")}
           </Button>
         )}
@@ -135,13 +136,22 @@ function FormularioDireccion({
     onCerrar();
   }
 
+  const estaCompleto = tipoId !== null && estadoId !== null;
+
   return (
-    <>
+    <form
+      className="grid gap-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (estaCompleto && !loading) void guardar();
+      }}
+    >
       <div className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label obligatorio>{t("entidades.tipo")}</Label>
+            <Label htmlFor="direccion-tipo" obligatorio>{t("entidades.tipo")}</Label>
             <SelectorDeTipologia
+              id="direccion-tipo"
               codigo="TIPO_DIRECCION"
               valor={tipoId}
               onCambiar={setTipoId}
@@ -150,8 +160,9 @@ function FormularioDireccion({
           </div>
 
           <div className="space-y-1.5">
-            <Label obligatorio>{t("entidades.estado")}</Label>
+            <Label htmlFor="direccion-estado" obligatorio>{t("entidades.estado")}</Label>
             <SelectorDeTipologia
+              id="direccion-estado"
               codigo="ESTADO_REGISTRO"
               predeterminada={edicion ? undefined : ABREV_ACTIVO}
               valor={estadoId}
@@ -199,24 +210,17 @@ function FormularioDireccion({
           />
         </div>
 
-        {error && (
-          <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-            {mensajeDeError(error, t)}
-          </p>
-        )}
+        <ErrorAlert message={mensajeDeError(error, t)} />
       </div>
 
       <DialogFooter>
-        <Button variant="ghost" onClick={onCerrar} disabled={loading}>
+        <Button type="button" variant="ghost" onClick={onCerrar} disabled={loading}>
           {t("comun.cancelar")}
         </Button>
-        <Button
-          onClick={guardar}
-          disabled={loading || tipoId === null || estadoId === null}
-        >
-          {loading ? t("comun.cargando") : t("entidades.guardar")}
-        </Button>
+        <SaveButton isSaving={loading} disabled={!estaCompleto}>
+          {t("entidades.guardar")}
+        </SaveButton>
       </DialogFooter>
-    </>
+    </form>
   );
 }

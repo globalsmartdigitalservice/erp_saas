@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Navigate, useLocation } from "react-router-dom";
 
 import { AccesoLayout } from "@/modules/seguridad/components/AccesoLayout";
-import { EmpresasDelUsuario } from "@/modules/seguridad/components/EmpresasDelUsuario";
+import { EmpresasDeUsuario } from "@/modules/seguridad/components/EmpresasDeUsuario";
 import { FormularioLogin } from "@/modules/seguridad/components/FormularioLogin";
 import {
   ELEGIR_EMPRESA,
@@ -12,7 +12,7 @@ import {
 } from "@/modules/seguridad/graphql/seguridad.mutations";
 import type {
   Credenciales,
-  EmpresaDelUsuario,
+  EmpresaDeUsuario,
   ResultadoLogin,
 } from "@/modules/seguridad/types/sesion.types";
 import { mensajeDeError } from "@/shared/lib/errores";
@@ -24,67 +24,64 @@ export function LoginPage() {
   const ubicacion = useLocation();
   const { usuario, cargando, refrescar } = useSession();
 
- 
   const destino = (ubicacion.state as { desde?: string } | null)?.desde ?? "/";
 
   const [credenciales, setCredenciales] = useState<Credenciales | null>(null);
-  const [empresas, setEmpresas] = useState<EmpresaDelUsuario[]>([]);
+  const [empresas, setEmpresas] = useState<EmpresaDeUsuario[]>([]);
   const [eligiendo, setEligiendo] = useState<string | null>(null);
   const [entrando, setEntrando] = useState(false);
 
   const [login, ingreso] = useMutation<{ login: ResultadoLogin }>(LOGIN);
 
-  
   const [elegirEmpresa, eleccion] = useMutation<{
     elegirEmpresa: Pick<ResultadoLogin, "necesitaElegirEmpresa" | "usuario">;
   }>(ELEGIR_EMPRESA);
 
   const enSegundoPaso = empresas.length > 0;
 
- 
   if (!cargando && usuario !== null) {
     return <Navigate to={destino} replace />;
   }
 
   async function entrar(datos: Credenciales) {
     setEntrando(true);
-    const resultado = await login({ variables: { datos } });
-    const respuesta = resultado.data?.login;
+    // Sin backend, el await lanza en vez de devolver: el finally es lo que
+    // evita que el botón quede trabado.
+    try {
+      const resultado = await login({ variables: { datos } });
+      const respuesta = resultado.data?.login;
+      if (!respuesta) return;
 
-    if (!respuesta) {
+      if (respuesta.necesitaElegirEmpresa) {
+        setCredenciales(datos);
+        setEmpresas(respuesta.empresas);
+        return;
+      }
+
+      await refrescar();
+    } finally {
       setEntrando(false);
-      return;
     }
-
-    if (respuesta.necesitaElegirEmpresa) {
-      setCredenciales(datos);
-      setEmpresas(respuesta.empresas);
-      setEntrando(false);
-      return;
-    }
-
-    await refrescar();
   }
 
   async function abrirEn(empresaId: string) {
     if (!credenciales) return;
 
     setEligiendo(empresaId);
-    const resultado = await elegirEmpresa({
-      variables: { datos: credenciales, empresaId },
-    });
+    try {
+      const resultado = await elegirEmpresa({
+        variables: { datos: credenciales, empresaId },
+      });
+      if (!resultado.data?.elegirEmpresa) return;
 
-    if (!resultado.data?.elegirEmpresa) {
+      setCredenciales(null);
+      await refrescar();
+    } finally {
       setEligiendo(null);
-      return;
     }
-
-    setCredenciales(null);
-    await refrescar();
   }
 
   function volverAlPrimerPaso() {
-    setCredenciales(null);
     setEmpresas([]);
   }
 
@@ -98,7 +95,7 @@ export function LoginPage() {
           key="empresas"
           className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-2"
         >
-          <EmpresasDelUsuario
+          <EmpresasDeUsuario
             empresas={empresas}
             eligiendo={eligiendo}
             error={mensajeDeError(eleccion.error, t)}
@@ -108,9 +105,11 @@ export function LoginPage() {
         </div>
       ) : (
         <FormularioLogin
+          inicial={credenciales}
           enviando={ingreso.loading || entrando}
           error={mensajeDeError(ingreso.error, t)}
           onEnviar={entrar}
+          onEditar={ingreso.reset}
         />
       )}
     </AccesoLayout>

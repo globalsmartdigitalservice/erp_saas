@@ -1,6 +1,7 @@
 import { useMutation, useQuery, type ApolloCache } from "@apollo/client";
-import { KeySquare, Lock, Search, ShieldOff } from "lucide-react";
+import { KeySquare, Loader2, Lock, Search, ShieldOff } from "lucide-react";
 import { memo, useCallback, useDeferredValue, useMemo, useState } from "react";
+import i18n, { type TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -12,11 +13,12 @@ import {
   PERMISOS_DEL_ROL,
 } from "@/modules/seguridad/graphql/roles.queries";
 import {
-  codenameDe,
   grupoDePermiso,
   type PermisoDeCatalogo,
-  type PermisoDelRol as LineaDePermiso,
+  type PermisoDeRol as LineaDePermiso,
 } from "@/modules/seguridad/types/rol.types";
+import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { ErrorState, EmptyState } from "@/shared/components/TableStates";
 import {
   Accordion,
   AccordionContent,
@@ -58,7 +60,7 @@ type GrupoDePermisos = {
   marcados: number;
 };
 
-export function PermisosDelRol({ rolId, esHeredado }: Props) {
+export function PermisosDeRol({ rolId, esHeredado }: Props) {
   const { t } = useTranslation();
   const [texto, setTexto] = useState("");
   const [abiertos, setAbiertos] = useState<string[] | null>(null);
@@ -104,9 +106,13 @@ export function PermisosDelRol({ rolId, esHeredado }: Props) {
 
   const [agregar, agregado] = useMutation(AGREGAR_PERMISO_AL_ROL);
   const [quitar, quitado] = useMutation(QUITAR_PERMISO_DEL_ROL);
+  const { reset: olvidarErrorDeAgregar } = agregado;
+  const { reset: olvidarErrorDeQuitar } = quitado;
 
   const alternar = useCallback(
     async (authPermissionId: string, marcar: boolean) => {
+      olvidarErrorDeAgregar();
+      olvidarErrorDeQuitar();
       setEnCurso((previo) => new Set(previo).add(authPermissionId));
       try {
         const variables = { rolId, authPermissionId };
@@ -135,14 +141,12 @@ export function PermisosDelRol({ rolId, esHeredado }: Props) {
         });
       }
     },
-    [rolId, agregar, quitar, escribirEnCache],
+    [rolId, agregar, quitar, escribirEnCache, olvidarErrorDeAgregar, olvidarErrorDeQuitar],
   );
 
   const cargando = asignados.loading || catalogo.loading;
-  const error = mensajeDeError(
-    asignados.error ?? catalogo.error ?? agregado.error ?? quitado.error,
-    t,
-  );
+  const errorDeConsulta = asignados.error ?? catalogo.error;
+  const errorDeCambio = mensajeDeError(agregado.error ?? quitado.error, t);
   const abiertosVisibles = buscando
     ? grupos.map((grupo) => grupo.clave)
     : (abiertos ??
@@ -180,14 +184,7 @@ export function PermisosDelRol({ rolId, esHeredado }: Props) {
       </CardHeader>
 
       <CardContent className="space-y-3">
-        {error && (
-          <p
-            role="alert"
-            className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive"
-          >
-            {error}
-          </p>
-        )}
+        <ErrorAlert message={errorDeCambio} />
 
         {cargando ? (
           <div className="space-y-2">
@@ -195,25 +192,26 @@ export function PermisosDelRol({ rolId, esHeredado }: Props) {
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />
           </div>
+        ) : errorDeConsulta ? (
+          <ErrorState
+            error={errorDeConsulta}
+            onRetry={() => {
+              void asignados.refetch();
+              if (!esHeredado) void catalogo.refetch();
+            }}
+          />
         ) : grupos.length === 0 ? (
-          <div className="flex items-start gap-3 rounded-md border border-dashed p-4">
-            <ShieldOff
-              className="mt-0.5 size-4 shrink-0 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <div>
-              <p className="text-sm font-medium">
-                {buscando ? t("roles.sinResultadosPermiso") : t("roles.sinPermisos")}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {buscando
-                  ? t("roles.sinResultadosPermisoAyuda")
-                  : esHeredado
-                    ? t("roles.sinPermisosHeredadoAyuda")
-                    : t("roles.sinPermisosAyuda")}
-              </p>
-            </div>
-          </div>
+          <EmptyState
+            icon={ShieldOff}
+            title={buscando ? t("roles.sinResultadosPermiso") : t("roles.sinPermisos")}
+            description={
+              buscando
+                ? t("roles.sinResultadosPermisoAyuda")
+                : esHeredado
+                  ? t("roles.sinPermisosHeredadoAyuda")
+                  : t("roles.sinPermisosAyuda")
+            }
+          />
         ) : (
           <Accordion
             type="multiple"
@@ -257,9 +255,7 @@ function GrupoDePermiso({
           <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
             <KeySquare className="size-4" aria-hidden="true" />
           </span>
-          <span className="font-medium">
-            {t("roles.grupo." + grupo.clave, { defaultValue: grupo.clave })}
-          </span>
+          <span className="font-medium">{tituloDeGrupo(grupo.clave, t)}</span>
           <Badge variant="outline" className="ml-auto mr-2 font-normal tabular-nums">
             {grupo.marcados} / {grupo.permisos.length}
           </Badge>
@@ -272,7 +268,6 @@ function GrupoDePermiso({
             <FilaDePermiso
               key={permiso.authPermissionId}
               authPermissionId={permiso.authPermissionId}
-              codigo={codenameDe(permiso)}
               etiqueta={permiso.etiqueta}
               marcado={permiso.marcado}
               fueraDeAlcance={permiso.fueraDeAlcance}
@@ -289,7 +284,6 @@ function GrupoDePermiso({
 
 const FilaDePermiso = memo(function FilaDePermiso({
   authPermissionId,
-  codigo,
   etiqueta,
   marcado,
   fueraDeAlcance,
@@ -298,7 +292,6 @@ const FilaDePermiso = memo(function FilaDePermiso({
   onAlternar,
 }: {
   authPermissionId: string;
-  codigo: string;
   etiqueta: string;
   marcado: boolean;
   fueraDeAlcance: boolean;
@@ -323,10 +316,10 @@ const FilaDePermiso = memo(function FilaDePermiso({
           disabled={bloqueado || guardando}
           onCheckedChange={(valor) => onAlternar(authPermissionId, valor === true)}
         />
-        <span className="min-w-0 flex-1">
-          <span className="block truncate">{etiqueta}</span>
-          <span className="block truncate text-xs text-muted-foreground">{codigo}</span>
-        </span>
+        <span className="min-w-0 flex-1">{etiqueta}</span>
+        {guardando && (
+          <Loader2 className="mt-0.5 size-3.5 shrink-0 animate-spin text-muted-foreground" aria-hidden="true" />
+        )}
         {fueraDeAlcance && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -356,7 +349,7 @@ function unir(
   const asignados = new Set(lineas.map((linea) => linea.authPermissionId));
   const otorgables = new Set(catalogo.map((permiso) => permiso.authPermissionId));
 
-  const delCatalogo = catalogo.map((permiso) => ({
+  const deCatalogo = catalogo.map((permiso) => ({
     ...permiso,
     marcado: asignados.has(permiso.authPermissionId),
     fueraDeAlcance: false,
@@ -372,7 +365,18 @@ function unir(
       fueraDeAlcance: !esHeredado,
     }));
 
-  return [...delCatalogo, ...ajenos];
+  return [...deCatalogo, ...ajenos];
+}
+
+/** El código del grupo es interno: sin traducción se muestra un título genérico, nunca la clave. */
+function tituloDeGrupo(clave: string, t: TFunction): string {
+  const traduccion = `roles.grupo.${clave}`;
+  if (i18n.exists(traduccion)) return t(traduccion);
+
+  if (import.meta.env.DEV) {
+    console.warn(`[permisos] Falta el título del grupo "${clave}" en es.json / en.json (${traduccion}).`);
+  }
+  return t("roles.grupoSinNombre");
 }
 
 function sinTildes(texto: string): string {
@@ -383,11 +387,7 @@ function filtrar(permisos: PermisoVisible[], texto: string): PermisoVisible[] {
   const buscado = sinTildes(texto.trim());
   if (!buscado) return permisos;
 
-  return permisos.filter(
-    (permiso) =>
-      sinTildes(permiso.etiqueta).includes(buscado) ||
-      sinTildes(permiso.codigo).includes(buscado),
-  );
+  return permisos.filter((permiso) => sinTildes(permiso.etiqueta).includes(buscado));
 }
 
 function agrupar(permisos: PermisoVisible[]): GrupoDePermisos[] {
@@ -401,12 +401,12 @@ function agrupar(permisos: PermisoVisible[]): GrupoDePermisos[] {
   }
 
   return [...porClave.entries()]
-    .map(([clave, delGrupo]) => ({
+    .map(([clave, deGrupo]) => ({
       clave,
-      permisos: [...delGrupo].sort((uno, otro) =>
+      permisos: [...deGrupo].sort((uno, otro) =>
         uno.etiqueta.localeCompare(otro.etiqueta),
       ),
-      marcados: delGrupo.filter((permiso) => permiso.marcado).length,
+      marcados: deGrupo.filter((permiso) => permiso.marcado).length,
     }))
     .sort((uno, otro) => uno.clave.localeCompare(otro.clave));
 }

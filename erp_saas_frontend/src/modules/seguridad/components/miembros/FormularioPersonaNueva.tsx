@@ -1,11 +1,11 @@
-import { CircleAlert } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { SeleccionDeRoles } from "@/modules/seguridad/components/miembros/SeleccionDeRoles";
 import type { DatosDePersonaNueva } from "@/modules/seguridad/types/miembro.types";
-import { Alert, AlertDescription } from "@/shared/components/ui/alert";
-import { Button } from "@/shared/components/ui/button";
+import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { PasswordInput } from "@/shared/components/PasswordInput";
+import { SaveButton } from "@/shared/components/SaveButton";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
@@ -29,7 +29,7 @@ export function FormularioPersonaNueva({ email, guardando, error, onGuardar }: P
   const [password, setPassword] = useState("");
   const [rolIds, setRolIds] = useState<string[]>([]);
 
-  const completo = username.trim() !== "" && (modo === "generar" || password !== "");
+  const estaCompleto = username.trim() !== "" && (modo === "generar" || password !== "");
 
   return (
     <form
@@ -37,7 +37,7 @@ export function FormularioPersonaNueva({ email, guardando, error, onGuardar }: P
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
-        if (!completo || guardando) return;
+        if (!estaCompleto || guardando) return;
         onGuardar(
           {
             username: username.trim(),
@@ -115,30 +115,27 @@ export function FormularioPersonaNueva({ email, guardando, error, onGuardar }: P
         </RadioGroup>
 
         {modo === "escribir" && (
-          <Input
-            type="password"
+          <PasswordInput
             autoComplete="new-password"
             aria-label={t("miembros.password")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="motion-safe:animate-in motion-safe:fade-in"
           />
         )}
       </fieldset>
 
       <SeleccionDeRoles seleccionados={rolIds} onCambiar={setRolIds} />
 
-      {error && (
-        <Alert variant="destructive" className="bg-destructive/5">
-          <CircleAlert aria-hidden="true" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      <ErrorAlert message={error} />
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={!completo || guardando}>
-          {guardando ? t("miembros.dandoDeAlta") : t("miembros.darDeAlta")}
-        </Button>
+        <SaveButton
+          isSaving={guardando}
+          savingText={t("miembros.dandoDeAlta")}
+          disabled={!estaCompleto}
+        >
+          {t("miembros.darDeAlta")}
+        </SaveButton>
       </div>
     </form>
   );

@@ -1,5 +1,5 @@
 import { useMutation } from "@apollo/client";
-import { KeyRound, RotateCcw, UserMinus, UserX } from "lucide-react";
+import { KeyRound, Loader2, RotateCcw, UserMinus, UserX } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -18,8 +18,8 @@ import {
   type CuentaDeMiembro,
   type MembresiaDeMiembro,
 } from "@/modules/seguridad/types/miembro.types";
-import { DialogoConfirmar } from "@/shared/components/DialogoConfirmar";
-import { Badge } from "@/shared/components/ui/badge";
+import { BadgeDeEstado } from "@/shared/components/BadgeDeEstado";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 import { Button } from "@/shared/components/ui/button";
 import {
   Card,
@@ -28,8 +28,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/components/ui/card";
+import { useEstadoId } from "@/shared/hooks/useEstadoId";
 import { useTipologias } from "@/shared/hooks/useTipologias";
-import { mensajeDeError } from "@/shared/lib/errores";
 import { useSession } from "@/shared/session";
 import { ABREV_ACTIVO, ABREV_BAJA } from "@/shared/types/tipologia.types";
 
@@ -48,10 +48,10 @@ export function MembresiaEnEmpresa({ cuenta, membresia }: Props) {
   const { empresa } = useSession();
   const estados = useTipologias("ESTADO_REGISTRO");
 
-  const activoId = estados.opciones.find((e) => e.abreviatura === ABREV_ACTIVO)?.id ?? null;
-  const bajaId = estados.opciones.find((e) => e.abreviatura === ABREV_BAJA)?.id ?? null;
-  const estado = estados.opciones.find((e) => e.id === membresia.estadoId)?.nombre;
-  const activa = membresia.estadoId === activoId;
+  const activoId = useEstadoId(ABREV_ACTIVO).id;
+  const bajaId = useEstadoId(ABREV_BAJA).id;
+  const nombreDeEstado = estados.opciones.find((e) => e.id === membresia.estadoId)?.nombre;
+  const estaActiva = membresia.estadoId === activoId;
   const nombre = cuenta.nombreCompleto || cuenta.username;
   const razonSocial = empresa?.razonSocial ?? "";
 
@@ -63,7 +63,12 @@ export function MembresiaEnEmpresa({ cuenta, membresia }: Props) {
             {t("miembros.enEstaEmpresa", { empresa: razonSocial })}
           </CardTitle>
           <CardDescription className="flex flex-wrap items-center gap-2">
-            {estado && <Badge variant="secondary">{estado}</Badge>}
+            {nombreDeEstado && (
+              <BadgeDeEstado
+                estado={{ id: membresia.estadoId, nombre: nombreDeEstado }}
+                activoId={activoId}
+              />
+            )}
             <span>
               {t("miembros.desdeFecha", {
                 fecha: fechaLegible(membresia.fechaAsignacion, i18n.language),
@@ -80,9 +85,9 @@ export function MembresiaEnEmpresa({ cuenta, membresia }: Props) {
         </CardHeader>
 
         <CardContent className="space-y-1">
-          {activa && <RestablecerPassword membresiaId={membresia.id} nombre={nombre} />}
+          {estaActiva && <RestablecerPassword membresiaId={membresia.id} nombre={nombre} />}
 
-          {activa ? (
+          {estaActiva ? (
             <BajaEnEmpresa
               membresiaId={membresia.id}
               bajaId={bajaId}
@@ -121,21 +126,19 @@ function RestablecerPassword({ membresiaId, nombre }: { membresiaId: string; nom
   const { t } = useTranslation();
   const [temporal, setTemporal] = useState<string | null>(null);
 
-  const [resetear, { loading, error, reset }] = useMutation<{ resetearPassword: string }>(
+  const [resetear, mutacion] = useMutation<{ resetearPassword: string }>(
     RESETEAR_PASSWORD,
     RECARGAR,
   );
 
   return (
     <>
-      <DialogoConfirmar
-        titulo={t("miembros.resetearTitulo", { nombre })}
-        descripcion={t("miembros.resetearAyuda")}
-        etiquetaConfirmar={t("miembros.resetear")}
-        cargando={loading}
-        error={mensajeDeError(error, t)}
-        alCerrar={reset}
-        onConfirmar={async () => {
+      <ConfirmDialog
+        title={t("miembros.resetearTitulo", { nombre })}
+        description={t("miembros.resetearAyuda")}
+        confirmLabel={t("miembros.resetear")}
+        mutation={mutacion}
+        onConfirm={async () => {
           const resultado = await resetear({ variables: { datos: { membresiaId } } });
           const password = resultado.data?.resetearPassword;
           if (!password) return false;
@@ -146,7 +149,7 @@ function RestablecerPassword({ membresiaId, nombre }: { membresiaId: string; nom
           <KeyRound size={14} aria-hidden="true" />
           {t("miembros.resetear")}
         </Button>
-      </DialogoConfirmar>
+      </ConfirmDialog>
 
       {temporal && (
         <DialogoPasswordTemporal
@@ -171,29 +174,27 @@ function BajaEnEmpresa({
   empresa: string;
 }) {
   const { t } = useTranslation();
-  const [desafiliar, { loading, error, reset }] = useMutation(DESAFILIAR, RECARGAR);
+  const [desafiliar, mutacion] = useMutation(DESAFILIAR, RECARGAR);
 
   return (
-    <DialogoConfirmar
-      titulo={t("miembros.bajaTitulo", { nombre, empresa })}
-      descripcion={t("miembros.bajaAyuda")}
-      etiquetaConfirmar={t("miembros.darDeBaja")}
-      cargando={loading}
-      error={mensajeDeError(error, t)}
-      alCerrar={reset}
-      onConfirmar={async () => {
+    <ConfirmDialog
+      title={t("miembros.bajaTitulo", { nombre, empresa })}
+      description={t("miembros.bajaAyuda")}
+      confirmLabel={t("miembros.darDeBaja")}
+      mutation={mutacion}
+      successMessage={t("miembros.dadoDeBaja")}
+      onConfirm={async () => {
         const resultado = await desafiliar({
           variables: { datos: { membresiaId, estadoBajaId: bajaId } },
         });
         if (!resultado.data?.desafiliar) return false;
-        toast.success(t("miembros.dadoDeBaja"));
       }}
     >
       <Button variant="ghost" size="sm" className={CLASE_BOTON_DE_BAJA} disabled={bajaId === null}>
         <UserMinus size={14} aria-hidden="true" />
         {t("miembros.darDeBaja")}
       </Button>
-    </DialogoConfirmar>
+    </ConfirmDialog>
   );
 }
 
@@ -225,8 +226,13 @@ function ReactivarEnEmpresa({
       className="w-full justify-start gap-2"
       onClick={alReactivar}
       disabled={loading || activoId === null}
+      aria-busy={loading || undefined}
     >
-      <RotateCcw size={14} aria-hidden="true" />
+      {loading ? (
+        <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+      ) : (
+        <RotateCcw size={14} aria-hidden="true" />
+      )}
       {loading ? t("comun.cargando") : t("miembros.reactivarMembresia")}
     </Button>
   );
@@ -234,27 +240,25 @@ function ReactivarEnEmpresa({
 
 function DesactivarCuenta({ usuarioId, nombre }: { usuarioId: string; nombre: string }) {
   const { t } = useTranslation();
-  const [desactivar, { loading, error, reset }] = useMutation(DESACTIVAR_USUARIO, RECARGAR);
+  const [desactivar, mutacion] = useMutation(DESACTIVAR_USUARIO, RECARGAR);
 
   return (
-    <DialogoConfirmar
-      titulo={t("miembros.desactivarTitulo", { nombre })}
-      descripcion={t("miembros.desactivarAyuda")}
-      etiquetaConfirmar={t("miembros.desactivarCuenta")}
-      cargando={loading}
-      error={mensajeDeError(error, t)}
-      alCerrar={reset}
-      onConfirmar={async () => {
+    <ConfirmDialog
+      title={t("miembros.desactivarTitulo", { nombre })}
+      description={t("miembros.desactivarAyuda")}
+      confirmLabel={t("miembros.desactivarCuenta")}
+      mutation={mutacion}
+      successMessage={t("miembros.cuentaDesactivada")}
+      onConfirm={async () => {
         const resultado = await desactivar({ variables: { id: usuarioId } });
         if (!resultado.data?.desactivarUsuario) return false;
-        toast.success(t("miembros.cuentaDesactivada"));
       }}
     >
       <Button variant="ghost" size="sm" className={CLASE_BOTON_DE_BAJA}>
         <UserX size={14} aria-hidden="true" />
         {t("miembros.desactivarCuenta")}
       </Button>
-    </DialogoConfirmar>
+    </ConfirmDialog>
   );
 }
 
@@ -278,8 +282,13 @@ function ReactivarCuenta({ usuarioId }: { usuarioId: string }) {
       className="w-full justify-start gap-2"
       onClick={alReactivar}
       disabled={loading}
+      aria-busy={loading || undefined}
     >
-      <RotateCcw size={14} aria-hidden="true" />
+      {loading ? (
+        <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+      ) : (
+        <RotateCcw size={14} aria-hidden="true" />
+      )}
       {loading ? t("comun.cargando") : t("miembros.reactivarCuenta")}
     </Button>
   );

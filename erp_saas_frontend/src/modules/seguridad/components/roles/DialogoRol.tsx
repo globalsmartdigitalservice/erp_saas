@@ -8,7 +8,9 @@ import {
   CREAR_ROL,
 } from "@/modules/seguridad/graphql/roles.mutations";
 import { ROLES } from "@/modules/seguridad/graphql/roles.queries";
-import type { RolSinConteo } from "@/modules/seguridad/types/rol.types";
+import type { Rol, RolSinConteo } from "@/modules/seguridad/types/rol.types";
+import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { SaveButton } from "@/shared/components/SaveButton";
 import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
@@ -20,9 +22,8 @@ import {
 } from "@/shared/components/ui/dialog";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import { useTipologias } from "@/shared/hooks/useTipologias";
+import { useEstadoActivoId } from "@/shared/hooks/useEstadoActivoId";
 import { mensajeDeError } from "@/shared/lib/errores";
-import { ABREV_ACTIVO } from "@/shared/types/tipologia.types";
 
 type Props = {
   rol: RolSinConteo | null;
@@ -42,20 +43,17 @@ export function DialogoRol({ rol, onCerrar }: Props) {
 function FormularioRol({ rol, onCerrar }: Props) {
   const { t } = useTranslation();
   const [nombre, setNombre] = useState(rol?.nombre ?? "");
-  const estados = useTipologias("ESTADO_REGISTRO");
+  const estadoActivoId = useEstadoActivoId();
 
-  const [crear, creacion] = useMutation(CREAR_ROL, {
+  const [crear, creacion] = useMutation<{ crearRol: Rol | null }>(CREAR_ROL, {
     refetchQueries: [ROLES],
   });
-  const [actualizar, edicion] = useMutation(ACTUALIZAR_ROL, {
+  const [actualizar, edicion] = useMutation<{ actualizarRol: Rol | null }>(ACTUALIZAR_ROL, {
     refetchQueries: [ROLES],
   });
 
   const enCurso = creacion.loading || edicion.loading;
   const error = mensajeDeError(creacion.error ?? edicion.error, t);
-
-  const estadoActivoId =
-    estados.opciones.find((estado) => estado.abreviatura === ABREV_ACTIVO)?.id ?? null;
 
   const limpio = nombre.trim();
   const sinCambios = rol !== null && limpio === rol.nombre;
@@ -66,20 +64,21 @@ function FormularioRol({ rol, onCerrar }: Props) {
     evento.preventDefault();
     if (!puedeGuardar) return;
 
-    try {
-      if (rol) {
-        await actualizar({ variables: { id: rol.id, datos: { nombre: limpio } } });
-        toast.success(t("roles.actualizado", { nombre: limpio }));
-      } else {
-        await crear({
-          variables: { datos: { nombre: limpio, estadoId: estadoActivoId } },
-        });
-        toast.success(t("roles.creado", { nombre: limpio }));
-      }
-      onCerrar();
-    } catch {
-      // El cartel del formulario ya muestra el error que devolvió el servidor.
+    // Con errorPolicy "all" un rechazo del backend no lanza: se sabe por `data`.
+    if (rol) {
+      const resultado = await actualizar({ variables: { id: rol.id, datos: { nombre: limpio } } });
+      if (!resultado.data?.actualizarRol) return;
+    } else {
+      const resultado = await crear({
+        variables: { datos: { nombre: limpio, estadoId: estadoActivoId } },
+      });
+      if (!resultado.data?.crearRol) return;
     }
+
+    toast.success(
+      rol ? t("roles.actualizado", { nombre: limpio }) : t("roles.creado", { nombre: limpio }),
+    );
+    onCerrar();
   }
 
   return (
@@ -108,19 +107,15 @@ function FormularioRol({ rol, onCerrar }: Props) {
         </p>
       </div>
 
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      <ErrorAlert message={error} />
 
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCerrar} disabled={enCurso}>
           {t("roles.cancelar")}
         </Button>
-        <Button type="submit" disabled={!puedeGuardar}>
-          {enCurso ? t("roles.guardando") : t("roles.guardar")}
-        </Button>
+        <SaveButton isSaving={enCurso} disabled={!puedeGuardar}>
+          {t("roles.guardar")}
+        </SaveButton>
       </DialogFooter>
     </form>
   );

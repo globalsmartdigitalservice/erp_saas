@@ -1,14 +1,11 @@
 import { useCallback, useState } from "react";
 
-
-
 const CLAVE = "erp.sidebar.colapsado";
 
 function leerColapsado(): boolean {
   try {
     return localStorage.getItem(CLAVE) === "1";
   } catch {
-
     return false;
   }
 }
@@ -23,7 +20,7 @@ export function useSidebar() {
       try {
         localStorage.setItem(CLAVE, siguiente ? "1" : "0");
       } catch {
-
+        // Sin localStorage (modo privado) solo no se recuerda.
       }
       return siguiente;
     });

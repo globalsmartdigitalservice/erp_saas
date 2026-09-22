@@ -1,7 +1,7 @@
 import { useQuery } from "@apollo/client";
-import { AlertTriangle, ArrowLeft } from "lucide-react";
+import { UserX } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import { DatosPersonales } from "@/modules/seguridad/components/miembros/DatosPersonales";
 import { MembresiaEnEmpresa } from "@/modules/seguridad/components/miembros/MembresiaEnEmpresa";
@@ -11,10 +11,10 @@ import type {
   CuentaDeMiembro,
   MembresiaDeMiembro,
 } from "@/modules/seguridad/types/miembro.types";
-import { EstadoError } from "@/shared/components/EstadosTabla";
-import { Button } from "@/shared/components/ui/button";
+import { BackButton } from "@/shared/components/BackButton";
+import { ErrorState, EmptyState } from "@/shared/components/TableStates";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { mensajeDeError } from "@/shared/lib/errores";
+import { isNotFound } from "@/shared/lib/errores";
 
 export function DetalleMiembroPage() {
   const { t } = useTranslation();
@@ -30,12 +30,7 @@ export function DetalleMiembroPage() {
 
   return (
     <section className="space-y-4">
-      <Button asChild variant="ghost" size="sm" className="-ml-2 gap-2">
-        <Link to="..">
-          <ArrowLeft size={16} />
-          {t("miembros.volver")}
-        </Link>
-      </Button>
+      <BackButton>{t("miembros.volver")}</BackButton>
 
       {loading ? (
         <div className="space-y-4">
@@ -45,12 +40,17 @@ export function DetalleMiembroPage() {
             <Skeleton className="h-48" />
           </div>
         </div>
+      ) : error && !isNotFound(error) && (!cuenta || !membresia) ? (
+        <ErrorState
+          error={error}
+          title={t("miembros.noExisteFicha")}
+          onRetry={() => refetch()}
+        />
       ) : !cuenta || !membresia ? (
-        <EstadoError
-          icono={AlertTriangle}
-          titulo={t("miembros.noExisteFicha")}
-          mensaje={mensajeDeError(error, t)}
-          onReintentar={() => refetch()}
+        <EmptyState
+          icon={UserX}
+          title={t("miembros.noEsDeEstaEmpresa")}
+          description={t("miembros.noEsDeEstaEmpresaAyuda")}
         />
       ) : (
         <div className="space-y-4 motion-safe:animate-in motion-safe:fade-in">

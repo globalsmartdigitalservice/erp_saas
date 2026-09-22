@@ -1,12 +1,15 @@
 {
   "comun": {
     "cargando": "Cargando…",
+    "guardando": "Guardando…",
     "error": "Algo salió mal",
     "sinDatos": "No hay nada para mostrar",
     "reintentar": "Reintentar",
     "cancelar": "Cancelar",
     "sinRespuesta": "No se pudo conectar con el servidor. Verifique su conexión e intente nuevamente.",
-    "ninguna": "Ninguna"
+    "ninguna": "Ninguna",
+    "mostrarPassword": "Mostrar contraseña",
+    "mayusculasActivadas": "Bloq Mayús está activado."
   },
   "login": {
     "titulo": "Iniciar sesión",
@@ -16,6 +19,7 @@
     "password": "Contraseña",
     "entrar": "Ingresar",
     "entrando": "Ingresando…",
+    "olvidoPassword": "Si olvidó su contraseña, solicite al administrador de su empresa que la restablezca.",
     "tituloEmpresa": "Seleccione una empresa",
     "ayudaEmpresa": "Su usuario está habilitado en más de una. La información que verá corresponde a la que seleccione.",
     "casaMatriz": "Casa matriz",
@@ -40,7 +44,7 @@
     "empresa": "Empresa",
     "idioma": "Idioma",
     "salir": "Cerrar sesión",
-    "saliendo": "Cerrando sesión"
+    "saliendo": "Cerrando sesión…"
   },
   "menu": {
     "configuracion": "Configuración",
@@ -54,7 +58,13 @@
     "categorias": "Categorías",
     "seguridad": "Seguridad",
     "usuarios": "Usuarios",
-    "roles": "Roles"
+    "roles": "Roles",
+    "saltarAlContenido": "Saltar al contenido"
+  },
+  "noEncontrada": {
+    "titulo": "Página no encontrada",
+    "ayuda": "La dirección no existe o ya no está disponible. Verifique el enlace o vuelva al inicio.",
+    "volver": "Ir al inicio"
   },
   "miembros": {
     "titulo": "Usuarios",
@@ -114,6 +124,8 @@
     "noCopiada": "No se pudo copiar. Selecciónela y cópiela a mano.",
     "listo": "Listo",
     "noExisteFicha": "No se pudo abrir la ficha",
+    "noEsDeEstaEmpresa": "Esta persona no existe o no trabaja en esta empresa",
+    "noEsDeEstaEmpresaAyuda": "Puede que el enlace sea antiguo o que la persona trabaje en otra sucursal. Vuelva a la lista de usuarios para buscarla.",
     "editarDatos": "Editar datos",
     "editarDatosAyuda": "Los cambios valen para todas las empresas donde trabaja: la cuenta es una sola.",
     "guardar": "Guardar",
@@ -166,6 +178,8 @@
     "ocultarTerminadas": "Ocultar terminadas"
   },
   "paginacion": {
+    "navegacion": "Paginación",
+    "pagina": "Página {{numero}}",
     "mostrando": "Mostrando {{inicio}} a {{fin}} de {{total}}",
     "primera": "Primera página",
     "anterior": "Página anterior",
@@ -177,7 +191,13 @@
   "listas": {
     "titulo": "Listas del sistema",
     "ayuda": "Los catálogos que alimentan las listas desplegables del sistema.",
+    "lista": "Lista",
     "elegiLista": "Seleccione una lista",
+    "sinElegir": "Seleccione una lista para ver sus valores",
+    "sinValores": "Esta lista todavía no tiene valores",
+    "valor": "Valor",
+    "abreviatura": "Abreviatura",
+    "origen": "Origen",
     "valores_one": "{{count}} valor",
     "valores_other": "{{count}} valores",
     "deFabrica": "de fábrica",
@@ -322,7 +342,9 @@
     "creado": "Se creó el rol {{nombre}}.",
     "actualizado": "Se actualizó el rol {{nombre}}.",
     "volver": "Volver a los roles",
-    "noExiste": "No se encontró el rol",
+    "grupoSinNombre": "Otros permisos",
+    "noEsDeEstaEmpresa": "Este rol no existe o no es de esta empresa",
+    "noEsDeEstaEmpresaAyuda": "Puede que el enlace sea antiguo o que el rol se haya creado en otra empresa. Vuelva a la lista de roles para buscarlo.",
     "darDeBaja": "Dar de baja",
     "darDeBajaTitulo": "¿Dar de baja el rol {{nombre}}?",
     "darDeBajaAyuda": "Dejará de estar disponible para asignarlo. No es posible darlo de baja si alguna persona todavía lo tiene.",

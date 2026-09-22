@@ -7,11 +7,11 @@ import { DialogoRol } from "@/modules/seguridad/components/roles/DialogoRol";
 import { TablaRoles } from "@/modules/seguridad/components/roles/TablaRoles";
 import { ROLES } from "@/modules/seguridad/graphql/roles.queries";
 import type { Rol } from "@/modules/seguridad/types/rol.types";
+import { PageHeader } from "@/shared/components/PageHeader";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { useTipologias } from "@/shared/hooks/useTipologias";
-import { mensajeDeError } from "@/shared/lib/errores";
 import { ABREV_ACTIVO, ABREV_BAJA } from "@/shared/types/tipologia.types";
 
 type FiltroDeEstado = "activos" | "baja" | "todos";
@@ -57,17 +57,16 @@ export function ListaRolesPage() {
 
   return (
     <section className="space-y-4">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-xl font-semibold">{t("roles.titulo")}</h1>
-          <p className="text-sm text-muted-foreground">{t("roles.ayuda")}</p>
-        </div>
-
-        <Button className="gap-2" onClick={() => abrir(ROL_NUEVO)}>
-          <Plus size={16} aria-hidden="true" />
-          {t("roles.nuevo")}
-        </Button>
-      </header>
+      <PageHeader
+        title={t("roles.titulo")}
+        description={t("roles.ayuda")}
+        action={
+          <Button className="gap-2" onClick={() => abrir(ROL_NUEVO)}>
+            <Plus aria-hidden="true" />
+            {t("roles.nuevo")}
+          </Button>
+        }
+      />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Tabs value={filtro} onValueChange={(valor) => setFiltro(valor as FiltroDeEstado)}>
@@ -105,7 +104,7 @@ export function ListaRolesPage() {
         roles={roles}
         nombresDeEstado={nombresDeEstado}
         cargando={loading || (esperandoEstado && estados.cargando)}
-        error={mensajeDeError(error, t)}
+        error={error}
         buscando={texto.trim() !== ""}
         onReintentar={() => refetch()}
         onEditar={abrir}

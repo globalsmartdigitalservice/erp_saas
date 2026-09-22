@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -17,7 +17,7 @@ export function BusquedaPorCorreo({ buscando, onBuscar }: Props) {
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const limpio = email.trim();
-  const completo = FORMA_DE_CORREO.test(limpio);
+  const estaCompleto = FORMA_DE_CORREO.test(limpio);
 
   return (
     <form
@@ -25,7 +25,7 @@ export function BusquedaPorCorreo({ buscando, onBuscar }: Props) {
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
-        if (completo && !buscando) onBuscar(limpio);
+        if (estaCompleto && !buscando) onBuscar(limpio);
       }}
     >
       <div className="flex-1 space-y-1.5">
@@ -42,8 +42,17 @@ export function BusquedaPorCorreo({ buscando, onBuscar }: Props) {
         />
       </div>
 
-      <Button type="submit" className="gap-2" disabled={!completo || buscando}>
-        <Search size={16} aria-hidden="true" />
+      <Button
+        type="submit"
+        className="gap-2"
+        disabled={!estaCompleto || buscando}
+        aria-busy={buscando || undefined}
+      >
+        {buscando ? (
+          <Loader2 className="animate-spin" aria-hidden="true" />
+        ) : (
+          <Search aria-hidden="true" />
+        )}
         {buscando ? t("miembros.buscandoCorreo") : t("miembros.buscarCorreo")}
       </Button>
     </form>

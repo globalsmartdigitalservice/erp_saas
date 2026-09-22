@@ -1,7 +1,5 @@
 import { gql } from "@apollo/client";
 
-
-
 export const CREAR_ENTIDAD = gql`
   mutation CrearEntidad($datos: CrearEntidadInput!) {
     crearEntidad(datos: $datos) {
@@ -38,7 +36,6 @@ export const CREAR_ROL = gql`
     }
   }
 `;
-
 
 export const ACTUALIZAR_ROL = gql`
   mutation ActualizarRolEntidad(
@@ -102,7 +99,6 @@ export const ACTUALIZAR_CONTACTO = gql`
   }
 `;
 
-
 export const DESACTIVAR_CONTACTO = gql`
   mutation DesactivarContactoEntidad($id: ID!) {
     desactivarContactoEntidad(id: $id) {
@@ -113,7 +109,6 @@ export const DESACTIVAR_CONTACTO = gql`
     }
   }
 `;
-
 
 export const CREAR_CATEGORIA = gql`
   mutation CrearCategoriaEntidad($datos: CrearCategoriaEntidadInput!) {

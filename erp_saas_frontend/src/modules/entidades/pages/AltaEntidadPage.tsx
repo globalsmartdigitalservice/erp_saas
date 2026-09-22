@@ -1,6 +1,5 @@
 import { useMutation } from "@apollo/client";
-import { ArrowLeft } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -10,22 +9,16 @@ import {
 } from "@/modules/entidades/components/FormularioEntidad";
 import { CREAR_ENTIDAD } from "@/modules/entidades/graphql/entidades.mutations";
 import { ENTIDADES } from "@/modules/entidades/graphql/entidades.queries";
-import { Button } from "@/shared/components/ui/button";
+import { BackButton } from "@/shared/components/BackButton";
+import { PageTitle } from "@/shared/components/PageTitle";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { mensajeDeError } from "@/shared/lib/errores";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/shared/components/ui/card";
 
-/** Alta de una entidad. */
 export function AltaEntidadPage() {
   const { t } = useTranslation();
   const navegar = useNavigate();
 
   const [crear, { loading, error }] = useMutation(CREAR_ENTIDAD, {
-
     refetchQueries: [ENTIDADES],
   });
 
@@ -45,7 +38,6 @@ export function AltaEntidadPage() {
       },
     });
 
-
     const creada = resultado.data?.crearEntidad;
     if (!creada) return;
 
@@ -55,16 +47,13 @@ export function AltaEntidadPage() {
 
   return (
     <section className="space-y-4">
-      <Button asChild variant="ghost" size="sm" className="-ml-2 gap-2">
-        <Link to="..">
-          <ArrowLeft size={16} />
-          {t("entidades.volver")}
-        </Link>
-      </Button>
+      <BackButton>{t("entidades.volver")}</BackButton>
 
       <Card>
         <CardHeader>
-          <CardTitle>{t("entidades.nueva")}</CardTitle>
+          <PageTitle>
+            {t("entidades.nueva")}
+          </PageTitle>
         </CardHeader>
         <CardContent>
           <FormularioEntidad

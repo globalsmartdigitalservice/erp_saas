@@ -5,8 +5,6 @@ import { Sheet, SheetContent, SheetTitle } from "@/shared/components/ui/sheet";
 import { Brand } from "./Brand";
 import { SidebarNav } from "./SidebarNav";
 
-
-
 type Props = {
   abierto: boolean;
   alCambiar: (abierto: boolean) => void;
@@ -22,7 +20,6 @@ export function SidebarMobile({ abierto, alCambiar, alCerrar }: Props) {
         side="left"
         className="flex w-72 flex-col border-none bg-sidebar p-0 text-sidebar-foreground"
       >
-
         <SheetTitle className="sr-only">{t("menu.navegacion")}</SheetTitle>
 
         <div className="flex h-16 items-center border-b border-sidebar-foreground/10 px-4">

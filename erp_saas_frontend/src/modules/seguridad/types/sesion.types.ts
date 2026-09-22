@@ -1,11 +1,11 @@
-export type EmpresaDelUsuario = {
+export type EmpresaDeUsuario = {
   membresiaId: string;
   empresaId: string;
   razonSocial: string;
   esMatriz: boolean;
 };
 
-export type UsuarioDeLaSesion = {
+export type UsuarioDeSesion = {
   id: string;
   nombreCompleto: string;
   debeCambiarPassword: boolean;
@@ -18,8 +18,8 @@ export type UsuarioDeLaSesion = {
  */
 export type ResultadoLogin = {
   necesitaElegirEmpresa: boolean;
-  usuario: UsuarioDeLaSesion | null;
-  empresas: EmpresaDelUsuario[];
+  usuario: UsuarioDeSesion | null;
+  empresas: EmpresaDeUsuario[];
 };
 
 /** `identificador` es el nombre de usuario o el correo: el backend acepta los dos. */

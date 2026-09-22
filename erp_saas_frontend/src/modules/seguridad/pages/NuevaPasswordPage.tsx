@@ -28,14 +28,14 @@ export function NuevaPasswordPage() {
 
   async function guardar(datos: CambioDePassword) {
     setGuardando(true);
-    const resultado = await cambiarMiPassword({ variables: { datos } });
+    try {
+      const resultado = await cambiarMiPassword({ variables: { datos } });
+      if (!resultado.data?.cambiarMiPassword) return;
 
-    if (!resultado.data?.cambiarMiPassword) {
+      await refrescar();
+    } finally {
       setGuardando(false);
-      return;
     }
-
-    await refrescar();
   }
 
   async function salir() {

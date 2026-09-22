@@ -10,11 +10,11 @@ import type {
   FiltroDeEstado,
   Miembro,
 } from "@/modules/seguridad/types/miembro.types";
+import { PageHeader } from "@/shared/components/PageHeader";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { useTipologias } from "@/shared/hooks/useTipologias";
-import { mensajeDeError } from "@/shared/lib/errores";
 import { ABREV_ACTIVO, ABREV_BAJA } from "@/shared/types/tipologia.types";
 
 const ABREVIATURA_POR_FILTRO: Record<FiltroDeEstado, string | null> = {
@@ -52,19 +52,18 @@ export function ListaMiembrosPage() {
 
   return (
     <section className="space-y-4">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-xl font-semibold">{t("miembros.titulo")}</h1>
-          <p className="text-sm text-muted-foreground">{t("miembros.ayuda")}</p>
-        </div>
-
-        <Button asChild className="gap-2">
-          <Link to="nuevo">
-            <Plus size={16} />
-            {t("miembros.nuevo")}
-          </Link>
-        </Button>
-      </header>
+      <PageHeader
+        title={t("miembros.titulo")}
+        description={t("miembros.ayuda")}
+        action={
+          <Button asChild className="gap-2">
+            <Link to="nuevo">
+              <Plus aria-hidden="true" />
+              {t("miembros.nuevo")}
+            </Link>
+          </Button>
+        }
+      />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Tabs value={filtro} onValueChange={(valor) => setFiltro(valor as FiltroDeEstado)}>
@@ -102,7 +101,7 @@ export function ListaMiembrosPage() {
         miembros={miembros}
         nombresDeEstado={nombresDeEstado}
         cargando={loading || (esperandoEstado && estados.cargando)}
-        error={mensajeDeError(error, t)}
+        error={error}
         buscando={texto.trim() !== ""}
         onReintentar={() => refetch()}
       />

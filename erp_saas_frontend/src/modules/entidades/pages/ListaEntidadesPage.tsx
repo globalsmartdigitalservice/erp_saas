@@ -13,10 +13,10 @@ import type {
   Entidad,
   Pagina,
 } from "@/modules/entidades/types/entidad.types";
-import { Paginacion } from "@/shared/components/Paginacion";
+import { PageHeader } from "@/shared/components/PageHeader";
+import { Pagination } from "@/shared/components/Pagination";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-
 
 export function ListaEntidadesPage() {
   const { t } = useTranslation();
@@ -63,60 +63,62 @@ export function ListaEntidadesPage() {
 
   return (
     <section className="space-y-4">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-xl font-semibold">
-            {t("entidades.titulo")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("entidades.ayuda")}
-          </p>
-        </div>
+      <PageHeader
+        title={t("entidades.titulo")}
+        description={t("entidades.ayuda")}
+        action={
+          <Button asChild className="gap-2">
+            <Link to="nueva">
+              <Plus aria-hidden="true" />
+              {t("entidades.nueva")}
+            </Link>
+          </Button>
+        }
+      />
 
-        <Button asChild className="gap-2">
-          <Link to="nueva">
-            <Plus size={16} />
-            {t("entidades.nueva")}
-          </Link>
-        </Button>
-      </header>
-
-      <div className="flex gap-2">
+      <form
+        role="search"
+        className="flex flex-wrap gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          buscar();
+        }}
+      >
         <Input
+          type="search"
           value={textoBusqueda}
           onChange={(e) => setTextoBusqueda(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && buscar()}
           placeholder={t("entidades.buscarPorDocumento")}
+          aria-label={t("entidades.buscarPorDocumento")}
           className="max-w-xs"
         />
-        <Button variant="secondary" onClick={buscar} className="gap-2">
-          <Search size={16} />
+        <Button type="submit" variant="secondary" className="gap-2">
+          <Search aria-hidden="true" />
           {t("entidades.buscar")}
         </Button>
         {buscando && (
-          <Button variant="ghost" onClick={limpiar} className="gap-2">
-            <X size={16} />
+          <Button type="button" variant="ghost" onClick={limpiar} className="gap-2">
+            <X aria-hidden="true" />
             {t("entidades.limpiar")}
           </Button>
         )}
-      </div>
+      </form>
 
       <TablaEntidades
         entidades={entidades}
         cargando={buscando ? busqueda.loading : lista.loading}
-        error={Boolean(buscando ? busqueda.error : lista.error)}
+        error={buscando ? busqueda.error : lista.error}
         onReintentar={() =>
           buscando ? busqueda.refetch() : lista.refetch()
         }
       />
 
-
       {!buscando && info && (
-        <Paginacion
+        <Pagination
           total={info.total}
-          limite={info.limite}
-          desde={info.desde}
-          onCambiar={setDesde}
+          limit={info.limite}
+          offset={info.desde}
+          onChange={setDesde}
         />
       )}
     </section>

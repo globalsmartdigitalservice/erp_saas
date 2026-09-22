@@ -2,7 +2,7 @@
 export type Agrupador = {
   valor: number;
   nombre: string;
- 
+
   codigo: string;
 };
 
@@ -13,7 +13,6 @@ export type Tipologia = {
   esDelSistema: boolean;
   esPropia: boolean;
 };
-
 
 export type OrigenDeTipologia = "deFabrica" | "propia" | "heredada";
 

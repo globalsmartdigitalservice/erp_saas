@@ -1,17 +1,18 @@
 import { useQuery } from "@apollo/client";
-import { useState } from "react";
+import { ListChecks } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 
+import {
+  DataTableBody,
+  DataTableHeader,
+  DataTableRow,
+  DataTable,
+} from "@/shared/components/DataTable";
+import { PageHeader } from "@/shared/components/PageHeader";
+import { ErrorState, EmptyState } from "@/shared/components/TableStates";
 import { Badge } from "@/shared/components/ui/badge";
-import {
-  AGRUPADORES,
-  TIPOLOGIAS,
-} from "@/shared/graphql/tipologias.queries";
-import {
-  origenDe,
-  type Agrupador,
-  type Tipologia,
-} from "@/shared/types/tipologia.types";
+import { Label } from "@/shared/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -19,11 +20,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
+import { TableCell, TableHead } from "@/shared/components/ui/table";
+import {
+  AGRUPADORES,
+  TIPOLOGIAS,
+} from "@/shared/graphql/tipologias.queries";
+import { cn } from "@/shared/lib/utils";
+import {
+  origenDe,
+  type Agrupador,
+  type OrigenDeTipologia,
+  type Tipologia,
+} from "@/shared/types/tipologia.types";
 
+const COLUMNAS = 3;
+
+const CLASE_POR_ORIGEN: Record<OrigenDeTipologia, string> = {
+  propia: "border-primary/30 bg-primary/10 text-primary",
+  heredada: "bg-transparent text-muted-foreground",
+  deFabrica: "border-transparent bg-secondary text-secondary-foreground",
+};
+
+function leerAgrupador(crudo: string | null): number | null {
+  const valor = Number(crudo);
+  return crudo !== null && Number.isInteger(valor) ? valor : null;
+}
 
 export function ListasPage() {
   const { t } = useTranslation();
-  const [agrupador, setAgrupador] = useState<number | null>(null);
+  const [parametros, setParametros] = useSearchParams();
+  const agrupador = leerAgrupador(parametros.get("lista"));
 
   const listas = useQuery<{ agrupadores: Agrupador[] }>(AGRUPADORES);
 
@@ -36,73 +62,90 @@ export function ListasPage() {
 
   return (
     <section className="space-y-4">
-      <header>
-        <h1 className="font-heading text-xl font-semibold">
-          {t("listas.titulo")}
-        </h1>
-        <p className="text-sm text-muted-foreground">{t("listas.ayuda")}</p>
-      </header>
+      <PageHeader title={t("listas.titulo")} description={t("listas.ayuda")} />
 
-      <Select
-        value={agrupador === null ? undefined : String(agrupador)}
-        onValueChange={(valor) => setAgrupador(Number(valor))}
-        disabled={listas.loading}
-      >
-        <SelectTrigger className="w-[280px]">
-          <SelectValue
-            placeholder={
-              listas.loading ? t("comun.cargando") : t("listas.elegiLista")
+      {listas.error ? (
+        <ErrorState error={listas.error} onRetry={() => listas.refetch()} />
+      ) : (
+        <div className="flex flex-col gap-1.5 sm:w-72">
+          <Label htmlFor="lista">{t("listas.lista")}</Label>
+          <Select
+            value={agrupador === null ? undefined : String(agrupador)}
+            onValueChange={(valor) =>
+              setParametros({ lista: valor }, { replace: true })
             }
-          />
-        </SelectTrigger>
-        <SelectContent>
-          {(listas.data?.agrupadores ?? []).map((lista) => (
-            <SelectItem key={lista.valor} value={String(lista.valor)}>
-              {lista.nombre}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+            disabled={listas.loading}
+          >
+            <SelectTrigger id="lista">
+              <SelectValue
+                placeholder={
+                  listas.loading ? t("comun.cargando") : t("listas.elegiLista")
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {(listas.data?.agrupadores ?? []).map((lista) => (
+                <SelectItem key={lista.valor} value={String(lista.valor)}>
+                  {lista.nombre}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
-      {agrupador !== null && (
+      {agrupador === null ? (
+        !listas.error && (
+          <EmptyState icon={ListChecks} title={t("listas.sinElegir")} />
+        )
+      ) : (
         <div className="space-y-2">
-          {valores.loading ? (
+          {valores.data && (
             <p className="text-sm text-muted-foreground">
-              {t("comun.cargando")}
+              {t("listas.valores", { count: filas.length })}
             </p>
-          ) : filas.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t("comun.sinDatos")}
-            </p>
-          ) : (
-            <>
-              <p className="text-sm text-muted-foreground">
-              
-                {t("listas.valores", { count: filas.length })}
-              </p>
-
-              <ul className="divide-y rounded-md border">
-                {filas.map((fila) => (
-                  <li
-                    key={fila.id}
-                    className="flex items-center gap-3 px-3 py-2 text-sm"
-                  >
-                    <span>{fila.nombre}</span>
-                    {fila.abreviatura && (
-                      <span className="text-muted-foreground">
-                        ({fila.abreviatura})
-                      </span>
-                    )}
-                    <Badge variant="secondary" className="ml-auto">
-                      {t(`listas.${origenDe(fila)}`)}
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
-            </>
           )}
+
+          <DataTable>
+            <DataTableHeader>
+              <TableHead>{t("listas.valor")}</TableHead>
+              <TableHead>{t("listas.abreviatura")}</TableHead>
+              <TableHead>{t("listas.origen")}</TableHead>
+            </DataTableHeader>
+
+            <DataTableBody
+              columns={COLUMNAS}
+              isLoading={valores.loading}
+              error={valores.error}
+              onRetry={() => valores.refetch()}
+              isEmpty={filas.length === 0}
+              empty={<EmptyState icon={ListChecks} title={t("listas.sinValores")} />}
+            >
+              {filas.map((fila, indice) => (
+                <DataTableRow key={fila.id} index={indice}>
+                  <TableCell className="font-medium">{fila.nombre}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {fila.abreviatura || "—"}
+                  </TableCell>
+                  <TableCell>
+                    <BadgeDeOrigen origen={origenDe(fila)} />
+                  </TableCell>
+                </DataTableRow>
+              ))}
+            </DataTableBody>
+          </DataTable>
         </div>
       )}
     </section>
+  );
+}
+
+function BadgeDeOrigen({ origen }: { origen: OrigenDeTipologia }) {
+  const { t } = useTranslation();
+
+  return (
+    <Badge variant="outline" className={cn("font-normal", CLASE_POR_ORIGEN[origen])}>
+      {t(`listas.${origen}`)}
+    </Badge>
   );
 }

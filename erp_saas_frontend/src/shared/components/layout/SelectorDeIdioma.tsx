@@ -1,4 +1,4 @@
-import { gql, useQuery } from "@apollo/client";
+import { useQuery } from "@apollo/client";
 import { Check, Languages } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -9,34 +9,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
+import { IDIOMAS_ACTIVOS } from "@/shared/graphql/idiomas.queries";
 import { cn } from "@/shared/lib/utils";
 import { usePreferencias } from "@/shared/preferencias";
-
-
-
-const IDIOMAS = gql`
-  query IdiomasActivos {
-    idiomas(soloActivos: true) {
-      id
-      codigo
-      nombre
-    }
-  }
-`;
-
-type Idioma = {
-  id: string;
-  codigo: string;
-  nombre: string;
-};
-
+import type { Idioma } from "@/shared/types/idioma.types";
 
 const ESPERA_AL_SALIR = 120;
 
 export function SelectorDeIdioma() {
   const { t } = useTranslation();
   const { idiomaId, idiomaCodigo, elegirIdioma } = usePreferencias();
-  const { data, loading } = useQuery<{ idiomas: Idioma[] }>(IDIOMAS);
+  const { data, loading } = useQuery<{ idiomas: Idioma[] }>(IDIOMAS_ACTIVOS);
 
   const [abierto, setAbierto] = useState(false);
   const temporizador = useRef<number | null>(null);
@@ -60,7 +43,6 @@ export function SelectorDeIdioma() {
       ESPERA_AL_SALIR,
     );
   }
-
 
   useEffect(() => cancelarCierre, []);
 

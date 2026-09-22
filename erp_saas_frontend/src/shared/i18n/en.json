@@ -1,12 +1,15 @@
 {
   "comun": {
     "cargando": "Loading…",
+    "guardando": "Saving…",
     "error": "Something went wrong",
     "sinDatos": "Nothing to show",
     "reintentar": "Retry",
     "cancelar": "Cancel",
     "sinRespuesta": "Could not reach the server. Please check your connection and try again.",
-    "ninguna": "None"
+    "ninguna": "None",
+    "mostrarPassword": "Show password",
+    "mayusculasActivadas": "Caps Lock is on."
   },
   "login": {
     "titulo": "Sign in",
@@ -16,6 +19,7 @@
     "password": "Password",
     "entrar": "Sign in",
     "entrando": "Signing in…",
+    "olvidoPassword": "If you forgot your password, ask your company's administrator to reset it.",
     "tituloEmpresa": "Select a company",
     "ayudaEmpresa": "Your account is enabled in more than one. The information you see belongs to the one you select.",
     "casaMatriz": "Headquarters",
@@ -40,7 +44,7 @@
     "empresa": "Company",
     "idioma": "Language",
     "salir": "Sign out",
-    "saliendo": "Signing out"
+    "saliendo": "Signing out…"
   },
   "menu": {
     "configuracion": "Settings",
@@ -54,7 +58,13 @@
     "categorias": "Categories",
     "seguridad": "Security",
     "usuarios": "Users",
-    "roles": "Roles"
+    "roles": "Roles",
+    "saltarAlContenido": "Skip to content"
+  },
+  "noEncontrada": {
+    "titulo": "Page not found",
+    "ayuda": "This address does not exist or is no longer available. Check the link or go back to the start.",
+    "volver": "Go to start"
   },
   "miembros": {
     "titulo": "Users",
@@ -114,6 +124,8 @@
     "noCopiada": "Could not copy. Select it and copy it manually.",
     "listo": "Done",
     "noExisteFicha": "The profile could not be opened",
+    "noEsDeEstaEmpresa": "This person does not exist or does not work at this company",
+    "noEsDeEstaEmpresaAyuda": "The link may be outdated, or the person may work at another branch. Go back to the user list to find them.",
     "editarDatos": "Edit details",
     "editarDatosAyuda": "Changes apply to every company where they work: there is a single account.",
     "guardar": "Save",
@@ -166,6 +178,8 @@
     "ocultarTerminadas": "Hide ended"
   },
   "paginacion": {
+    "navegacion": "Pagination",
+    "pagina": "Page {{numero}}",
     "mostrando": "Showing {{inicio}} to {{fin}} of {{total}}",
     "primera": "First page",
     "anterior": "Previous page",
@@ -177,7 +191,13 @@
   "listas": {
     "titulo": "System lists",
     "ayuda": "The catalogs that fill the dropdown lists across the system.",
+    "lista": "List",
     "elegiLista": "Select a list",
+    "sinElegir": "Select a list to see its values",
+    "sinValores": "This list has no values yet",
+    "valor": "Value",
+    "abreviatura": "Abbreviation",
+    "origen": "Origin",
     "valores_one": "{{count}} value",
     "valores_other": "{{count}} values",
     "deFabrica": "built-in",
@@ -322,7 +342,9 @@
     "creado": "Role {{nombre}} was created.",
     "actualizado": "Role {{nombre}} was updated.",
     "volver": "Back to roles",
-    "noExiste": "Role not found",
+    "grupoSinNombre": "Other permissions",
+    "noEsDeEstaEmpresa": "This role does not exist or does not belong to this company",
+    "noEsDeEstaEmpresaAyuda": "The link may be outdated, or the role may belong to another company. Go back to the role list to find it.",
     "darDeBaja": "Deactivate",
     "darDeBajaTitulo": "Deactivate role {{nombre}}?",
     "darDeBajaAyuda": "It will no longer be available to assign. It cannot be deactivated while someone still holds it.",

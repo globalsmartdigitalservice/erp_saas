@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@apollo/client";
-import { AlertTriangle, ArrowLeft } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { AlertTriangle } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -14,24 +14,19 @@ import {
   ENTIDADES,
 } from "@/modules/entidades/graphql/entidades.queries";
 import type { Entidad } from "@/modules/entidades/types/entidad.types";
-import { EstadoVacio } from "@/shared/components/EstadosTabla";
-import { Button } from "@/shared/components/ui/button";
-import { mensajeDeError } from "@/shared/lib/errores";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/shared/components/ui/card";
+import { BackButton } from "@/shared/components/BackButton";
+import { PageTitle } from "@/shared/components/PageTitle";
+import { ErrorState, EmptyState } from "@/shared/components/TableStates";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-
+import { mensajeDeError } from "@/shared/lib/errores";
 
 export function EdicionEntidadPage() {
   const { t } = useTranslation();
   const navegar = useNavigate();
   const { id } = useParams<{ id: string }>();
 
-  const { data, loading } = useQuery<{ entidad: Entidad | null }>(ENTIDAD, {
+  const consulta = useQuery<{ entidad: Entidad | null }>(ENTIDAD, {
     variables: { id },
     skip: !id,
   });
@@ -41,7 +36,7 @@ export function EdicionEntidadPage() {
     { refetchQueries: [ENTIDAD, ENTIDADES] },
   );
 
-  const entidad = data?.entidad ?? null;
+  const entidad = consulta.data?.entidad ?? null;
 
   async function guardar(datos: DatosDeEntidad) {
     const resultado = await actualizar({
@@ -66,37 +61,39 @@ export function EdicionEntidadPage() {
     navegar("..");
   }
 
-  if (loading) {
+  if (consulta.loading) {
     return <Skeleton className="h-96 w-full" />;
+  }
+
+  if (consulta.error && entidad === null) {
+    return (
+      <ErrorState error={consulta.error} onRetry={() => consulta.refetch()} />
+    );
   }
 
   if (entidad === null) {
     return (
-      <EstadoVacio
-        icono={AlertTriangle}
-        titulo={t("entidades.noExiste")}
-        descripcion={t("entidades.noExisteAyuda")}
+      <EmptyState
+        icon={AlertTriangle}
+        title={t("entidades.noExiste")}
+        description={t("entidades.noExisteAyuda")}
       />
     );
   }
 
   return (
     <section className="space-y-4">
-      <Button asChild variant="ghost" size="sm" className="-ml-2 gap-2">
-        <Link to="..">
-          <ArrowLeft size={16} />
-          {t("entidades.volver")}
-        </Link>
-      </Button>
+      <BackButton>{t("entidades.volver")}</BackButton>
 
       <Card>
         <CardHeader>
-          <CardTitle>{t("entidades.editar")}</CardTitle>
+          <PageTitle>
+            {t("entidades.editar")}
+          </PageTitle>
         </CardHeader>
         <CardContent>
           <FormularioEntidad
             inicial={{
-
               tipoEntidadId: entidad.tipoEntidad?.id ?? null,
               nombre: entidad.nombre,
               priApellido: entidad.priApellido,

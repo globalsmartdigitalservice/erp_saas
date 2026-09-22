@@ -120,14 +120,3 @@ export function fechaLegible(fecha: string, idioma: string): string {
     year: "numeric",
   });
 }
-
-export function iniciales(nombre: string): string {
-  return (
-    nombre
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((parte) => parte[0].toUpperCase())
-      .join("") || "?"
-  );
-}

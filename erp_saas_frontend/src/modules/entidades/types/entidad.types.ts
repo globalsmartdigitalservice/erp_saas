@@ -1,5 +1,3 @@
-
-
 export type InfoDePagina = {
   total: number;
   limite: number;
@@ -12,12 +10,10 @@ export type Pagina<T> = {
   info: InfoDePagina;
 };
 
-
 export type Tipologia = {
   id: string;
   nombre: string;
 };
-
 
 export type Entidad = {
   id: string;
@@ -38,9 +34,7 @@ export type CategoriaEntidad = {
   id: string;
   nombre: string;
   descripcion: string;
-
   descuentoCategCliente: string;
-
   listaPrecioId: number | null;
   estado: Tipologia | null;
 };
@@ -49,7 +43,6 @@ export type RolEntidad = {
   id: string;
   tipoRol: Tipologia | null;
   categoria: CategoriaEntidad | null;
-
   limiteCredito: string | null;
   estado: Tipologia | null;
 };
@@ -72,7 +65,6 @@ export type ContactoEntidad = {
   telefono: string;
   estado: Tipologia | null;
 };
-
 
 export function nombreCompleto(entidad: Entidad): string {
   return [entidad.nombre, entidad.priApellido, entidad.segApellido]

@@ -1,8 +1,8 @@
 import { useLazyQuery, useMutation } from "@apollo/client";
-import { ArrowLeft, CircleAlert, Info, Mail, UserCheck } from "lucide-react";
+import { Info, Loader2, Mail, UserCheck } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { BusquedaPorCorreo } from "@/modules/seguridad/components/miembros/BusquedaPorCorreo";
@@ -19,6 +19,9 @@ import type {
   DatosDePersonaNueva,
   PersonaEncontrada,
 } from "@/modules/seguridad/types/miembro.types";
+import { BackButton } from "@/shared/components/BackButton";
+import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { PageTitle } from "@/shared/components/PageTitle";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -26,7 +29,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { mensajeDeError } from "@/shared/lib/errores";
@@ -92,16 +94,11 @@ export function AltaMiembroPage() {
 
   return (
     <section className="mx-auto max-w-3xl space-y-4">
-      <Button asChild variant="ghost" size="sm" className="-ml-2 gap-2">
-        <Link to="..">
-          <ArrowLeft size={16} />
-          {t("miembros.volver")}
-        </Link>
-      </Button>
+      <BackButton>{t("miembros.volver")}</BackButton>
 
       <Card>
         <CardHeader>
-          <CardTitle>{t("miembros.nuevo")}</CardTitle>
+          <PageTitle>{t("miembros.nuevo")}</PageTitle>
           <CardDescription>{t("miembros.altaAyuda")}</CardDescription>
         </CardHeader>
 
@@ -122,12 +119,7 @@ export function AltaMiembroPage() {
 
           {correo !== null && busqueda.loading && <Skeleton className="h-28 w-full" />}
 
-          {correo !== null && busqueda.error && (
-            <Alert variant="destructive" className="bg-destructive/5">
-              <CircleAlert aria-hidden="true" />
-              <AlertDescription>{mensajeDeError(busqueda.error, t)}</AlertDescription>
-            </Alert>
-          )}
+          {correo !== null && <ErrorAlert message={mensajeDeError(busqueda.error, t)} />}
 
           {hayResultado && resultado?.trabajaAca && (
             <Alert className="motion-safe:animate-in motion-safe:fade-in">
@@ -153,18 +145,16 @@ export function AltaMiembroPage() {
 
               <SeleccionDeRoles seleccionados={rolIds} onCambiar={setRolIds} />
 
-              {alta.error && (
-                <Alert variant="destructive" className="bg-destructive/5">
-                  <CircleAlert aria-hidden="true" />
-                  <AlertDescription>{mensajeDeError(alta.error, t)}</AlertDescription>
-                </Alert>
-              )}
+              <ErrorAlert message={mensajeDeError(alta.error, t)} />
 
               <div className="flex justify-end">
                 <Button
+                  className="gap-2"
                   onClick={() => registrar({ usuarioId: resultado.usuarioId, rolIds })}
                   disabled={alta.loading}
+                  aria-busy={alta.loading || undefined}
                 >
+                  {alta.loading && <Loader2 className="animate-spin" aria-hidden="true" />}
                   {alta.loading
                     ? t("miembros.agregando")
                     : t("miembros.agregar", { empresa: empresa?.razonSocial ?? "" })}

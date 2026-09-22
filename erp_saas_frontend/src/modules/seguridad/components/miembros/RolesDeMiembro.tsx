@@ -19,7 +19,10 @@ import {
   type RolAsignable,
   type RolAsignadoDeMiembro,
 } from "@/modules/seguridad/types/miembro.types";
-import { DialogoConfirmar } from "@/shared/components/DialogoConfirmar";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
+import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { SaveButton } from "@/shared/components/SaveButton";
+import { ErrorState } from "@/shared/components/TableStates";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -48,7 +51,7 @@ import {
 } from "@/shared/components/ui/select";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Textarea } from "@/shared/components/ui/textarea";
-import { useTipologias } from "@/shared/hooks/useTipologias";
+import { useEstadoId } from "@/shared/hooks/useEstadoId";
 import { mensajeDeError } from "@/shared/lib/errores";
 import { cn } from "@/shared/lib/utils";
 import { ABREV_ACTIVO } from "@/shared/types/tipologia.types";
@@ -64,10 +67,9 @@ type Props = {
 export function RolesDeMiembro({ membresiaId, nombre }: Props) {
   const { t } = useTranslation();
   const [verTerminadas, setVerTerminadas] = useState(false);
-  const estados = useTipologias("ESTADO_REGISTRO");
-  const activoId = estados.opciones.find((e) => e.abreviatura === ABREV_ACTIVO)?.id ?? null;
+  const { id: activoId, cargando: cargandoEstados } = useEstadoId(ABREV_ACTIVO);
 
-  const { data, loading, error } = useQuery<{ rolesDe: RolAsignadoDeMiembro[] }>(
+  const { data, loading, error, refetch } = useQuery<{ rolesDe: RolAsignadoDeMiembro[] }>(
     ROLES_DE_MIEMBRO,
     { variables: { membresiaId } },
   );
@@ -110,12 +112,10 @@ export function RolesDeMiembro({ membresiaId, nombre }: Props) {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {loading || estados.cargando ? (
+        {loading || cargandoEstados ? (
           <Skeleton className="h-20 w-full" />
         ) : error ? (
-          <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-            {mensajeDeError(error, t)}
-          </p>
+          <ErrorState error={error} onRetry={() => refetch()} />
         ) : (
           <>
             {enCurso.length === 0 && (
@@ -184,38 +184,41 @@ function FilaDeAsignacion({
             })}`}
           {asignacion.motivo && ` · ${asignacion.motivo}`}
         </p>
+        {(estado !== "vigente" || asignacion.rol?.esHeredado) && (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {estado === "programada" && (
+              <Badge variant="outline" className="font-normal">
+                {t("miembros.asignacionProgramada")}
+              </Badge>
+            )}
+            {estado === "rolDeBaja" && (
+              <Badge variant="outline" className="font-normal text-destructive">
+                {t("miembros.asignacionRolDeBaja")}
+              </Badge>
+            )}
+            {estado === "terminada" && (
+              <Badge variant="outline" className="font-normal">
+                {t("miembros.asignacionTerminada")}
+              </Badge>
+            )}
+            {asignacion.rol?.esHeredado && (
+              <Badge variant="outline" className="font-normal">
+                {t("miembros.rolHeredado")}
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
-
-      {estado === "programada" && (
-        <Badge variant="outline" className="hidden font-normal sm:inline-flex">
-          {t("miembros.asignacionProgramada")}
-        </Badge>
-      )}
-      {estado === "rolDeBaja" && (
-        <Badge variant="outline" className="hidden font-normal text-destructive sm:inline-flex">
-          {t("miembros.asignacionRolDeBaja")}
-        </Badge>
-      )}
-      {estado === "terminada" && (
-        <Badge variant="outline" className="hidden font-normal sm:inline-flex">
-          {t("miembros.asignacionTerminada")}
-        </Badge>
-      )}
-      {asignacion.rol?.esHeredado && (
-        <Badge variant="outline" className="hidden font-normal sm:inline-flex">
-          {t("miembros.rolHeredado")}
-        </Badge>
-      )}
 
       <Button
         variant="ghost"
         size="icon"
         className="size-8 shrink-0 text-muted-foreground"
+        aria-label={t("miembros.editarAsignacion")}
         title={t("miembros.editarAsignacion")}
         onClick={() => setEditando(true)}
       >
         <Pencil size={15} aria-hidden="true" />
-        <span className="sr-only">{t("miembros.editarAsignacion")}</span>
       </Button>
       {ocupaElRol(asignacion) && <QuitarRol asignacion={asignacion} nombre={nombre} />}
 
@@ -234,33 +237,31 @@ function QuitarRol({
   nombre: string;
 }) {
   const { t } = useTranslation();
-  const [quitar, { loading, error, reset }] = useMutation(QUITAR_ROL, RECARGAR);
+  const [quitar, mutacion] = useMutation(QUITAR_ROL, RECARGAR);
   const rol = asignacion.rol?.nombre ?? "";
 
   return (
-    <DialogoConfirmar
-      titulo={t("miembros.quitarRolTitulo", { rol, nombre })}
-      descripcion={t("miembros.quitarRolAyuda")}
-      etiquetaConfirmar={t("miembros.quitarRol")}
-      cargando={loading}
-      error={mensajeDeError(error, t)}
-      alCerrar={reset}
-      onConfirmar={async () => {
+    <ConfirmDialog
+      title={t("miembros.quitarRolTitulo", { rol, nombre })}
+      description={t("miembros.quitarRolAyuda")}
+      confirmLabel={t("miembros.quitarRol")}
+      mutation={mutacion}
+      successMessage={t("miembros.rolQuitado")}
+      onConfirm={async () => {
         const resultado = await quitar({ variables: { asignacionId: asignacion.id } });
         if (!resultado.data?.quitarRol) return false;
-        toast.success(t("miembros.rolQuitado"));
       }}
     >
       <Button
         variant="ghost"
         size="icon"
         className="size-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+        aria-label={t("miembros.quitarRol")}
         title={t("miembros.quitarRol")}
       >
         <X size={15} aria-hidden="true" />
-        <span className="sr-only">{t("miembros.quitarRol")}</span>
       </Button>
-    </DialogoConfirmar>
+    </ConfirmDialog>
   );
 }
 
@@ -339,17 +340,23 @@ function FormularioAsignarRol({
   }
 
   return (
-    <>
+    <form
+      className="grid gap-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (rolId !== "" && !loading) void guardar();
+      }}
+    >
       <div className="space-y-4">
         <div className="space-y-1.5">
-          <Label obligatorio>{t("miembros.rol")}</Label>
+          <Label htmlFor="rol-a-asignar" obligatorio>{t("miembros.rol")}</Label>
           {roles.loading ? (
             <Skeleton className="h-9 w-full" />
           ) : disponibles.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("miembros.sinRolesParaAsignar")}</p>
           ) : (
             <Select value={rolId} onValueChange={setRolId}>
-              <SelectTrigger>
+              <SelectTrigger id="rol-a-asignar">
                 <SelectValue placeholder={t("miembros.elegiRol")} />
               </SelectTrigger>
               <SelectContent>
@@ -375,21 +382,17 @@ function FormularioAsignarRol({
           />
         </div>
 
-        {error && (
-          <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-            {mensajeDeError(error, t)}
-          </p>
-        )}
+        <ErrorAlert message={mensajeDeError(error, t)} />
       </div>
 
       <DialogFooter>
-        <Button variant="ghost" onClick={onCerrar} disabled={loading}>
+        <Button type="button" variant="ghost" onClick={onCerrar} disabled={loading}>
           {t("comun.cancelar")}
         </Button>
-        <Button onClick={guardar} disabled={loading || rolId === ""}>
-          {loading ? t("comun.cargando") : t("miembros.asignar")}
-        </Button>
+        <SaveButton isSaving={loading} disabled={rolId === ""}>
+          {t("miembros.asignar")}
+        </SaveButton>
       </DialogFooter>
-    </>
+    </form>
   );
 }

@@ -16,8 +16,9 @@ import type {
   CategoriaEntidad,
   RolEntidad,
 } from "@/modules/entidades/types/entidad.types";
+import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { SaveButton } from "@/shared/components/SaveButton";
 import { SelectorDeTipologia } from "@/shared/components/SelectorDeTipologia";
-import { ABREV_ACTIVO } from "@/shared/types/tipologia.types";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -29,7 +30,6 @@ import {
   DialogTrigger,
 } from "@/shared/components/ui/dialog";
 import { Input } from "@/shared/components/ui/input";
-import { mensajeDeError } from "@/shared/lib/errores";
 import { Label } from "@/shared/components/ui/label";
 import {
   Select,
@@ -38,7 +38,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-
+import { mensajeDeError } from "@/shared/lib/errores";
+import { ABREV_ACTIVO } from "@/shared/types/tipologia.types";
 
 export function DialogoRol({
   entidadId,
@@ -59,14 +60,14 @@ export function DialogoRol({
             variant="ghost"
             size="icon"
             className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+            aria-label={t("entidades.editarRol")}
             title={t("entidades.editarRol")}
           >
-            <Pencil size={15} />
-            <span className="sr-only">{t("entidades.editarRol")}</span>
+            <Pencil aria-hidden="true" />
           </Button>
         ) : (
           <Button variant="outline" size="sm" className="gap-2">
-            <Plus size={14} />
+            <Plus aria-hidden="true" />
             {t("entidades.agregarRol")}
           </Button>
         )}
@@ -112,7 +113,6 @@ function FormularioRol({
   );
   const [limiteCredito, setLimiteCredito] = useState(rol?.limiteCredito ?? "");
 
- 
   const categorias = useQuery<{ categoriasEntidad: CategoriaEntidad[] }>(
     CATEGORIAS_ENTIDAD,
   );
@@ -157,11 +157,19 @@ function FormularioRol({
     onCerrar();
   }
 
+  const estaCompleto = estadoId !== null && (edicion || tipoRolId !== null);
+
   return (
-    <>
+    <form
+      className="grid gap-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (estaCompleto && !loading) void guardar();
+      }}
+    >
       <div className="space-y-4">
         <div className="space-y-1.5">
-          <Label obligatorio>{t("entidades.rol")}</Label>
+          <Label htmlFor={edicion ? undefined : "rol-tipo"} obligatorio>{t("entidades.rol")}</Label>
 
           {edicion ? (
             <div className="space-y-1.5">
@@ -174,6 +182,7 @@ function FormularioRol({
             </div>
           ) : (
             <SelectorDeTipologia
+              id="rol-tipo"
               codigo="TIPO_ROL"
               valor={tipoRolId}
               onCambiar={setTipoRolId}
@@ -183,8 +192,9 @@ function FormularioRol({
         </div>
 
         <div className="space-y-1.5">
-          <Label obligatorio>{t("entidades.estado")}</Label>
+          <Label htmlFor="rol-estado" obligatorio>{t("entidades.estado")}</Label>
           <SelectorDeTipologia
+            id="rol-estado"
             codigo="ESTADO_REGISTRO"
             predeterminada={edicion ? undefined : ABREV_ACTIVO}
             valor={estadoId}
@@ -194,7 +204,7 @@ function FormularioRol({
         </div>
 
         <div className="space-y-1.5">
-          <Label>{t("entidades.categoria")}</Label>
+          <Label htmlFor="rol-categoria">{t("entidades.categoria")}</Label>
           <Select
             value={categoriaId ?? undefined}
             onValueChange={setCategoriaId}
@@ -203,7 +213,7 @@ function FormularioRol({
               (categorias.data?.categoriasEntidad.length ?? 0) === 0
             }
           >
-            <SelectTrigger>
+            <SelectTrigger id="rol-categoria">
               <SelectValue placeholder={t("entidades.sinCategoria")} />
             </SelectTrigger>
             <SelectContent>
@@ -227,26 +237,17 @@ function FormularioRol({
           />
         </div>
 
-        {error && (
-          <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-            {mensajeDeError(error, t)}
-          </p>
-        )}
+        <ErrorAlert message={mensajeDeError(error, t)} />
       </div>
 
       <DialogFooter>
-        <Button variant="ghost" onClick={onCerrar} disabled={loading}>
+        <Button type="button" variant="ghost" onClick={onCerrar} disabled={loading}>
           {t("comun.cancelar")}
         </Button>
-        <Button
-          onClick={guardar}
-          disabled={
-            loading || estadoId === null || (!edicion && tipoRolId === null)
-          }
-        >
-          {loading ? t("comun.cargando") : t("entidades.guardar")}
-        </Button>
+        <SaveButton isSaving={loading} disabled={!estaCompleto}>
+          {t("entidades.guardar")}
+        </SaveButton>
       </DialogFooter>
-    </>
+    </form>
   );
 }

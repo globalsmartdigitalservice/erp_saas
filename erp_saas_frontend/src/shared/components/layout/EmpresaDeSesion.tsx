@@ -6,12 +6,12 @@ import { useSession } from "@/shared/session";
 /**
  * La empresa en la que está parada la sesión. SOLO LECTURA.
  *
- *  Reemplaza al selector que había antes. No es un combo porque la empresa
+ * Reemplaza al selector que había antes. No es un combo porque la empresa
  * sale del token firmado: cambiarla exige un token nuevo, no un clic. Ver
  * `MODULO_12_frontend.md` §4.1 — mientras eso no exista, cambiar de sucursal
  * es cerrar sesión y volver a entrar.
  */
-export function EmpresaDeLaSesion() {
+export function EmpresaDeSesion() {
   const { t } = useTranslation();
   const { empresa } = useSession();
 
@@ -19,7 +19,7 @@ export function EmpresaDeLaSesion() {
 
   return (
     <div
-      className="flex min-w-0 items-center gap-2 text-sm"
+      className="hidden min-w-0 items-center gap-2 text-sm sm:flex"
       aria-label={t("cabecera.empresa")}
     >
       <Building2 className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />

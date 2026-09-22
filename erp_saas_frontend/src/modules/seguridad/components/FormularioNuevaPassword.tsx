@@ -1,4 +1,4 @@
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -6,9 +6,9 @@ import {
   CAMBIO_DE_PASSWORD_VACIO,
   type CambioDePassword,
 } from "@/modules/seguridad/types/sesion.types";
+import { PasswordInput } from "@/shared/components/PasswordInput";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
-import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 
 type Props = {
@@ -30,7 +30,7 @@ export function FormularioNuevaPassword({ enviando, error, onEnviar }: Props) {
 
   const coinciden = confirmacion === datos.passwordNueva;
   const noCoinciden = confirmacion !== "" && !coinciden;
-  const completo =
+  const estaCompleto =
     datos.passwordActual !== "" && datos.passwordNueva !== "" && coinciden;
 
   return (
@@ -39,16 +39,15 @@ export function FormularioNuevaPassword({ enviando, error, onEnviar }: Props) {
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
-        if (completo && !enviando) onEnviar(datos);
+        if (estaCompleto && !enviando) onEnviar(datos);
       }}
     >
       <div className="space-y-1.5">
         <Label htmlFor="password-actual" obligatorio>
           {t("nuevaPassword.actual")}
         </Label>
-        <Input
+        <PasswordInput
           id="password-actual"
-          type="password"
           autoComplete="current-password"
           autoFocus
           aria-describedby="password-actual-ayuda"
@@ -64,9 +63,8 @@ export function FormularioNuevaPassword({ enviando, error, onEnviar }: Props) {
         <Label htmlFor="password-nueva" obligatorio>
           {t("nuevaPassword.nueva")}
         </Label>
-        <Input
+        <PasswordInput
           id="password-nueva"
-          type="password"
           autoComplete="new-password"
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? ID_ERROR : undefined}
@@ -79,9 +77,8 @@ export function FormularioNuevaPassword({ enviando, error, onEnviar }: Props) {
         <Label htmlFor="password-confirmacion" obligatorio>
           {t("nuevaPassword.confirmacion")}
         </Label>
-        <Input
+        <PasswordInput
           id="password-confirmacion"
-          type="password"
           autoComplete="new-password"
           aria-invalid={noCoinciden ? true : undefined}
           aria-describedby={noCoinciden ? ID_COINCIDENCIA : undefined}
@@ -102,7 +99,13 @@ export function FormularioNuevaPassword({ enviando, error, onEnviar }: Props) {
         </Alert>
       )}
 
-      <Button type="submit" className="w-full" disabled={!completo || enviando}>
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={!estaCompleto || enviando}
+        aria-busy={enviando || undefined}
+      >
+        {enviando && <Loader2 aria-hidden="true" className="animate-spin" />}
         {enviando ? t("nuevaPassword.guardando") : t("nuevaPassword.guardar")}
       </Button>
     </form>

@@ -7,7 +7,7 @@ import type { RolAsignable } from "@/modules/seguridad/types/miembro.types";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Label } from "@/shared/components/ui/label";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { useTipologias } from "@/shared/hooks/useTipologias";
+import { useEstadoId } from "@/shared/hooks/useEstadoId";
 import { ABREV_ACTIVO } from "@/shared/types/tipologia.types";
 
 type Props = {
@@ -17,9 +17,7 @@ type Props = {
 
 export function SeleccionDeRoles({ seleccionados, onCambiar }: Props) {
   const { t } = useTranslation();
-  const estados = useTipologias("ESTADO_REGISTRO");
-  const activoId =
-    estados.opciones.find((estado) => estado.abreviatura === ABREV_ACTIVO)?.id ?? null;
+  const { id: activoId, cargando: cargandoEstados } = useEstadoId(ABREV_ACTIVO);
 
   const { data, loading } = useQuery<{ roles: RolAsignable[] }>(ROLES_ASIGNABLES, {
     variables: { estadoId: activoId },
@@ -39,7 +37,7 @@ export function SeleccionDeRoles({ seleccionados, onCambiar }: Props) {
       <legend className="text-sm font-medium">{t("miembros.roles")}</legend>
       <p className="text-xs text-muted-foreground">{t("miembros.rolesAyuda")}</p>
 
-      {loading || estados.cargando ? (
+      {loading || cargandoEstados ? (
         <Skeleton className="h-16 w-full" />
       ) : roles.length === 0 ? (
         <p className="rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground">

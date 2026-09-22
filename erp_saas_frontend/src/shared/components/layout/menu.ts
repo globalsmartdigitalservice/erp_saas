@@ -1,7 +1,5 @@
 import { Settings, UserCog, Users, type LucideIcon } from "lucide-react";
 
-
-
 export type PantallaDeMenu = {
   ruta: string;
   clave: string;
@@ -12,6 +10,11 @@ export type ModuloDeMenu = {
   clave: string;
   icono: LucideIcon;
   pantallas: PantallaDeMenu[];
+};
+
+export type MenuLocation = {
+  modulo: ModuloDeMenu;
+  pantalla: PantallaDeMenu;
 };
 
 export const MENU: ModuloDeMenu[] = [
@@ -40,3 +43,24 @@ export const MENU: ModuloDeMenu[] = [
     pantallas: [{ ruta: "/configuracion/listas", clave: "menu.listas" }],
   },
 ];
+
+const MENU_LOCATIONS: MenuLocation[] = MENU.flatMap((modulo) =>
+  modulo.pantallas.map((pantalla) => ({ modulo, pantalla })),
+);
+
+/**
+ * La pantalla del menú a la que pertenece la URL. Gana la coincidencia más
+ * larga: `/entidades/categorias` es Categorías, no Entidades, y `/entidades/5`
+ * sí es Entidades.
+ */
+export function findMenuLocation(pathname: string): MenuLocation | null {
+  const candidatas = MENU_LOCATIONS.filter(
+    ({ pantalla }) =>
+      pathname === pantalla.ruta || pathname.startsWith(pantalla.ruta + "/"),
+  );
+
+  return (
+    candidatas.sort((a, b) => b.pantalla.ruta.length - a.pantalla.ruta.length)[0] ??
+    null
+  );
+}

@@ -12,18 +12,18 @@ import { SESSION_EXPIRED_EVENT } from "@/config/refresh";
 import { LOGOUT } from "@/modules/seguridad/graphql/seguridad.mutations";
 import { SESION_ACTUAL } from "@/modules/seguridad/graphql/seguridad.queries";
 import type {
-  EmpresaDelUsuario,
-  UsuarioDeLaSesion,
+  EmpresaDeUsuario,
+  UsuarioDeSesion,
 } from "@/modules/seguridad/types/sesion.types";
 
-type EmpresaDeLaSesion = Pick<
-  EmpresaDelUsuario,
+type EmpresaDeSesion = Pick<
+  EmpresaDeUsuario,
   "empresaId" | "razonSocial" | "esMatriz"
 >;
 
 type Session = {
-  usuario: UsuarioDeLaSesion | null;
-  empresa: EmpresaDeLaSesion | null;
+  usuario: UsuarioDeSesion | null;
+  empresa: EmpresaDeSesion | null;
   permisos: string[];
   /** El arranque todavía no contestó: no se sabe si hay sesión o no. */
   cargando: boolean;
@@ -33,8 +33,8 @@ type Session = {
 };
 
 type Respuesta = {
-  me: UsuarioDeLaSesion | null;
-  miEmpresa: EmpresaDeLaSesion | null;
+  me: UsuarioDeSesion | null;
+  miEmpresa: EmpresaDeSesion | null;
   misPermisos: string[];
 };
 

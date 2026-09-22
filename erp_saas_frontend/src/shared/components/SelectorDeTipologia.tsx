@@ -10,23 +10,23 @@ import {
 } from "@/shared/components/ui/select";
 import { useTipologias } from "@/shared/hooks/useTipologias";
 
-
 const NINGUNA = "__ninguna__";
 
 type Props = {
-
+  id?: string;
   codigo: string;
   valor: string | null;
   onCambiar: (id: string | null) => void;
   placeholder?: string;
   disabled?: boolean;
-
+  /** Abreviatura de la opción que se elige sola mientras no haya valor. */
   predeterminada?: string;
-
+  /** Agrega "Ninguna" para poder dejarlo vacío. */
   opcional?: boolean;
 };
 
 export function SelectorDeTipologia({
+  id,
   codigo,
   valor,
   onCambiar,
@@ -37,7 +37,6 @@ export function SelectorDeTipologia({
 }: Props) {
   const { t } = useTranslation();
   const { opciones, cargando } = useTipologias(codigo);
-
 
   useEffect(() => {
     if (predeterminada === undefined || valor !== null) return;
@@ -54,7 +53,7 @@ export function SelectorDeTipologia({
       }
       disabled={disabled || cargando || opciones.length === 0}
     >
-      <SelectTrigger>
+      <SelectTrigger id={id}>
         <SelectValue
           placeholder={cargando ? t("comun.cargando") : placeholder}
         />

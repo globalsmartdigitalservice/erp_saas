@@ -9,6 +9,7 @@ import { NuevaPasswordPage } from "@/modules/seguridad/pages/NuevaPasswordPage";
 import { SeguridadRoutes } from "@/modules/seguridad/routes/SeguridadRoutes";
 import { TipologiasRoutes } from "@/modules/tipologias/routes/TipologiasRoutes";
 import { AppShell } from "@/shared/components/layout/AppShell";
+import { NotFoundPage } from "@/shared/components/NotFoundPage";
 import { ProtectedRoute } from "@/shared/components/ProtectedRoute";
 import { PreferenciasProvider } from "@/shared/preferencias";
 import { SessionProvider } from "@/shared/session";
@@ -38,14 +39,7 @@ function App() {
                 </Route>
               </Route>
 
-              <Route
-                path="*"
-                element={
-                  <div className="flex min-h-screen items-center justify-center text-muted-foreground">
-                    404
-                  </div>
-                }
-              />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </SessionProvider>
         </BrowserRouter>

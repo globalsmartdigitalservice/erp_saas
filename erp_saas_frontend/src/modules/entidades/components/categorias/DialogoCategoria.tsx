@@ -10,6 +10,9 @@ import {
 } from "@/modules/entidades/graphql/entidades.mutations";
 import { CATEGORIAS_ENTIDAD } from "@/modules/entidades/graphql/entidades.queries";
 import type { CategoriaEntidad } from "@/modules/entidades/types/entidad.types";
+import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { SaveButton } from "@/shared/components/SaveButton";
+import { SelectorDeTipologia } from "@/shared/components/SelectorDeTipologia";
 import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
@@ -20,12 +23,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/shared/components/ui/dialog";
-import { SelectorDeTipologia } from "@/shared/components/SelectorDeTipologia";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { mensajeDeError } from "@/shared/lib/errores";
 import { ABREV_ACTIVO } from "@/shared/types/tipologia.types";
-
 
 export function DialogoCategoria({
   categoria,
@@ -44,14 +45,14 @@ export function DialogoCategoria({
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            aria-label={t("categorias.editar")}
             title={t("categorias.editar")}
           >
-            <Pencil size={15} />
-            <span className="sr-only">{t("categorias.editar")}</span>
+            <Pencil aria-hidden="true" />
           </Button>
         ) : (
           <Button className="gap-2">
-            <Plus size={16} />
+            <Plus aria-hidden="true" />
             {t("categorias.nueva")}
           </Button>
         )}
@@ -73,7 +74,6 @@ export function DialogoCategoria({
     </Dialog>
   );
 }
-
 
 function FormularioCategoria({
   categoria,
@@ -112,7 +112,6 @@ function FormularioCategoria({
       variables: edicion ? { id: categoria.id, datos } : { datos },
     });
 
-
     const guardado =
       resultado.data?.crearCategoriaEntidad ??
       resultado.data?.actualizarCategoriaEntidad;
@@ -122,8 +121,16 @@ function FormularioCategoria({
     onCerrar();
   }
 
+  const estaCompleto = nombre.trim() !== "" && estadoId !== null;
+
   return (
-    <>
+    <form
+      className="grid gap-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (estaCompleto && !loading) void guardar();
+      }}
+    >
       <div className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="nombre" obligatorio>{t("categorias.nombre")}</Label>
@@ -145,8 +152,9 @@ function FormularioCategoria({
         </div>
 
         <div className="space-y-1.5">
-          <Label obligatorio>{t("categorias.estado")}</Label>
+          <Label htmlFor="categoria-estado" obligatorio>{t("categorias.estado")}</Label>
           <SelectorDeTipologia
+            id="categoria-estado"
             codigo="ESTADO_REGISTRO"
             predeterminada={edicion ? undefined : ABREV_ACTIVO}
             valor={estadoId}
@@ -170,24 +178,17 @@ function FormularioCategoria({
           </p>
         </div>
 
-        {error && (
-          <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-            {mensajeDeError(error, t)}
-          </p>
-        )}
+        <ErrorAlert message={mensajeDeError(error, t)} />
       </div>
 
       <DialogFooter>
-        <Button variant="ghost" onClick={onCerrar} disabled={loading}>
+        <Button type="button" variant="ghost" onClick={onCerrar} disabled={loading}>
           {t("comun.cancelar")}
         </Button>
-        <Button
-          onClick={guardar}
-          disabled={loading || nombre.trim() === "" || estadoId === null}
-        >
-          {loading ? t("comun.cargando") : t("categorias.guardar")}
-        </Button>
+        <SaveButton isSaving={loading} disabled={!estaCompleto}>
+          {t("categorias.guardar")}
+        </SaveButton>
       </DialogFooter>
-    </>
+    </form>
   );
 }

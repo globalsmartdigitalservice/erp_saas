@@ -5,7 +5,7 @@ import { DialogoCategoria } from "@/modules/entidades/components/categorias/Dial
 import { TablaCategorias } from "@/modules/entidades/components/categorias/TablaCategorias";
 import { CATEGORIAS_ENTIDAD } from "@/modules/entidades/graphql/entidades.queries";
 import type { CategoriaEntidad } from "@/modules/entidades/types/entidad.types";
-
+import { PageHeader } from "@/shared/components/PageHeader";
 
 export function CategoriasPage() {
   const { t } = useTranslation();
@@ -16,23 +16,16 @@ export function CategoriasPage() {
 
   return (
     <section className="space-y-4">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-xl font-semibold">
-            {t("categorias.titulo")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("categorias.ayuda")}
-          </p>
-        </div>
-
-        <DialogoCategoria />
-      </header>
+      <PageHeader
+        title={t("categorias.titulo")}
+        description={t("categorias.ayuda")}
+        action={<DialogoCategoria />}
+      />
 
       <TablaCategorias
         categorias={data?.categoriasEntidad ?? []}
         cargando={loading}
-        error={Boolean(error)}
+        error={error}
         onReintentar={() => refetch()}
       />
     </section>

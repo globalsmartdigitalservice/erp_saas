@@ -10,6 +10,8 @@ import {
   type CambiosDeAsignacion,
   type RolAsignadoDeMiembro,
 } from "@/modules/seguridad/types/miembro.types";
+import { ErrorAlert } from "@/shared/components/ErrorAlert";
+import { SaveButton } from "@/shared/components/SaveButton";
 import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
@@ -158,19 +160,15 @@ function FormularioAsignacion({ asignacion, onCerrar }: Props) {
         )}
       </div>
 
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {mensajeDeError(error, t)}
-        </p>
-      )}
+      <ErrorAlert message={mensajeDeError(error, t)} />
 
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCerrar} disabled={loading}>
           {t("comun.cancelar")}
         </Button>
-        <Button type="submit" disabled={!puedeGuardar}>
-          {loading ? t("miembros.guardando") : t("miembros.guardar")}
-        </Button>
+        <SaveButton isSaving={loading} disabled={!puedeGuardar}>
+          {t("miembros.guardar")}
+        </SaveButton>
       </DialogFooter>
     </form>
   );

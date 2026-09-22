@@ -1,12 +1,13 @@
 import { Menu } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { Button } from "@/shared/components/ui/button";
+
 import { Brand } from "./Brand";
-import { EmpresaDeLaSesion } from "./EmpresaDeLaSesion";
+import { EmpresaDeSesion } from "./EmpresaDeSesion";
 import { MenuDeUsuario } from "./MenuDeUsuario";
+import { Breadcrumbs } from "./Breadcrumbs";
 import { SelectorDeIdioma } from "./SelectorDeIdioma";
-
-
 
 type Props = {
   alAbrirMenu: () => void;
@@ -17,22 +18,24 @@ export function Header({ alAbrirMenu }: Props) {
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-background px-4">
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={alAbrirMenu}
         aria-label={t("menu.abrir")}
-        className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden"
+        className="size-9 text-muted-foreground md:hidden [&_svg]:size-5"
       >
-        <Menu size={22} />
-      </button>
+        <Menu />
+      </Button>
 
-     
       <div className="md:hidden">
         <Brand />
       </div>
 
+      <Breadcrumbs />
+
       <div className="ml-auto flex min-w-0 items-center gap-3">
-        <EmpresaDeLaSesion />
+        <EmpresaDeSesion />
         <SelectorDeIdioma />
         <MenuDeUsuario />
       </div>
