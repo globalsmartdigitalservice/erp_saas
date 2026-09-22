@@ -29,7 +29,11 @@ class UsuarioQueries:
         try:
             fila = membresias.persona_de_la_empresa(int(id))
         except ValidationError as error:
-            raise GraphQLError("; ".join(error.messages)) from error
+            codigo = getattr(error, "code", None)
+            raise GraphQLError(
+                "; ".join(error.messages),
+                extensions={"code": codigo} if codigo else None,
+            ) from error
         return UsuarioType.desde_modelo(fila)
 
 

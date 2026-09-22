@@ -12,6 +12,8 @@ from comun.usuarios import api as usuarios
 from comun.usuarios.models import Usuario
 from core.tenancy import empresa_actual
 
+CODIGO_NO_EXISTE = "NOT_FOUND"
+
 
 def _validar_estado(estado_id: int) -> None:
     tipologias.exigir_del_agrupador(
@@ -64,7 +66,9 @@ def persona_de_la_empresa(usuario_id: int) -> Usuario:
     cliente entero."""
     membresia = repo.obtener_de_usuario(usuario_id)
     if membresia is None:
-        raise ValidationError(f"No existe el usuario {usuario_id}.")
+        raise ValidationError(
+            f"No existe el usuario {usuario_id}.", code=CODIGO_NO_EXISTE
+        )
     return usuarios.obtener_usuario(membresia.usuario_id)
 
 
